@@ -36,7 +36,11 @@ export type TranslationKey =
   | "wednesday"
   | "thursday"
   | "friday"
-  | "saturday";
+  | "saturday"
+  | "downloadW9"
+  | "choosePdfFile"
+  | "uploading"
+  | "pdfOnly";
 
 type Translations = {
   [key in LangKey]: {
@@ -80,7 +84,11 @@ export const translations: Translations = {
     wednesday: "Wed",
     thursday: "Thu",
     friday: "Fri",
-    saturday: "Sat"
+    saturday: "Sat",
+    downloadW9: "Download W-9 Form",
+    choosePdfFile: "Choose PDF File",
+    uploading: "Uploading...",
+    pdfOnly: "Please upload PDF files only"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -117,7 +125,11 @@ export const translations: Translations = {
     wednesday: "三",
     thursday: "四",
     friday: "五",
-    saturday: "六"
+    saturday: "六",
+    downloadW9: "下载 W-9 表格",
+    choosePdfFile: "选择PDF文件",
+    uploading: "上传中...",
+    pdfOnly: "请只上传PDF文件"
   },
   es: {
     appTitle: "MS Sphere Check-In",
@@ -154,6 +166,10 @@ export const translations: Translations = {
     wednesday: "Mié",
     thursday: "Jue",
     friday: "Vie",
-    saturday: "Sáb"
+    saturday: "Sáb",
+    downloadW9: "Descargar Formulario W-9",
+    choosePdfFile: "Seleccionar archivo PDF",
+    uploading: "Subiendo...",
+    pdfOnly: "Por favor, suba solo archivos PDF"
   }
 };

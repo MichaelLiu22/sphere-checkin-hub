@@ -2,8 +2,20 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Star } from "lucide-react";
+import { Star, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+type HighlightedDate = {
+  day: number;
+  icon: "star" | "circle";
+  tooltip: string;
+};
 
 const PayrollCalendar: React.FC = () => {
   const { t } = useLanguage();
@@ -31,6 +43,21 @@ const PayrollCalendar: React.FC = () => {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
 
+  // Define highlighted dates
+  const getHighlightedDates = (): HighlightedDate[] => [
+    { day: 1, icon: "star", tooltip: t("payPeriodStart") },
+    { day: 15, icon: "star", tooltip: t("payPeriodStart") },
+    { day: 5, icon: "circle", tooltip: t("payDay") },
+    { day: 20, icon: "circle", tooltip: t("payDay") },
+  ];
+
+  const highlightedDates = getHighlightedDates();
+  
+  // Check if a day is highlighted
+  const getHighlight = (day: number): HighlightedDate | undefined => {
+    return highlightedDates.find(date => date.day === day);
+  };
+
   // Generate calendar days
   const days = [];
   
@@ -41,19 +68,36 @@ const PayrollCalendar: React.FC = () => {
   
   // Add days of the month
   for (let day = 1; day <= daysInMonth; day++) {
-    const isPayPeriodStart = day === 1 || day === 15;
-    const isPayDay = day === 5 || day === 20;
+    const highlight = getHighlight(day);
+    const isHighlighted = !!highlight;
+    const iconType = highlight?.icon;
     
     days.push(
-      <div 
-        key={`day-${day}`} 
-        className={cn(
-          "calendar-day relative",
-          isPayPeriodStart && "payperiod-start",
-          isPayDay && "pay-date"
+      <div key={`day-${day}`} className="calendar-day-wrapper">
+        {isHighlighted ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className={cn(
+                  "calendar-day relative",
+                  iconType === "circle" && "pay-date"
+                )}
+              >
+                {day}
+                {iconType === "star" && (
+                  <Star className="h-3 w-3 text-brand-accent absolute -top-1 -right-1" />
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{highlight.tooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <div className="calendar-day">
+            {day}
+          </div>
         )}
-      >
-        {day}
       </div>
     );
   }
@@ -103,7 +147,7 @@ const PayrollCalendar: React.FC = () => {
             <span>{t("payPeriodStart")}</span>
           </div>
           <div className="flex items-center">
-            <div className="h-3 w-3 border-2 border-paydate rounded-full mr-2"></div>
+            <Circle className="h-4 w-4 text-paydate mr-2" />
             <span>{t("payDay")}</span>
           </div>
         </div>

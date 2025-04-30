@@ -78,8 +78,12 @@
 }
 
 @layer components {
+  .calendar-day-wrapper {
+    @apply flex items-center justify-center;
+  }
+  
   .calendar-day {
-    @apply flex items-center justify-center h-9 w-9 rounded-full transition-colors hover:bg-muted cursor-default mx-auto;
+    @apply flex items-center justify-center h-9 w-9 rounded-full transition-colors hover:bg-muted cursor-default mx-auto relative;
   }
 
   .payperiod-start {
