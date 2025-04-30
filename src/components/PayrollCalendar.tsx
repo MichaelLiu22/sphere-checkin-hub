@@ -1,0 +1,115 @@
+
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Star } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const PayrollCalendar: React.FC = () => {
+  const { t } = useLanguage();
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  const monthNames = [
+    t("january"), t("february"), t("march"), t("april"),
+    t("may"), t("june"), t("july"), t("august"),
+    t("september"), t("october"), t("november"), t("december")
+  ];
+  
+  const dayNames = [
+    t("sunday"), t("monday"), t("tuesday"), 
+    t("wednesday"), t("thursday"), t("friday"), t("saturday")
+  ];
+
+  // Get the days in the current month
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  
+  // Get the first day of the month (0 = Sunday, 1 = Monday, etc.)
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+  
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayOfMonth = getFirstDayOfMonth(year, month);
+
+  // Generate calendar days
+  const days = [];
+  
+  // Add empty cells for days before the first day of the month
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(<div key={`empty-${i}`} className="calendar-day invisible"></div>);
+  }
+  
+  // Add days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const isPayPeriodStart = day === 1 || day === 15;
+    const isPayDay = day === 5 || day === 20;
+    
+    days.push(
+      <div 
+        key={`day-${day}`} 
+        className={cn(
+          "calendar-day relative",
+          isPayPeriodStart && "payperiod-start",
+          isPayDay && "pay-date"
+        )}
+      >
+        {day}
+      </div>
+    );
+  }
+  
+  const navigateMonth = (change: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + change);
+    setCurrentDate(newDate);
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle>{t("calendar")}</CardTitle>
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={() => navigateMonth(-1)}
+            className="p-1 rounded-full hover:bg-muted"
+          >
+            ←
+          </button>
+          <span className="text-sm font-medium">
+            {`${monthNames[month]} ${year}`}
+          </span>
+          <button 
+            onClick={() => navigateMonth(1)}
+            className="p-1 rounded-full hover:bg-muted"
+          >
+            →
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-7 gap-1 text-center mb-2">
+          {dayNames.map((day, index) => (
+            <div key={index} className="text-sm font-medium text-muted-foreground">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days}
+        </div>
+        <div className="flex flex-col space-y-1 mt-4 text-sm">
+          <div className="flex items-center">
+            <Star className="h-4 w-4 text-brand-accent mr-2" />
+            <span>{t("payPeriodStart")}</span>
+          </div>
+          <div className="flex items-center">
+            <div className="h-3 w-3 border-2 border-paydate rounded-full mr-2"></div>
+            <span>{t("payDay")}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default PayrollCalendar;
