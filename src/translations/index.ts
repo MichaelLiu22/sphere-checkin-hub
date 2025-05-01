@@ -1,4 +1,3 @@
-
 export type LangKey = "en" | "zh" | "es";
 
 export type TranslationKey = 
@@ -62,7 +61,14 @@ export type TranslationKey =
   | "invalidCredentials"
   | "username"
   | "password"
-  | "login";
+  | "login"
+  | "adminDashboardTitle"
+  | "submittedAt"
+  | "w9Form"
+  | "ndaForm"
+  | "download"
+  | "noSubmissions"
+  | "backToHome";
 
 type Translations = {
   [key in LangKey]: {
@@ -132,7 +138,14 @@ export const translations: Translations = {
     invalidCredentials: "Invalid username or password",
     username: "Username",
     password: "Password",
-    login: "Login"
+    login: "Login",
+    adminDashboardTitle: "Admin Dashboard",
+    submittedAt: "Submitted At",
+    w9Form: "W-9 Form",
+    ndaForm: "NDA Form",
+    download: "Download",
+    noSubmissions: "No submissions found",
+    backToHome: "Back to Home"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -195,7 +208,14 @@ export const translations: Translations = {
     invalidCredentials: "用户名或密码无效",
     username: "用户名",
     password: "密码",
-    login: "登录"
+    login: "登录",
+    adminDashboardTitle: "管理员面板",
+    submittedAt: "提交时间",
+    w9Form: "W-9 表格",
+    ndaForm: "保密协议",
+    download: "下载",
+    noSubmissions: "没有找到提交记录",
+    backToHome: "返回首页"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -258,6 +278,13 @@ export const translations: Translations = {
     invalidCredentials: "Usuario o contraseña inválidos",
     username: "Usuario",
     password: "Contraseña",
-    login: "Iniciar Sesión"
+    login: "Iniciar Sesión",
+    adminDashboardTitle: "Panel de Administrador",
+    submittedAt: "Fecha de envío",
+    w9Form: "Formulario W-9",
+    ndaForm: "Formulario NDA",
+    download: "Descargar",
+    noSubmissions: "No se encontraron envíos",
+    backToHome: "Volver al inicio"
   }
 };

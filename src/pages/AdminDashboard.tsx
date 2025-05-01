@@ -26,7 +26,7 @@ const mockSubmissions = [
 ];
 
 const AdminDashboard: React.FC = () => {
-  const { t, currentLanguage } = useLanguage();
+  const { t, language } = useLanguage();
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -37,7 +37,7 @@ const AdminDashboard: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     };
-    return date.toLocaleDateString(currentLanguage, options);
+    return date.toLocaleDateString(language, options);
   };
   
   return (
