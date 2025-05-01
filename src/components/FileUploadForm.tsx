@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ExternalLink } from "lucide-react";
 
-type FileType = "nda";
+type FileType = "nda" | "w9";
 
 const FileUploadForm: React.FC = () => {
   const { t } = useLanguage();
@@ -46,7 +46,7 @@ const FileUploadForm: React.FC = () => {
     setTimeout(() => {
       toast({
         title: t("uploadSuccess"),
-        description: `${type === "nda" ? t("uploadNDA") : ""}: ${files[type]?.name}`,
+        description: `${type === "nda" ? t("uploadNDA") : type === "w9" ? t("uploadW9") : ""}: ${files[type]?.name}`,
       });
       
       setIsUploading(prev => ({ ...prev, [type]: false }));
@@ -75,7 +75,7 @@ const FileUploadForm: React.FC = () => {
     setTimeout(() => {
       console.log("Submission data:", {
         full_legal_name: fullLegalName,
-        w9_link: "https://www.irs.gov/pub/irs-pdf/fw9.pdf",
+        w9_file: files.w9,
         nda_file: files.nda,
       });
 
@@ -112,6 +112,7 @@ const FileUploadForm: React.FC = () => {
             />
           </div>
 
+          {/* W9 Upload Field */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="font-medium">
@@ -126,8 +127,31 @@ const FileUploadForm: React.FC = () => {
                 {t("downloadW9")} <ExternalLink className="ml-1 h-3 w-3" />
               </a>
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="w9-upload"
+                type="file"
+                accept=".pdf"
+                onChange={(e) => handleFileChange("w9", e)}
+                className="hidden"
+              />
+              <Label
+                htmlFor="w9-upload"
+                className="cursor-pointer flex-1 px-4 py-2 border border-dashed rounded-md border-gray-300 hover:border-gray-400 transition-colors text-center"
+              >
+                {files.w9 ? files.w9.name : t("choosePdfFile")}
+              </Label>
+              <Button 
+                type="button"
+                onClick={() => handleUpload("w9")} 
+                disabled={!files.w9 || isUploading.w9}
+              >
+                {isUploading.w9 ? t("uploading") : t("uploadButton")}
+              </Button>
+            </div>
           </div>
 
+          {/* NDA Upload Field */}
           <div className="space-y-2">
             <Label htmlFor="nda-upload" className="font-medium">
               {t("uploadNDA")}
@@ -159,10 +183,20 @@ const FileUploadForm: React.FC = () => {
           <Button 
             type="submit" 
             className="w-full mt-4" 
-            disabled={isSubmitting || !fullLegalName}
+            disabled={isSubmitting || !fullLegalName || !files.w9}
           >
             {isSubmitting ? t("submitting") : t("submitForms")}
           </Button>
+          
+          {/* Admin Login Button */}
+          <div className="text-center mt-4">
+            <a 
+              href="/admin" 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("adminLogin")}
+            </a>
+          </div>
         </form>
       </CardContent>
     </Card>

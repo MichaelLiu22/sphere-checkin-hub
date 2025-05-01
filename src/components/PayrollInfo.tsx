@@ -32,6 +32,7 @@ const PayrollInfo: React.FC = () => {
           <p>{t("payByHours")}</p>
           <p>{t("questionsContact")}</p>
           <p>{t("uploadInstructions")}</p>
+          <p className="font-bold text-destructive">{t("clockInReminder")}</p>
         </div>
       </CardContent>
     </Card>

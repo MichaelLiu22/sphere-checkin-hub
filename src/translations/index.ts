@@ -55,7 +55,9 @@ export type TranslationKey =
   | "questionsContact"
   | "uploadInstructions"
   | "welcomeBanner"
-  | "payDayExplanation";
+  | "payDayExplanation"
+  | "clockInReminder"
+  | "adminLogin";
 
 type Translations = {
   [key in LangKey]: {
@@ -104,7 +106,7 @@ export const translations: Translations = {
     choosePdfFile: "Choose PDF File",
     uploading: "Uploading...",
     pdfOnly: "Please upload PDF files only",
-    fullLegalName: "Full Legal Name (must match check)",
+    fullLegalName: "We will issue the check to this name",
     fullLegalNamePlaceholder: "Enter your full legal name",
     submitForms: "Submit Forms",
     submitting: "Submitting...",
@@ -119,7 +121,9 @@ export const translations: Translations = {
     questionsContact: "Questions? Contact: acctspheremedia@gmail.com",
     uploadInstructions: "You can upload PDF forms here or print and hand to Michael.",
     welcomeBanner: "Welcome to Our TEAM!",
-    payDayExplanation: "\"Pay Day\" means you will receive the previous period's pay by the end of that day."
+    payDayExplanation: "\"Pay Day\" means you will receive the previous period's pay by the end of that day.",
+    clockInReminder: "Please clock in/out on time, including for lunch breaks. Delayed payments due to missing clock records will not be our responsibility.",
+    adminLogin: "Admin Login"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -161,7 +165,7 @@ export const translations: Translations = {
     choosePdfFile: "选择PDF文件",
     uploading: "上传中...",
     pdfOnly: "请只上传PDF文件",
-    fullLegalName: "全名（须与支票上一致）",
+    fullLegalName: "我们将会给这个名字开支票",
     fullLegalNamePlaceholder: "请输入您的全名",
     submitForms: "提交表格",
     submitting: "提交中...",
@@ -176,7 +180,9 @@ export const translations: Translations = {
     questionsContact: "如有问题，请联系：acctspheremedia@gmail.com",
     uploadInstructions: "您可以在此处上传 PDF 版本的表格，或打印后交给 Michael。",
     welcomeBanner: "欢迎加入我们的 TEAM!",
-    payDayExplanation: "Pay Day 的意思是：您将在这一天结束之前拿到上一段时间的工资。"
+    payDayExplanation: "Pay Day 的意思是：您将在这一天结束之前拿到上一段时间的工资。",
+    clockInReminder: "请上班下班，午饭准时打卡，如果没有打卡记录造成的工资延时发放问题概不负责",
+    adminLogin: "Admin 登录"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -218,7 +224,7 @@ export const translations: Translations = {
     choosePdfFile: "Seleccionar archivo PDF",
     uploading: "Subiendo...",
     pdfOnly: "Por favor, suba solo archivos PDF",
-    fullLegalName: "Nombre completo (debe coincidir con el cheque)",
+    fullLegalName: "Emitiremos el cheque a este nombre",
     fullLegalNamePlaceholder: "Ingrese su nombre legal completo",
     submitForms: "Enviar Formularios",
     submitting: "Enviando...",
@@ -233,6 +239,8 @@ export const translations: Translations = {
     questionsContact: "Preguntas? Contacta: acctspheremedia@gmail.com",
     uploadInstructions: "Puede cargar formularios PDF aquí o imprimir y entregar a Michael.",
     welcomeBanner: "¡Bienvenido a Nuestro EQUIPO!",
-    payDayExplanation: "\"Día de pago\" significa que recibirá el pago del período anterior antes de que termine ese día."
+    payDayExplanation: "\"Día de pago\" significa que recibirá el pago del período anterior antes de que termine ese día.",
+    clockInReminder: "Por favor, registre entrada/salida a tiempo, incluso para el almuerzo. No seremos responsables por pagos retrasados debido a registros de tiempo faltantes.",
+    adminLogin: "Inicio de Admin"
   }
 };
