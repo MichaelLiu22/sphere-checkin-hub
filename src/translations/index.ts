@@ -1,3 +1,4 @@
+
 export type LangKey = "en" | "zh" | "es";
 
 export type TranslationKey = 
@@ -57,7 +58,11 @@ export type TranslationKey =
   | "welcomeBanner"
   | "payDayExplanation"
   | "clockInReminder"
-  | "adminLogin";
+  | "adminLogin"
+  | "invalidCredentials"
+  | "username"
+  | "password"
+  | "login";
 
 type Translations = {
   [key in LangKey]: {
