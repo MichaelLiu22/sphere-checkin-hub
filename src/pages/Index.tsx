@@ -19,6 +19,12 @@ const Index = () => {
       </header>
 
       <main className="container flex-grow py-8 animate-fade-in">
+        {/* Welcome Banner */}
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-bold">🎉 {t("welcomeBanner")} 🎉</h2>
+        </div>
+
+        {/* Two-column layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-6">
             <FileUploadForm />

@@ -28,6 +28,7 @@ const PayrollInfo: React.FC = () => {
             20 (<Circle className="inline h-3 w-3 text-paydate" />)
           </p>
           
+          <p className="italic">{t("payDayExplanation")}</p>
           <p>{t("payByHours")}</p>
           <p>{t("questionsContact")}</p>
           <p>{t("uploadInstructions")}</p>
