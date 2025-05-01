@@ -128,7 +128,11 @@ export const translations: Translations = {
     welcomeBanner: "Welcome to Our TEAM!",
     payDayExplanation: "\"Pay Day\" means you will receive the previous period's pay by the end of that day.",
     clockInReminder: "Please clock in/out on time, including for lunch breaks. Delayed payments due to missing clock records will not be our responsibility.",
-    adminLogin: "Admin Login"
+    adminLogin: "Admin Login",
+    invalidCredentials: "Invalid username or password",
+    username: "Username",
+    password: "Password",
+    login: "Login"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -187,7 +191,11 @@ export const translations: Translations = {
     welcomeBanner: "欢迎加入我们的 TEAM!",
     payDayExplanation: "Pay Day 的意思是：您将在这一天结束之前拿到上一段时间的工资。",
     clockInReminder: "请上班下班，午饭准时打卡，如果没有打卡记录造成的工资延时发放问题概不负责",
-    adminLogin: "Admin 登录"
+    adminLogin: "Admin 登录",
+    invalidCredentials: "用户名或密码无效",
+    username: "用户名",
+    password: "密码",
+    login: "登录"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -246,6 +254,10 @@ export const translations: Translations = {
     welcomeBanner: "¡Bienvenido a Nuestro EQUIPO!",
     payDayExplanation: "\"Día de pago\" significa que recibirá el pago del período anterior antes de que termine ese día.",
     clockInReminder: "Por favor, registre entrada/salida a tiempo, incluso para el almuerzo. No seremos responsables por pagos retrasados debido a registros de tiempo faltantes.",
-    adminLogin: "Inicio de Admin"
+    adminLogin: "Inicio de Admin",
+    invalidCredentials: "Usuario o contraseña inválidos",
+    username: "Usuario",
+    password: "Contraseña",
+    login: "Iniciar Sesión"
   }
 };
