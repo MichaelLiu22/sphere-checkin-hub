@@ -51,9 +51,6 @@ const FileUploadForm: React.FC = () => {
       
       setIsUploading(prev => ({ ...prev, [type]: false }));
     }, 1500);
-    
-    // In a real implementation, you would handle the actual file upload here
-    // Example: const response = await uploadFile(files[type], type);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,8 +73,6 @@ const FileUploadForm: React.FC = () => {
 
     // Simulate form submission and email notification
     setTimeout(() => {
-      // This is where you would typically send the data to your backend
-      // which would then send the email notification
       console.log("Submission data:", {
         full_legal_name: fullLegalName,
         w9_file: files.w9,
@@ -94,12 +89,6 @@ const FileUploadForm: React.FC = () => {
       setFiles({});
       setIsSubmitting(false);
     }, 2000);
-
-    // In a real implementation with Supabase integration:
-    // 1. Upload files to Supabase storage
-    // 2. Get the URLs for the uploaded files
-    // 3. Create a record in a 'submissions' table with the name and file URLs
-    // 4. Trigger a serverless function to send the email notification
   };
 
   return (

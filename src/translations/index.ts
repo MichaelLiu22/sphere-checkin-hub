@@ -47,7 +47,13 @@ export type TranslationKey =
   | "formError"
   | "requiredFields"
   | "submissionSuccess"
-  | "submissionEmailSent";
+  | "submissionEmailSent"
+  | "payPeriods"
+  | "payDays"
+  | "monthEnd"
+  | "payByHours"
+  | "questionsContact"
+  | "uploadInstructions";
 
 type Translations = {
   [key in LangKey]: {
@@ -103,7 +109,13 @@ export const translations: Translations = {
     formError: "Form Error",
     requiredFields: "Please fill out all required fields and upload the W-9 form",
     submissionSuccess: "Submission Successful",
-    submissionEmailSent: "Your forms have been submitted and a notification has been sent to the admin"
+    submissionEmailSent: "Your forms have been submitted and a notification has been sent to the admin",
+    payPeriods: "Pay Periods",
+    payDays: "Pay Days",
+    monthEnd: "Month End",
+    payByHours: "Pay by hours—verify with Jocelyn.",
+    questionsContact: "Questions? Contact: acctspheremedia@gmail.com",
+    uploadInstructions: "You can upload PDF forms here or print and hand to Michael."
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -152,7 +164,13 @@ export const translations: Translations = {
     formError: "表格错误",
     requiredFields: "请填写所有必填字段并上传 W-9 表格",
     submissionSuccess: "提交成功",
-    submissionEmailSent: "您的表格已提交，通知已发送给管理员"
+    submissionEmailSent: "您的表格已提交，通知已发送给管理员",
+    payPeriods: "我们的工资周期",
+    payDays: "发薪日",
+    monthEnd: "月末",
+    payByHours: "工资按工时支付，工时请与 Jocelyn 核对。",
+    questionsContact: "如有问题，请联系：acctspheremedia@gmail.com",
+    uploadInstructions: "您可以在此处上传 PDF 版本的表格，或打印后交给 Michael。",
   },
   es: {
     appTitle: "MS Sphere Check-In",
@@ -201,6 +219,12 @@ export const translations: Translations = {
     formError: "Error en el Formulario",
     requiredFields: "Por favor complete todos los campos obligatorios y suba el formulario W-9",
     submissionSuccess: "Envío Exitoso",
-    submissionEmailSent: "Sus formularios han sido enviados y se ha enviado una notificación al administrador"
+    submissionEmailSent: "Sus formularios han sido enviados y se ha enviado una notificación al administrador",
+    payPeriods: "Períodos de pago",
+    payDays: "Días de pago",
+    monthEnd: "fin de mes",
+    payByHours: "Pago por horas—verifica con Jocelyn.",
+    questionsContact: "Preguntas? Contacta: acctspheremedia@gmail.com",
+    uploadInstructions: "Puede cargar formularios PDF aquí o imprimir y entregar a Michael."
   }
 };
