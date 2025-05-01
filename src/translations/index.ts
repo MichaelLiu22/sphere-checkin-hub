@@ -1,4 +1,3 @@
-
 export type LangKey = "en" | "zh" | "es";
 
 export type TranslationKey = 
@@ -40,7 +39,15 @@ export type TranslationKey =
   | "downloadW9"
   | "choosePdfFile"
   | "uploading"
-  | "pdfOnly";
+  | "pdfOnly"
+  | "fullLegalName"
+  | "fullLegalNamePlaceholder"
+  | "submitForms"
+  | "submitting"
+  | "formError"
+  | "requiredFields"
+  | "submissionSuccess"
+  | "submissionEmailSent";
 
 type Translations = {
   [key in LangKey]: {
@@ -88,7 +95,15 @@ export const translations: Translations = {
     downloadW9: "Download W-9 Form",
     choosePdfFile: "Choose PDF File",
     uploading: "Uploading...",
-    pdfOnly: "Please upload PDF files only"
+    pdfOnly: "Please upload PDF files only",
+    fullLegalName: "Full Legal Name (Required)",
+    fullLegalNamePlaceholder: "Enter your full legal name",
+    submitForms: "Submit Forms",
+    submitting: "Submitting...",
+    formError: "Form Error",
+    requiredFields: "Please fill out all required fields and upload the W-9 form",
+    submissionSuccess: "Submission Successful",
+    submissionEmailSent: "Your forms have been submitted and a notification has been sent to the admin"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -129,7 +144,15 @@ export const translations: Translations = {
     downloadW9: "下载 W-9 表格",
     choosePdfFile: "选择PDF文件",
     uploading: "上传中...",
-    pdfOnly: "请只上传PDF文件"
+    pdfOnly: "请只上传PDF文件",
+    fullLegalName: "全名（必填）",
+    fullLegalNamePlaceholder: "请输入您的全名",
+    submitForms: "提交表格",
+    submitting: "提交中...",
+    formError: "表格错误",
+    requiredFields: "请填写所有必填字段并上传 W-9 表格",
+    submissionSuccess: "提交成功",
+    submissionEmailSent: "您的表格已提交，通知已发送给管理员"
   },
   es: {
     appTitle: "MS Sphere Check-In",
@@ -170,6 +193,14 @@ export const translations: Translations = {
     downloadW9: "Descargar Formulario W-9",
     choosePdfFile: "Seleccionar archivo PDF",
     uploading: "Subiendo...",
-    pdfOnly: "Por favor, suba solo archivos PDF"
+    pdfOnly: "Por favor, suba solo archivos PDF",
+    fullLegalName: "Nombre Legal Completo (Obligatorio)",
+    fullLegalNamePlaceholder: "Ingrese su nombre legal completo",
+    submitForms: "Enviar Formularios",
+    submitting: "Enviando...",
+    formError: "Error en el Formulario",
+    requiredFields: "Por favor complete todos los campos obligatorios y suba el formulario W-9",
+    submissionSuccess: "Envío Exitoso",
+    submissionEmailSent: "Sus formularios han sido enviados y se ha enviado una notificación al administrador"
   }
 };
