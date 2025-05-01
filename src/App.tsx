@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
+import BasicAuth from "./components/BasicAuth";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +21,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route 
+              path="/admin" 
+              element={
+                <BasicAuth username="xliu22" password="Tops2231!$">
+                  <AdminDashboard />
+                </BasicAuth>
+              } 
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

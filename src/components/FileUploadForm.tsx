@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Download } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type FileType = "nda" | "w9";
 
@@ -190,12 +190,13 @@ const FileUploadForm: React.FC = () => {
           
           {/* Admin Login Button */}
           <div className="text-center mt-4">
-            <a 
-              href="/admin" 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
             >
-              {t("adminLogin")}
-            </a>
+              <Link to="/admin">{t("adminLogin")}</Link>
+            </Button>
           </div>
         </form>
       </CardContent>
