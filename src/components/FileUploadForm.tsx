@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ExternalLink, Download } from "lucide-react";
 import { Link } from "react-router-dom";
+import {supabase} from "@/integrations/supabase/client.ts";
 
 type FileType = "nda" | "w9";
 
@@ -38,20 +39,57 @@ const FileUploadForm: React.FC = () => {
   };
 
   const handleUpload = async (type: FileType) => {
-    if (!files[type]) return;
-    
+    const file = files[type];
+    if (!file) return;
+
     setIsUploading(prev => ({ ...prev, [type]: true }));
-    
-    // Simulate upload with timeout
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.storage
+          .from("pdffileupload")
+          .upload(`uploads/${fullLegalName}_${type}.pdf`, file, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+
+      setIsUploading(prev => ({ ...prev, [type]: false }));
+
+      if (error || !data) {
+        toast({
+          title: t("uploadError"),
+          description: error?.message || "Unknown error",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 正确获取 Public URL
+      const publicUrlResponse = supabase
+          .storage
+          .from("pdffileupload")
+          .getPublicUrl(`uploads/${fullLegalName}_${type}.pdf`);
+
+      const publicUrl = publicUrlResponse.data.publicUrl;
+
+      console.log(`Public URL for ${type}:`, publicUrl);
+
+      // 你可以用 state 把这个 publicUrl 存起来，显示在页面上
       toast({
         title: t("uploadSuccess"),
-        description: `${type === "nda" ? t("uploadNDA") : type === "w9" ? t("uploadW9") : ""}: ${files[type]?.name}`,
+        description: `${t("fileUploaded")}: ${publicUrl}`,
       });
-      
+
+    } catch (error) {
       setIsUploading(prev => ({ ...prev, [type]: false }));
-    }, 1500);
+      console.error("Upload failed:", error);
+      toast({
+        title: t("uploadError"),
+        description: error?.message || "Unknown error",
+        variant: "destructive",
+      });
+    }
   };
+
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFullLegalName(e.target.value);
