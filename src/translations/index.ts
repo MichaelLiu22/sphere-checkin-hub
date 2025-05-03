@@ -78,7 +78,7 @@ type Translations = {
 
 export const translations: Translations = {
   en: {
-    appTitle: "MS Sphere Media Check-In",
+    appTitle: "Michael Studio Sphere media",
     languageEn: "English",
     languageZh: "中文",
     languageEs: "Español",
