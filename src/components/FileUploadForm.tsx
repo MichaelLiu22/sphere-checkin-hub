@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -155,16 +154,23 @@ const FileUploadForm: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="font-medium">
-                {t("uploadW9")}
+                {t("uploadW9")} ({t("required")})
               </Label>
-              <a 
-                href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center text-sm text-primary hover:underline"
+              <Button
+                variant="link"
+                className="flex items-center gap-1 text-primary hover:text-primary/80"
+                asChild
               >
-                {t("downloadW9")} <ExternalLink className="ml-1 h-3 w-3" />
-              </a>
+                <a 
+                  href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Download className="h-4 w-4" />
+                  {t("downloadW9")}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -192,9 +198,26 @@ const FileUploadForm: React.FC = () => {
 
           {/* NDA Upload Field */}
           <div className="space-y-2">
-            <Label htmlFor="nda-upload" className="font-medium">
-              {t("uploadNDA")}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="font-medium">
+                {t("uploadNDA")}
+              </Label>
+              <Button
+                variant="link"
+                className="flex items-center gap-1 text-primary hover:text-primary/80"
+                asChild
+              >
+                <a 
+                  href="/nda-template.pdf" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Download className="h-4 w-4" />
+                  {t("downloadNDA")}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            </div>
             <div className="flex items-center gap-2">
               <input
                 id="nda-upload"
