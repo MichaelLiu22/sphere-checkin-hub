@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,22 +16,14 @@ const UserAuth: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   // Check for existing session on component mount
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase
-        .from('users')
-        .select('id, full_name')
-        .single();
-      
-      if (data) {
-        // If user is already logged in, redirect to dashboard
-        navigate('/user-dashboard');
-      }
-    };
-    
-    checkSession();
+  React.useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      // If user is already logged in, redirect to dashboard
+      navigate('/user-dashboard');
+    }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {

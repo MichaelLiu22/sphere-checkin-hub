@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import BasicAuth from "./components/BasicAuth";
 import Dashboard from "./pages/Dashboard";
 import UserDashboard from "./pages/UserDashboard";
+import Home from "./pages/Home";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/user-dashboard" element={<UserDashboard />} />
             <Route 
