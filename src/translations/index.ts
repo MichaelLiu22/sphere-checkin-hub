@@ -1,3 +1,4 @@
+
 export type LangKey = "en" | "zh" | "es";
 
 export type TranslationKey = 
@@ -100,25 +101,21 @@ export type TranslationKey =
   | "welcome"
   | "welcomeDescription"
   | "documentUpload"
-  | "userLogin"
-  | "adminLogin"
-  | "fullLegalName"
-  | "uploadW9"
-  | "uploadNDA"
   | "upload"
   | "uploadingFile"
   | "fileUploadSuccess"
   | "fileUploadError"
-  | "userRegistration"
-  | "loginSuccess"
-  | "registrationSuccess"
   | "loginError"
   | "registrationError"
-  | "passwordMismatch";
+  | "passwordMismatch"
+  | "logout"
+  | "employeeSubmissions"
+  | "notUploaded"
+  | "fileUploaded";
 
 type Translations = {
   [key in LangKey]: {
-    [key in TranslationKey]: string;
+    [key in TranslationKey]?: string;
   };
 };
 
@@ -220,25 +217,20 @@ export const translations: Translations = {
     uploadedFiles: "Uploaded Files",
     loading: "Loading...",
     noFiles: "No files uploaded yet",
-    download: "Download",
     welcome: "Welcome to Sphere Check-in Hub",
     welcomeDescription: "Please upload your required documents and manage your account",
     documentUpload: "Document Upload",
-    userLogin: "User Login",
-    adminLogin: "Admin Login",
-    fullLegalName: "Full Legal Name",
-    uploadW9: "Upload W9 Form",
-    uploadNDA: "Upload NDA Form",
     upload: "Upload",
     uploadingFile: "Uploading...",
     fileUploadSuccess: "File uploaded successfully!",
     fileUploadError: "Error uploading file. Please try again.",
-    userRegistration: "User Registration",
-    loginSuccess: "Login successful!",
-    registrationSuccess: "Registration successful!",
     loginError: "Login failed. Please try again.",
     registrationError: "Registration failed. Please try again.",
-    passwordMismatch: "Passwords do not match"
+    passwordMismatch: "Passwords do not match",
+    logout: "Logout",
+    employeeSubmissions: "Employee Submissions",
+    notUploaded: "Not Uploaded",
+    fileUploaded: "File Uploaded"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -337,25 +329,20 @@ export const translations: Translations = {
     uploadedFiles: "已上传文件",
     loading: "加载中...",
     noFiles: "暂无上传文件",
-    download: "下载",
     welcome: "欢迎使用 Sphere 签到中心",
     welcomeDescription: "请上传所需文件并管理您的账户",
     documentUpload: "文件上传",
-    userLogin: "用户登录",
-    adminLogin: "管理员登录",
-    fullLegalName: "完整法定姓名",
-    uploadW9: "上传 W9 表格",
-    uploadNDA: "上传 NDA 表格",
     upload: "上传",
     uploadingFile: "正在上传...",
     fileUploadSuccess: "文件上传成功！",
     fileUploadError: "文件上传失败，请重试。",
-    userRegistration: "用户注册",
-    loginSuccess: "登录成功！",
-    registrationSuccess: "注册成功！",
     loginError: "登录失败，请重试。",
     registrationError: "注册失败，请重试。",
-    passwordMismatch: "密码不匹配"
+    passwordMismatch: "密码不匹配",
+    logout: "退出登录",
+    employeeSubmissions: "员工提交",
+    notUploaded: "未上传",
+    fileUploaded: "文件已上传"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -454,24 +441,19 @@ export const translations: Translations = {
     uploadedFiles: "Archivos Subidos",
     loading: "Cargando...",
     noFiles: "No hay archivos subidos",
-    download: "Descargar",
     welcome: "Bienvenido al Centro de Registro de Sphere",
     welcomeDescription: "Por favor, suba sus documentos requeridos y administre su cuenta",
     documentUpload: "Subir Documentos",
-    userLogin: "Inicio de Sesión de Usuario",
-    adminLogin: "Inicio de Sesión de Administrador",
-    fullLegalName: "Nombre Legal Completo",
-    uploadW9: "Subir Formulario W9",
-    uploadNDA: "Subir Formulario NDA",
     upload: "Subir",
     uploadingFile: "Subiendo...",
     fileUploadSuccess: "¡Archivo subido exitosamente!",
     fileUploadError: "Error al subir archivo. Por favor, intente de nuevo.",
-    userRegistration: "Registro de Usuario",
-    loginSuccess: "¡Inicio de sesión exitoso!",
-    registrationSuccess: "¡Registro exitoso!",
     loginError: "Error al iniciar sesión. Por favor, intente de nuevo.",
     registrationError: "Error al registrarse. Por favor, intente de nuevo.",
-    passwordMismatch: "Las contraseñas no coinciden"
+    passwordMismatch: "Las contraseñas no coinciden",
+    logout: "Cerrar sesión",
+    employeeSubmissions: "Presentaciones de empleados",
+    notUploaded: "No subido",
+    fileUploaded: "Archivo subido"
   }
 };

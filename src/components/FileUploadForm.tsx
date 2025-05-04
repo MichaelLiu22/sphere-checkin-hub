@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ const FileUploadForm: React.FC = () => {
         description: `${t("fileUploaded")}: ${publicUrl}`,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       setIsUploading(prev => ({ ...prev, [type]: false }));
       console.error("Upload failed:", error);
       toast({
