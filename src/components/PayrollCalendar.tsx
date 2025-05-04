@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -44,12 +43,14 @@ const PayrollCalendar: React.FC = () => {
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
 
   // Define highlighted dates
-  const getHighlightedDates = (): HighlightedDate[] => [
-    { day: 1, icon: "star", tooltip: t("payPeriodStart") },
-    { day: 15, icon: "star", tooltip: t("payPeriodStart") },
-    { day: 5, icon: "circle", tooltip: t("payDay") },
-    { day: 20, icon: "circle", tooltip: t("payDay") },
-  ];
+  const getHighlightedDates = (): HighlightedDate[] => {
+    return [
+      { day: 15, icon: "star", tooltip: t("payPeriodStart") },
+      { day: daysInMonth, icon: "star", tooltip: t("payPeriodStart") },
+      { day: 5, icon: "circle", tooltip: t("payDay") },
+      { day: 20, icon: "circle", tooltip: t("payDay") },
+    ];
+  };
 
   const highlightedDates = getHighlightedDates();
   

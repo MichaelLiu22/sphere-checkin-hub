@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,9 +15,9 @@ const PayrollInfo: React.FC = () => {
         <div className="space-y-2">
           <p className="font-bold">{t("payPeriods")}</p>
           <p>
-            1–15 (<Star className="inline h-3 w-3 text-brand-accent" />)
-            &nbsp;&nbsp;
             15–{t("monthEnd")} (<Star className="inline h-3 w-3 text-brand-accent" />)
+            &nbsp;&nbsp;
+            {t("monthEnd")}–15 (<Star className="inline h-3 w-3 text-brand-accent" />)
           </p>
           
           <p className="font-bold">{t("payDays")}: </p>
