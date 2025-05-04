@@ -27,7 +27,7 @@ const UserAuth: React.FC = () => {
       
       if (data) {
         // If user is already logged in, redirect to dashboard
-        navigate('/dashboard');
+        navigate('/user-dashboard');
       }
     };
     
@@ -54,7 +54,7 @@ const UserAuth: React.FC = () => {
           toast.success(t("loginSuccess"));
           // Save user info to localStorage for session management
           localStorage.setItem('user', JSON.stringify(data));
-          navigate('/dashboard');
+          navigate('/user-dashboard');
         } else {
           toast.error(t("loginError"));
         }
@@ -93,7 +93,7 @@ const UserAuth: React.FC = () => {
         toast.success(t("registrationSuccess"));
         // Auto-login after registration
         localStorage.setItem('user', JSON.stringify(data));
-        navigate('/dashboard');
+        navigate('/user-dashboard');
       }
     } catch (error: any) {
       console.error("Auth error:", error);
