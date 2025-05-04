@@ -3,8 +3,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import AdminFileUpload from "@/components/AdminFileUpload";
+import { useNavigate } from "react-router-dom";
 
 interface FileSubmission {
   id: string;
@@ -14,35 +17,38 @@ interface FileSubmission {
   nda_file: { url: string };
 }
 
+interface FileRecord {
+  id: string;
+  name: string;
+  description: string;
+  file_type: "pre" | "regular";
+  file_url: string;
+  created_at: string;
+}
+
 const AdminDashboard: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<FileSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<FileRecord[]>([]);
   
   useEffect(() => {
     fetchSubmissions();
+    fetchFiles();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   const fetchSubmissions = async () => {
     try {
       setError(null);
       console.log("开始获取文件列表...");
       
-      // 首先检查存储桶是否存在
-      const { data: buckets, error: bucketsError } = await supabase
-        .storage
-        .listBuckets();
-
-      if (bucketsError) {
-        console.error("获取存储桶列表失败:", bucketsError);
-        setError("无法访问存储桶");
-        return;
-      }
-
-      console.log("可用的存储桶:", buckets);
-
-      // 获取存储桶中的所有文件
       const { data: files, error: filesError } = await supabase.storage
         .from("pdffileupload")
         .list("uploads", {
@@ -66,7 +72,6 @@ const AdminDashboard: React.FC = () => {
 
       console.log("获取到的文件列表:", files);
 
-      // 处理文件列表，将相同用户名的文件组合在一起
       const submissionsMap = new Map<string, FileSubmission>();
       
       for (const file of files) {
@@ -76,7 +81,6 @@ const AdminDashboard: React.FC = () => {
           const [fullLegalName, fileType] = fileName.split("_");
           const fileTypeWithoutExt = fileType.replace(".pdf", "");
           
-          // 获取文件的公共URL
           const { data: { publicUrl } } = supabase.storage
             .from("pdffileupload")
             .getPublicUrl(`uploads/${fileName}`);
@@ -116,92 +120,109 @@ const AdminDashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const fetchFiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('files')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setFiles(data || []);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    return date.toLocaleDateString(language, options);
+    return date.toLocaleString();
   };
   
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container py-8 animate-fade-in">
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>{t("adminDashboardTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
-                {error}
-              </div>
-            )}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("fullLegalName")}</TableHead>
-                  <TableHead>{t("submittedAt")}</TableHead>
-                  <TableHead>{t("w9Form")}</TableHead>
-                  <TableHead>{t("ndaForm")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">加载中...</TableCell>
-                  </TableRow>
-                ) : submissions.length > 0 ? (
-                  submissions.map((submission) => (
-                    <TableRow key={submission.id}>
-                      <TableCell>{submission.full_legal_name}</TableCell>
-                      <TableCell>{formatDate(submission.submitted_at)}</TableCell>
-                      <TableCell>
-                        {submission.w9_file.url ? (
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={submission.w9_file.url} target="_blank" rel="noopener noreferrer">
-                              <Download className="mr-2" size={16} />
-                              {t("download")}
-                            </a>
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground">未上传</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {submission.nda_file.url ? (
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={submission.nda_file.url} target="_blank" rel="noopener noreferrer">
-                              <Download className="mr-2" size={16} />
-                              {t("download")}
-                            </a>
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground">未上传</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">{t("noSubmissions")}</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <div className="mt-4 text-center">
-              <Button variant="outline" asChild>
-                <a href="/">{t("backToHome")}</a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">{t("adminDashboard")}</h1>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          {t("logout")}
+        </Button>
       </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("employeeSubmissions")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("fullLegalName")}</TableHead>
+                <TableHead>{t("submittedAt")}</TableHead>
+                <TableHead>{t("w9Form")}</TableHead>
+                <TableHead>{t("ndaForm")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6">{t("loading")}</TableCell>
+                </TableRow>
+              ) : submissions.length > 0 ? (
+                submissions.map((submission) => (
+                  <TableRow key={submission.id}>
+                    <TableCell>{submission.full_legal_name}</TableCell>
+                    <TableCell>{formatDate(submission.submitted_at)}</TableCell>
+                    <TableCell>
+                      {submission.w9_file.url ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={submission.w9_file.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="mr-2" size={16} />
+                            {t("download")}
+                          </a>
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">{t("notUploaded")}</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {submission.nda_file.url ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={submission.nda_file.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="mr-2" size={16} />
+                            {t("download")}
+                          </a>
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">{t("notUploaded")}</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6">{t("noSubmissions")}</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("uploadFile")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AdminFileUpload />
+        </CardContent>
+      </Card>
     </div>
   );
 };

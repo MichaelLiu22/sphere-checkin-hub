@@ -68,7 +68,53 @@ export type TranslationKey =
   | "ndaForm"
   | "download"
   | "noSubmissions"
-  | "backToHome";
+  | "backToHome"
+  | "userLogin"
+  | "userRegistration"
+  | "confirmPassword"
+  | "processing"
+  | "register"
+  | "needToRegister"
+  | "alreadyHaveAccount"
+  | "loginSuccess"
+  | "registrationSuccess"
+  | "passwordsDoNotMatch"
+  | "userDashboard"
+  | "uploadFile"
+  | "fileName"
+  | "fileDescription"
+  | "fileType"
+  | "selectFileType"
+  | "preFile"
+  | "regularFile"
+  | "chooseFile"
+  | "myFiles"
+  | "preFiles"
+  | "regularFiles"
+  | "downloadFile"
+  | "noFilesFound"
+  | "adminDashboard"
+  | "uploadedFiles"
+  | "loading"
+  | "noFiles"
+  | "welcome"
+  | "welcomeDescription"
+  | "documentUpload"
+  | "userLogin"
+  | "adminLogin"
+  | "fullLegalName"
+  | "uploadW9"
+  | "uploadNDA"
+  | "upload"
+  | "uploadingFile"
+  | "fileUploadSuccess"
+  | "fileUploadError"
+  | "userRegistration"
+  | "loginSuccess"
+  | "registrationSuccess"
+  | "loginError"
+  | "registrationError"
+  | "passwordMismatch";
 
 type Translations = {
   [key in LangKey]: {
@@ -145,7 +191,54 @@ export const translations: Translations = {
     ndaForm: "NDA Form",
     download: "Download",
     noSubmissions: "No submissions found",
-    backToHome: "Back to Home"
+    backToHome: "Back to Home",
+    userLogin: "User Login",
+    userRegistration: "User Registration",
+    confirmPassword: "Confirm Password",
+    processing: "Processing...",
+    register: "Register",
+    needToRegister: "Need to register?",
+    alreadyHaveAccount: "Already have an account?",
+    loginSuccess: "Login successful!",
+    registrationSuccess: "Registration successful!",
+    passwordsDoNotMatch: "Passwords do not match",
+    userDashboard: "User Dashboard",
+    uploadFile: "Upload File",
+    fileName: "File Name",
+    fileDescription: "File Description",
+    fileType: "File Type",
+    selectFileType: "Select File Type",
+    preFile: "Pre File",
+    regularFile: "Regular File",
+    chooseFile: "Choose File",
+    myFiles: "My Files",
+    preFiles: "Pre-employment Files",
+    regularFiles: "Regular Files",
+    downloadFile: "Download",
+    noFilesFound: "No files found",
+    adminDashboard: "Admin Dashboard",
+    uploadedFiles: "Uploaded Files",
+    loading: "Loading...",
+    noFiles: "No files uploaded yet",
+    download: "Download",
+    welcome: "Welcome to Sphere Check-in Hub",
+    welcomeDescription: "Please upload your required documents and manage your account",
+    documentUpload: "Document Upload",
+    userLogin: "User Login",
+    adminLogin: "Admin Login",
+    fullLegalName: "Full Legal Name",
+    uploadW9: "Upload W9 Form",
+    uploadNDA: "Upload NDA Form",
+    upload: "Upload",
+    uploadingFile: "Uploading...",
+    fileUploadSuccess: "File uploaded successfully!",
+    fileUploadError: "Error uploading file. Please try again.",
+    userRegistration: "User Registration",
+    loginSuccess: "Login successful!",
+    registrationSuccess: "Registration successful!",
+    loginError: "Login failed. Please try again.",
+    registrationError: "Registration failed. Please try again.",
+    passwordMismatch: "Passwords do not match"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -215,7 +308,54 @@ export const translations: Translations = {
     ndaForm: "保密协议",
     download: "下载",
     noSubmissions: "没有找到提交记录",
-    backToHome: "返回首页"
+    backToHome: "返回首页",
+    userLogin: "用户登录",
+    userRegistration: "用户注册",
+    confirmPassword: "确认密码",
+    processing: "处理中...",
+    register: "注册",
+    needToRegister: "需要注册？",
+    alreadyHaveAccount: "已有账号？",
+    loginSuccess: "登录成功！",
+    registrationSuccess: "注册成功！",
+    passwordsDoNotMatch: "密码不匹配",
+    userDashboard: "用户面板",
+    uploadFile: "上传文件",
+    fileName: "文件名称",
+    fileDescription: "文件描述",
+    fileType: "文件类型",
+    selectFileType: "选择文件类型",
+    preFile: "预文件",
+    regularFile: "常规文件",
+    chooseFile: "选择文件",
+    myFiles: "我的文件",
+    preFiles: "入职文件",
+    regularFiles: "普通文件",
+    downloadFile: "下载",
+    noFilesFound: "未找到文件",
+    adminDashboard: "管理员仪表板",
+    uploadedFiles: "已上传文件",
+    loading: "加载中...",
+    noFiles: "暂无上传文件",
+    download: "下载",
+    welcome: "欢迎使用 Sphere 签到中心",
+    welcomeDescription: "请上传所需文件并管理您的账户",
+    documentUpload: "文件上传",
+    userLogin: "用户登录",
+    adminLogin: "管理员登录",
+    fullLegalName: "完整法定姓名",
+    uploadW9: "上传 W9 表格",
+    uploadNDA: "上传 NDA 表格",
+    upload: "上传",
+    uploadingFile: "正在上传...",
+    fileUploadSuccess: "文件上传成功！",
+    fileUploadError: "文件上传失败，请重试。",
+    userRegistration: "用户注册",
+    loginSuccess: "登录成功！",
+    registrationSuccess: "注册成功！",
+    loginError: "登录失败，请重试。",
+    registrationError: "注册失败，请重试。",
+    passwordMismatch: "密码不匹配"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -285,6 +425,53 @@ export const translations: Translations = {
     ndaForm: "Formulario NDA",
     download: "Descargar",
     noSubmissions: "No se encontraron envíos",
-    backToHome: "Volver al inicio"
+    backToHome: "Volver al inicio",
+    userLogin: "Inicio de Sesión",
+    userRegistration: "Registro de Usuario",
+    confirmPassword: "Confirmar Contraseña",
+    processing: "Procesando...",
+    register: "Registrarse",
+    needToRegister: "¿Necesitas registrarte?",
+    alreadyHaveAccount: "¿Ya tienes una cuenta?",
+    loginSuccess: "¡Inicio de sesión exitoso!",
+    registrationSuccess: "¡Registro exitoso!",
+    passwordsDoNotMatch: "Las contraseñas no coinciden",
+    userDashboard: "Panel de Usuario",
+    uploadFile: "Subir Archivo",
+    fileName: "Nombre del Archivo",
+    fileDescription: "Descripción del Archivo",
+    fileType: "Tipo de Archivo",
+    selectFileType: "Seleccionar Tipo de Archivo",
+    preFile: "Archivo Pre",
+    regularFile: "Archivo Regular",
+    chooseFile: "Elegir Archivo",
+    myFiles: "Mis Archivos",
+    preFiles: "Archivos Pre-empleo",
+    regularFiles: "Archivos Regulares",
+    downloadFile: "Descargar",
+    noFilesFound: "No se encontraron archivos",
+    adminDashboard: "Panel de Administración",
+    uploadedFiles: "Archivos Subidos",
+    loading: "Cargando...",
+    noFiles: "No hay archivos subidos",
+    download: "Descargar",
+    welcome: "Bienvenido al Centro de Registro de Sphere",
+    welcomeDescription: "Por favor, suba sus documentos requeridos y administre su cuenta",
+    documentUpload: "Subir Documentos",
+    userLogin: "Inicio de Sesión de Usuario",
+    adminLogin: "Inicio de Sesión de Administrador",
+    fullLegalName: "Nombre Legal Completo",
+    uploadW9: "Subir Formulario W9",
+    uploadNDA: "Subir Formulario NDA",
+    upload: "Subir",
+    uploadingFile: "Subiendo...",
+    fileUploadSuccess: "¡Archivo subido exitosamente!",
+    fileUploadError: "Error al subir archivo. Por favor, intente de nuevo.",
+    userRegistration: "Registro de Usuario",
+    loginSuccess: "¡Inicio de sesión exitoso!",
+    registrationSuccess: "¡Registro exitoso!",
+    loginError: "Error al iniciar sesión. Por favor, intente de nuevo.",
+    registrationError: "Error al registrarse. Por favor, intente de nuevo.",
+    passwordMismatch: "Las contraseñas no coinciden"
   }
 };
