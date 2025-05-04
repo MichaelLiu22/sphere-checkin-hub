@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      files: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_type: string
+          file_url: string
+          id: string
+          name: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_type: string
+          file_url: string
+          id?: string
+          name: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          name?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -36,6 +74,90 @@ export type Database = {
           onboarded?: boolean | null
           password?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      SphereCheckIN: {
+        Row: {
+          created_at: string
+          full_legal_name: string | null
+          id: number
+          nda_file: string | null
+          user_id: string | null
+          w9_file: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_legal_name?: string | null
+          id?: number
+          nda_file?: string | null
+          user_id?: string | null
+          w9_file?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_legal_name?: string | null
+          id?: number
+          nda_file?: string | null
+          user_id?: string | null
+          w9_file?: string | null
+        }
+        Relationships: []
+      }
+      user_file_access: {
+        Row: {
+          created_at: string
+          file_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_file_access_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_file_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          password_hash: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          password_hash: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          password_hash?: string
         }
         Relationships: []
       }

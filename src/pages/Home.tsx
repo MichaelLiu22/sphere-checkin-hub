@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,24 +18,21 @@ const Home: React.FC = () => {
         <p className="text-xl text-gray-600">{t("welcomeDescription")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("documentUpload")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DocumentUpload />
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("documentUpload")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DocumentUpload />
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("userLogin")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UserAuth />
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <UserAuth />
+        </div>
       </div>
 
       <div className="text-center mt-8">
@@ -49,4 +47,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home; 
+export default Home;
