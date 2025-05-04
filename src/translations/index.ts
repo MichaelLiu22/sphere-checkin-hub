@@ -1,4 +1,3 @@
-
 export type LangKey = "en" | "zh" | "es";
 
 export type TranslationKey = 
@@ -111,7 +110,8 @@ export type TranslationKey =
   | "logout"
   | "employeeSubmissions"
   | "notUploaded"
-  | "fileUploaded";
+  | "fileUploaded"
+  | "userAuthentication";
 
 type Translations = {
   [key in LangKey]: {
@@ -230,7 +230,8 @@ export const translations: Translations = {
     logout: "Logout",
     employeeSubmissions: "Employee Submissions",
     notUploaded: "Not Uploaded",
-    fileUploaded: "File Uploaded"
+    fileUploaded: "File Uploaded",
+    userAuthentication: "User Authentication"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -338,11 +339,12 @@ export const translations: Translations = {
     fileUploadError: "文件上传失败，请重试。",
     loginError: "登录失败，请重试。",
     registrationError: "注册失败，请重试。",
-    passwordMismatch: "密码不匹配",
+    passwordMismatch: "密码不匹���",
     logout: "退出登录",
     employeeSubmissions: "员工提交",
     notUploaded: "未上传",
-    fileUploaded: "文件已上传"
+    fileUploaded: "文件已上传",
+    userAuthentication: "用户认证"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -454,6 +456,7 @@ export const translations: Translations = {
     logout: "Cerrar sesión",
     employeeSubmissions: "Presentaciones de empleados",
     notUploaded: "No subido",
-    fileUploaded: "Archivo subido"
+    fileUploaded: "Archivo subido",
+    userAuthentication: "Autenticación de Usuario"
   }
 };
