@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +18,9 @@ const Home: React.FC = () => {
     <Layout>
       <div className="container mx-auto p-4 space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">{t("welcome")}</h1>
-          <p className="text-xl text-gray-600">{t("welcomeDescription")}</p>
+          <h1 className="text-4xl font-bold mb-2">Michael Studio Check-in System</h1>
+          <p className="text-xl text-gray-600 mb-4">Sphere Media Inc.</p>
+          <p className="text-lg text-gray-600">{t("welcomeDescription")}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
