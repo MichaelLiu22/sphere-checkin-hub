@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { ExternalLink, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import {supabase} from "@/integrations/supabase/client.ts";
 
-type FileType = "nda" | "w9";
+type FileType = "nda" | "w9" | "employment";
 
 const FileUploadForm: React.FC = () => {
   const { t } = useLanguage();
@@ -115,6 +116,7 @@ const FileUploadForm: React.FC = () => {
         full_legal_name: fullLegalName,
         w9_file: files.w9,
         nda_file: files.nda,
+        employment_file: files.employment
       });
 
       toast({
@@ -242,6 +244,52 @@ const FileUploadForm: React.FC = () => {
             </div>
           </div>
 
+          {/* Employment Agreement Upload Field */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="font-medium">
+                {t("uploadEmployment")}
+              </Label>
+              <Button
+                variant="link"
+                className="flex items-center gap-1 text-primary hover:text-primary/80"
+                asChild
+              >
+                <a 
+                  href="/employment-agreement.pdf" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Download className="h-4 w-4" />
+                  {t("downloadEmployment")}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="employment-upload"
+                type="file"
+                accept=".pdf"
+                onChange={(e) => handleFileChange("employment", e)}
+                className="hidden"
+              />
+              <Label
+                htmlFor="employment-upload"
+                className="cursor-pointer flex-1 px-4 py-2 border border-dashed rounded-md border-gray-300 hover:border-gray-400 transition-colors text-center"
+              >
+                {files.employment ? files.employment.name : t("choosePdfFile")}
+              </Label>
+              <Button 
+                type="button"
+                onClick={() => handleUpload("employment")} 
+                disabled={!files.employment || isUploading.employment}
+              >
+                {isUploading.employment ? t("uploading") : t("uploadButton")}
+              </Button>
+            </div>
+          </div>
+
           <Button 
             type="submit" 
             className="w-full mt-4" 
@@ -249,17 +297,6 @@ const FileUploadForm: React.FC = () => {
           >
             {isSubmitting ? t("submitting") : t("submitForms")}
           </Button>
-          
-          {/* Admin Login Button */}
-          <div className="text-center mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <Link to="/admin">{t("adminLogin")}</Link>
-            </Button>
-          </div>
         </form>
       </CardContent>
     </Card>

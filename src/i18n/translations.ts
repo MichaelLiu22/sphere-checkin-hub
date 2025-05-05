@@ -1,12 +1,15 @@
+
 export type TranslationKey = 
   | "welcome"
   | "uploadW9"
   | "uploadNDA"
+  | "uploadEmployment"
   | "choosePdfFile"
   | "uploadButton"
   | "uploading"
   | "downloadW9"
   | "downloadNDA"
+  | "downloadEmployment"
   | "uploadSuccess"
   | "uploadError"
   | "submitButton"
@@ -36,11 +39,13 @@ export const translations = {
     welcome: "Welcome",
     uploadW9: "Upload W9",
     uploadNDA: "Upload NDA",
+    uploadEmployment: "Upload Employment Agreement",
     choosePdfFile: "Choose PDF file",
     uploadButton: "Upload",
     uploading: "Uploading...",
     downloadW9: "Download W9",
     downloadNDA: "Download NDA",
+    downloadEmployment: "Download Employment Agreement",
     uploadSuccess: "Upload Success",
     uploadError: "Upload Error",
     submitButton: "Submit",
@@ -69,11 +74,13 @@ export const translations = {
     welcome: "欢迎",
     uploadW9: "上传 W9",
     uploadNDA: "上传保密协议",
+    uploadEmployment: "上传入职协议",
     choosePdfFile: "选择 PDF 文件",
     uploadButton: "上传",
     uploading: "上传中...",
     downloadW9: "下载 W9",
     downloadNDA: "下载保密协议",
+    downloadEmployment: "下载入职协议",
     uploadSuccess: "上传成功",
     uploadError: "上传错误",
     submitButton: "提交",
@@ -102,11 +109,13 @@ export const translations = {
     welcome: "Bienvenido",
     uploadW9: "Subir W9",
     uploadNDA: "Subir NDA",
+    uploadEmployment: "Subir Acuerdo de Empleo",
     choosePdfFile: "Elegir archivo PDF",
     uploadButton: "Subir",
     uploading: "Subiendo...",
     downloadW9: "Descargar W9",
     downloadNDA: "Descargar NDA",
+    downloadEmployment: "Descargar Acuerdo de Empleo",
     uploadSuccess: "Subida Exitosa",
     uploadError: "Error de Subida",
     submitButton: "Enviar",
