@@ -1,4 +1,3 @@
-
 export type TranslationKey = 
   | "welcome"
   | "uploadW9"
@@ -96,7 +95,26 @@ export type TranslationKey =
   | "regularFile"
   | "chooseFile"
   | "upload"
-  | "submitForms";
+  | "submitForms"
+  // Dashboard and Files
+  | "preFiles"
+  | "regularFiles"
+  | "downloadFile"
+  | "noFilesFound"
+  | "loading"
+  | "download"
+  | "notUploaded"
+  // Admin Dashboard
+  | "adminDashboard"
+  | "logout"
+  | "employeeSubmissions"
+  | "submittedAt"
+  | "w9Form"
+  | "ndaForm"
+  | "noSubmissions"
+  | "userDashboard"
+  | "appTitle"
+  | "welcomeBanner";
 
 export const translations = {
   en: {
@@ -196,7 +214,26 @@ export const translations = {
     regularFile: "Regular File",
     chooseFile: "Choose File",
     upload: "Upload",
-    submitForms: "Submit Forms"
+    submitForms: "Submit Forms",
+    // Dashboard and Files
+    preFiles: "Pre-employment Files",
+    regularFiles: "Regular Files",
+    downloadFile: "Download",
+    noFilesFound: "No files found",
+    loading: "Loading...",
+    download: "Download",
+    notUploaded: "Not Uploaded",
+    // Admin Dashboard
+    adminDashboard: "Admin Dashboard",
+    logout: "Logout",
+    employeeSubmissions: "Employee Submissions",
+    submittedAt: "Submitted At",
+    w9Form: "W-9 Form",
+    ndaForm: "NDA Form",
+    noSubmissions: "No submissions found",
+    userDashboard: "User Dashboard",
+    appTitle: "Sphere Check-in Hub",
+    welcomeBanner: "Welcome to Our TEAM!"
   },
   zh: {
     welcome: "欢迎",
@@ -262,7 +299,7 @@ export const translations = {
     payDays: "发薪日",
     monthEnd: "月末",
     payByHours: "工资按工时支付，工时请与 Jocelyn 核对。",
-    questionsContact: "如有问题，请联系：acctspheremedia@gmail.com",
+    questionsContact: "如���问题，请联系：acctspheremedia@gmail.com",
     uploadInstructions: "您可以在此处上传 PDF 版本的表格，或打印后交给 Michael。",
     payDayExplanation: "Pay Day 的意思是：您将在这一天结束之前拿到上一段时间的工资。",
     clockInReminder: "请上班下班，午饭准时打卡，如果没有打卡记录造成的工资延时发放问题概不负责",
@@ -295,7 +332,26 @@ export const translations = {
     regularFile: "常规文件",
     chooseFile: "选择文件",
     upload: "上传",
-    submitForms: "提交表格"
+    submitForms: "提交表格",
+    // Dashboard and Files
+    preFiles: "入职文件",
+    regularFiles: "普通文件",
+    downloadFile: "下载",
+    noFilesFound: "未找到文件",
+    loading: "加载中...",
+    download: "下载",
+    notUploaded: "未上传",
+    // Admin Dashboard
+    adminDashboard: "管理员仪表板",
+    logout: "退出登录",
+    employeeSubmissions: "员工提交",
+    submittedAt: "提交时间",
+    w9Form: "W-9 表格",
+    ndaForm: "保密协议",
+    noSubmissions: "没有找到提交记录",
+    userDashboard: "用户面板",
+    appTitle: "Sphere 签到中心",
+    welcomeBanner: "欢迎加入我们的 TEAM!"
   },
   es: {
     welcome: "Bienvenido",
@@ -394,6 +450,25 @@ export const translations = {
     regularFile: "Archivo Regular",
     chooseFile: "Elegir Archivo",
     upload: "Subir",
-    submitForms: "Enviar Formularios"
+    submitForms: "Enviar Formularios",
+    // Dashboard and Files
+    preFiles: "Archivos Pre-empleo",
+    regularFiles: "Archivos Regulares",
+    downloadFile: "Descargar",
+    noFilesFound: "No se encontraron archivos",
+    loading: "Cargando...",
+    download: "Descargar",
+    notUploaded: "No subido",
+    // Admin Dashboard
+    adminDashboard: "Panel de Administración",
+    logout: "Cerrar sesión",
+    employeeSubmissions: "Presentaciones de empleados",
+    submittedAt: "Fecha de envío",
+    w9Form: "Formulario W-9",
+    ndaForm: "Formulario NDA",
+    noSubmissions: "No se encontraron envíos",
+    userDashboard: "Panel de Usuario",
+    appTitle: "Sphere Check-in Hub",
+    welcomeBanner: "¡Bienvenido a Nuestro EQUIPO!"
   }
-} as const; 
+} as const;
