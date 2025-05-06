@@ -38,7 +38,7 @@ const UserAuth: React.FC = () => {
           .from('users')
           .select('*')
           .eq('full_name', fullName)
-          .eq('password', password)
+          .eq('password_hash', password)
           .single();
 
         if (error) {
@@ -99,9 +99,9 @@ const UserAuth: React.FC = () => {
           .from('users')
           .insert([{
             full_name: fullName,
-            password: password,
+            password_hash: password,
             // Add a default user_type for new registrations
-            user_type: 'warehouse', // Default user type
+            user_type: 'unassigned', // Default user type
           }])
           .select()
           .single();
@@ -111,9 +111,6 @@ const UserAuth: React.FC = () => {
           if (error.code === '23505') { // Unique constraint violation
             setError("Error: 00003 - 用户已存在");
             toast.error("Error: 00003 - 用户已存在");
-          } else if (error.code === '42501' || error.message.includes('policy')) { // Permission/policy error
-            setError("Error: 00002 - 数据写入失败");
-            toast.error("Error: 00002 - 数据写入失败");
           } else {
             // Generic error for all other cases
             setError("Error: 00099 - 系统异常");
