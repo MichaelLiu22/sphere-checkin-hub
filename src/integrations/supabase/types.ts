@@ -145,19 +145,31 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          notes: string | null
           password_hash: string
+          task_permission: boolean | null
+          upload_permission: boolean | null
+          user_type: string | null
         }
         Insert: {
           created_at?: string
           full_name: string
           id?: string
+          notes?: string | null
           password_hash: string
+          task_permission?: boolean | null
+          upload_permission?: boolean | null
+          user_type?: string | null
         }
         Update: {
           created_at?: string
           full_name?: string
           id?: string
+          notes?: string | null
           password_hash?: string
+          task_permission?: boolean | null
+          upload_permission?: boolean | null
+          user_type?: string | null
         }
         Relationships: []
       }

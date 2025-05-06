@@ -57,16 +57,26 @@ const UserAuth: React.FC = () => {
         }
       } else {
         // Registration validation
-        if (password.length < 6) {
-          setError(t("passwordTooShort"));
-          toast.error(t("passwordTooShort"));
+        // Check if passwords match
+        if (password !== confirmPassword) {
+          setError("Error: 00001 - 密码不一致");
+          toast.error("Error: 00001 - 密码不一致");
           setLoading(false);
           return;
         }
 
-        if (password !== confirmPassword) {
-          setError(t("passwordMismatch"));
-          toast.error(t("passwordMismatch"));
+        // Check if required fields are filled
+        if (!fullName || !password) {
+          setError("Error: 00004 - 信息不完整");
+          toast.error("Error: 00004 - 信息不完整");
+          setLoading(false);
+          return;
+        }
+
+        // Check password length
+        if (password.length < 6) {
+          setError("Error: 00005 - 密码太短");
+          toast.error("Error: 00005 - 密码太短");
           setLoading(false);
           return;
         }
@@ -79,8 +89,8 @@ const UserAuth: React.FC = () => {
           .single();
           
         if (existingUser) {
-          setError(t("userAlreadyExists"));
-          toast.error(t("userAlreadyExists"));
+          setError("Error: 00003 - 用户已存在");
+          toast.error("Error: 00003 - 用户已存在");
           setLoading(false);
           return;
         }
@@ -97,7 +107,19 @@ const UserAuth: React.FC = () => {
           .single();
 
         if (error) {
-          setError(t("registrationError"));
+          // Handle specific Supabase errors
+          if (error.code === '23505') { // Unique constraint violation
+            setError("Error: 00003 - 用户已存在");
+            toast.error("Error: 00003 - 用户已存在");
+          } else if (error.code === '42501' || error.message.includes('policy')) { // Permission/policy error
+            setError("Error: 00002 - 数据写入失败");
+            toast.error("Error: 00002 - 数据写入失败");
+          } else {
+            // Generic error for all other cases
+            setError("Error: 00099 - 系统异常");
+            toast.error("Error: 00099 - 系统异常");
+            console.error("Registration error details:", error);
+          }
           throw error;
         }
 

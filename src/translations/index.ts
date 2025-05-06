@@ -111,7 +111,14 @@ export type TranslationKey =
   | "employeeSubmissions"
   | "notUploaded"
   | "fileUploaded"
-  | "userAuthentication";
+  | "userAuthentication"
+  | "passwordRequirements"
+  | "passwordTooShort"
+  | "userAlreadyExists"
+  | "missingRequiredFields"
+  | "dataWriteFailed"
+  | "systemError"
+  | "welcomeUser";
 
 type Translations = {
   [key in LangKey]: {
@@ -231,7 +238,14 @@ export const translations: Translations = {
     employeeSubmissions: "Employee Submissions",
     notUploaded: "Not Uploaded",
     fileUploaded: "File Uploaded",
-    userAuthentication: "User Authentication"
+    userAuthentication: "User Authentication",
+    passwordRequirements: "Password must be at least 6 characters long",
+    passwordTooShort: "Error: 00005 - Password too short",
+    userAlreadyExists: "Error: 00003 - User already exists",
+    missingRequiredFields: "Error: 00004 - Incomplete information",
+    dataWriteFailed: "Error: 00002 - Data write failure",
+    systemError: "Error: 00099 - System exception",
+    welcomeUser: "Welcome {{name}}"
   },
   zh: {
     appTitle: "MS Sphere 员工登记系统",
@@ -344,7 +358,14 @@ export const translations: Translations = {
     employeeSubmissions: "员工提交",
     notUploaded: "未上传",
     fileUploaded: "文件已上传",
-    userAuthentication: "用户认证"
+    userAuthentication: "用户认证",
+    passwordRequirements: "密码至少需要6个字符",
+    passwordTooShort: "Error: 00005 - 密码太短",
+    userAlreadyExists: "Error: 00003 - 用户已存在",
+    missingRequiredFields: "Error: 00004 - 信息不完整",
+    dataWriteFailed: "Error: 00002 - 数据写入失败",
+    systemError: "Error: 00099 - 系统异常",
+    welcomeUser: "欢迎 {{name}}"
   },
   es: {
     appTitle: "MS Sphere Media Check-In",
@@ -457,6 +478,13 @@ export const translations: Translations = {
     employeeSubmissions: "Presentaciones de empleados",
     notUploaded: "No subido",
     fileUploaded: "Archivo subido",
-    userAuthentication: "Autenticación de Usuario"
+    userAuthentication: "Autenticación de Usuario",
+    passwordRequirements: "La contraseña debe tener al menos 6 caracteres",
+    passwordTooShort: "Error: 00005 - Contraseña demasiado corta",
+    userAlreadyExists: "Error: 00003 - El usuario ya existe",
+    missingRequiredFields: "Error: 00004 - Información incompleta",
+    dataWriteFailed: "Error: 00002 - Error al escribir datos",
+    systemError: "Error: 00099 - Excepción del sistema",
+    welcomeUser: "Bienvenido {{name}}"
   }
 };
