@@ -1,12 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 
 const UserAuth: React.FC = () => {
   const { t } = useLanguage();
@@ -18,7 +17,7 @@ const UserAuth: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Check for existing session on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       // If user is already logged in, redirect to dashboard
@@ -32,7 +31,7 @@ const UserAuth: React.FC = () => {
 
     try {
       if (isLogin) {
-        // 登录逻辑
+        // Login logic
         const { data, error } = await supabase
           .from('users')
           .select('*')
@@ -51,7 +50,7 @@ const UserAuth: React.FC = () => {
           toast.error(t("loginError"));
         }
       } else {
-        // 注册逻辑
+        // Registration logic
         if (password !== confirmPassword) {
           toast.error(t("passwordMismatch"));
           setLoading(false);
@@ -96,74 +95,70 @@ const UserAuth: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">
-              {isLogin ? t("userLogin") : t("userRegistration")}
-            </h2>
-            <Button
-              variant="link"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setFullName("");
-                setPassword("");
-                setConfirmPassword("");
-              }}
-            >
-              {isLogin ? t("needToRegister") : t("alreadyHaveAccount")}
-            </Button>
-          </div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">
+          {isLogin ? t("userLogin") : t("userRegistration")}
+        </h2>
+        <Button
+          variant="link"
+          onClick={() => {
+            setIsLogin(!isLogin);
+            setFullName("");
+            setPassword("");
+            setConfirmPassword("");
+          }}
+        >
+          {isLogin ? t("needToRegister") : t("alreadyHaveAccount")}
+        </Button>
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium mb-1">
-                {t("fullLegalName")}
-              </label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
-                {t("password")}
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {!isLogin && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
-                  {t("confirmPassword")}
-                </label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? t("processing") : (isLogin ? t("login") : t("register"))}
-            </Button>
-          </form>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="fullName" className="block text-sm font-medium mb-1">
+            {t("fullLegalName")}
+          </label>
+          <Input
+            id="fullName"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
         </div>
-      </CardContent>
-    </Card>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium mb-1">
+            {t("password")}
+          </label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {!isLogin && (
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+              {t("confirmPassword")}
+            </label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+        )}
+
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? t("processing") : (isLogin ? t("login") : t("register"))}
+        </Button>
+      </form>
+    </div>
   );
 };
 
