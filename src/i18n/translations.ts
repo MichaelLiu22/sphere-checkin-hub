@@ -1,474 +1,466 @@
-export type TranslationKey = 
-  | "welcome"
-  | "uploadW9"
-  | "uploadNDA"
-  | "uploadEmployment"
-  | "choosePdfFile"
-  | "uploadButton"
-  | "uploading"
-  | "downloadW9"
-  | "downloadNDA"
-  | "downloadEmployment"
-  | "uploadSuccess"
-  | "uploadError"
-  | "submitButton"
-  | "submitting"
-  | "submitSuccess"
-  | "submitError"
-  | "uploadTitle"
-  | "uploadSubtitle"
-  | "fullLegalName"
-  | "fullLegalNamePlaceholder"
-  | "formError"
-  | "requiredFields"
-  | "submissionSuccess"
-  | "submissionEmailSent"
-  | "fileUploaded"
-  | "pdfOnly"
-  | "required"
-  | "documentUpload"
-  | "payrollInfoTitle"
-  | "userAuthentication"
-  | "calendar"
-  | "adminLogin"
-  | "welcomeDescription"
-  // Month names
-  | "january"
-  | "february"
-  | "march"
-  | "april"
-  | "may"
-  | "june"
-  | "july"
-  | "august"
-  | "september"
-  | "october"
-  | "november"
-  | "december"
-  // Day names
-  | "sunday"
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  // Language keys
-  | "languageEn"
-  | "languageZh"
-  | "languageEs"
-  // Payroll information
-  | "payPeriods"
-  | "payDays"
-  | "monthEnd"
-  | "payByHours"
-  | "questionsContact"
-  | "uploadInstructions"
-  | "payDayExplanation"
-  | "clockInReminder"
-  | "payPeriodStart"
-  | "payDay"
-  // Authentication
-  | "invalidCredentials"
-  | "username"
-  | "password"
-  | "login"
-  | "loginSuccess"
-  | "loginError"
-  | "passwordMismatch"
-  | "registrationSuccess"
-  | "registrationError"
-  | "userLogin"
-  | "userRegistration"
-  | "needToRegister"
-  | "alreadyHaveAccount"
-  | "confirmPassword"
-  | "processing"
-  | "register"
-  // File upload
-  | "uploadFile"
-  | "fileName"
-  | "fileDescription"
-  | "fileType"
-  | "selectFileType"
-  | "preFile"
-  | "regularFile"
-  | "chooseFile"
-  | "upload"
-  | "submitForms"
-  // Dashboard and Files
-  | "preFiles"
-  | "regularFiles"
-  | "downloadFile"
-  | "noFilesFound"
-  | "loading"
-  | "download"
-  | "notUploaded"
-  // Admin Dashboard
-  | "adminDashboard"
-  | "logout"
-  | "employeeSubmissions"
-  | "submittedAt"
-  | "w9Form"
-  | "ndaForm"
-  | "noSubmissions"
-  | "userDashboard"
-  | "appTitle"
-  | "welcomeBanner";
-
 export const translations = {
   en: {
-    welcome: "Welcome",
-    uploadW9: "Upload W9",
-    uploadNDA: "Upload NDA",
-    uploadEmployment: "Upload Employment Agreement",
-    choosePdfFile: "Choose PDF file",
-    uploadButton: "Upload",
-    uploading: "Uploading...",
-    downloadW9: "Download W9",
-    downloadNDA: "Download NDA",
-    downloadEmployment: "Download Employment Agreement",
-    uploadSuccess: "Upload Success",
-    uploadError: "Upload Error",
-    submitButton: "Submit",
-    submitting: "Submitting...",
-    submitSuccess: "Submission Success",
-    submitError: "Submission Error",
-    uploadTitle: "Document Upload",
-    uploadSubtitle: "We will issue the check to this name",
-    fullLegalName: "Full Legal Name",
-    fullLegalNamePlaceholder: "Enter your full legal name",
-    formError: "Form Error",
-    requiredFields: "Please fill in all required fields",
-    submissionSuccess: "Success",
-    submissionEmailSent: "Your submission has been received",
-    fileUploaded: "File uploaded",
-    pdfOnly: "Only PDF files are allowed",
-    required: "Required",
-    documentUpload: "Document Upload",
-    payrollInfoTitle: "Payroll Information",
-    userAuthentication: "User Authentication",
-    calendar: "Calendar",
-    adminLogin: "Admin Login",
-    welcomeDescription: "Welcome to Sphere Check-in Hub",
-    // Month names
-    january: "January",
-    february: "February",
-    march: "March",
-    april: "April",
-    may: "May",
-    june: "June",
-    july: "July",
-    august: "August",
-    september: "September",
-    october: "October",
-    november: "November",
-    december: "December",
-    // Day names
-    sunday: "Sun",
-    monday: "Mon",
-    tuesday: "Tue",
-    wednesday: "Wed",
-    thursday: "Thu",
-    friday: "Fri",
-    saturday: "Sat",
-    // Language keys
-    languageEn: "English",
-    languageZh: "中文",
-    languageEs: "Español",
-    // Payroll information
-    payPeriods: "Pay Periods",
-    payDays: "Pay Days",
-    monthEnd: "Month End",
-    payByHours: "Pay by hours—verify with Jocelyn.",
-    questionsContact: "Questions? Contact: acctspheremedia@gmail.com",
-    uploadInstructions: "You can upload PDF forms here or print and hand to Michael.",
-    payDayExplanation: "\"Pay Day\" means you will receive the previous period's pay by the end of that day.",
-    clockInReminder: "Please clock in/out on time, including for lunch breaks. Delayed payments due to missing clock records will not be our responsibility.",
-    payPeriodStart: "Pay Period Start",
-    payDay: "Pay Day",
-    // Authentication
-    invalidCredentials: "Invalid username or password",
-    username: "Username",
-    password: "Password",
-    login: "Login",
-    loginSuccess: "Login successful!",
-    loginError: "Login failed. Please try again.",
-    passwordMismatch: "Passwords do not match",
-    registrationSuccess: "Registration successful!",
-    registrationError: "Registration failed. Please try again.",
-    userLogin: "User Login",
-    userRegistration: "User Registration",
-    needToRegister: "Need to register?",
-    alreadyHaveAccount: "Already have an account?",
-    confirmPassword: "Confirm Password",
-    processing: "Processing...",
-    register: "Register",
-    // File upload
-    uploadFile: "Upload File",
-    fileName: "File Name",
-    fileDescription: "File Description",
-    fileType: "File Type",
-    selectFileType: "Select File Type",
-    preFile: "Pre File",
-    regularFile: "Regular File",
-    chooseFile: "Choose File",
-    upload: "Upload",
-    submitForms: "Submit Forms",
-    // Dashboard and Files
-    preFiles: "Pre-employment Files",
-    regularFiles: "Regular Files",
-    downloadFile: "Download",
-    noFilesFound: "No files found",
-    loading: "Loading...",
-    download: "Download",
-    notUploaded: "Not Uploaded",
+    // Common
+    "appTitle": "MS Sphere Media",
+    "welcomeDescription": "Welcome to the Michael Studio Check-in System. Please upload your W9 form and log in to access your dashboard.",
+    "loading": "Loading",
+    "noFilesFound": "No files found",
+    "download": "Download",
+    "processing": "Processing",
+    "submitForms": "Submit Forms",
+    "uploading": "Uploading",
+    "uploadButton": "Upload",
+    "submitting": "Submitting",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "calendar": "Calendar",
+    "questionsContact": "If you have any questions, please contact your manager.",
+    
+    // Home Page
+    "welcomeBanner": "Welcome to our platform!",
+    "documentUpload": "Document Upload",
+    "fullLegalName": "Full Legal Name",
+    "fullLegalNamePlaceholder": "Enter your full legal name",
+    "uploadW9": "Upload W9 Form",
+    "required": "Required",
+    "downloadW9": "Download W9 Form",
+    "choosePdfFile": "Choose PDF File",
+    "userAuthentication": "User Authentication",
+    "payrollInfoTitle": "Payroll Information & Calendar",
+    "adminLogin": "Admin Login",
+    
+    // File Upload Form
+    "formError": "Form Error",
+    "requiredFields": "Please fill in all required fields.",
+    "uploadError": "Upload Error",
+    "pdfOnly": "Please upload a PDF file.",
+    "uploadSuccess": "Upload Success!",
+    "fileUploaded": "File uploaded successfully. Public URL",
+    "submissionSuccess": "Submission Success!",
+    "submissionEmailSent": "Your submission has been received. An email confirmation has been sent to your address.",
+    
+    // User Auth
+    "userLogin": "User Login",
+    "userRegistration": "User Registration",
+    "needToRegister": "Need to register?",
+    "alreadyHaveAccount": "Already have an account?",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "loginSuccess": "Login successful!",
+    "loginError": "Invalid credentials. Please try again.",
+    "registrationSuccess": "Registration successful! You are now logged in.",
+    "registrationError": "Registration failed. Please try again.",
+    
+    // Payroll Info
+    "payPeriods": "Pay Periods",
+    "monthEnd": "month-end",
+    "payDays": "Pay Days",
+    "payDayExplanation": "Employees are paid bi-weekly, two weeks after the end of the pay period.",
+    "payByHours": "Please submit your hours by 5 PM on the last day of the pay period.",
+    "uploadInstructions": "Please upload all invoices and receipts to the system.",
+    "clockInReminder": "Remember to clock in and out each day!",
+    
+    // User Dashboard
+    "userDashboard": "User Dashboard",
+    "preFiles": "Pre-Production Files",
+    "regularFiles": "Regular Files",
+    "downloadFile": "Download File",
+    
     // Admin Dashboard
-    adminDashboard: "Admin Dashboard",
-    logout: "Logout",
-    employeeSubmissions: "Employee Submissions",
-    submittedAt: "Submitted At",
-    w9Form: "W-9 Form",
-    ndaForm: "NDA Form",
-    noSubmissions: "No submissions found",
-    userDashboard: "User Dashboard",
-    appTitle: "Sphere Check-in Hub",
-    welcomeBanner: "Welcome to Our TEAM!"
+    "adminDashboard": "Admin Dashboard",
+    "uploadNewFile": "Upload New File",
+    "fileName": "File Name",
+    "fileDescription": "File Description",
+    "fileType": "File Type",
+    "fileURL": "File URL",
+    "uploadedBy": "Uploaded By",
+    "createFile": "Create File",
+    "updateFile": "Update File",
+    "deleteFile": "Delete File",
+    "noFiles": "No files in database",
+    "deleteConfirmation": "Are you sure you want to delete this file?",
+    
+    // Basic Auth
+    "basicAuthTitle": "Admin Authentication",
+    "basicAuthDescription": "Enter your credentials to access the admin dashboard.",
+    "username": "Username",
+    
+    // Not Found Page
+    "notFoundTitle": "404 - Not Found",
+    "notFoundDescription": "The page you are looking for does not exist.",
+    "goHome": "Go Home",
+    
+    // Registration and Auth
+    "userAlreadyExists": "This name is already registered",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordRequirements": "Password must be at least 6 characters long",
+    "invalidCredentials": "Invalid name or password",
+    "logoutSuccess": "Successfully logged out",
+    
+    // Employee Dashboard
+    "employeeDashboard": "Employee Dashboard",
+    "welcomeUser": "Welcome, {{name}}",
+    "taskArea": "Task Area (任务区)",
+    "financeArea": "Finance Area (财务区)",
+    
+    // Task Types
+    "warehouseTasks": "Warehouse Tasks",
+    "warehouseTasksDesc": "Tasks related to inventory management and package handling",
+    "influencerTasks": "Influencer Tasks",
+    "influencerTasksDesc": "Content creation and social media engagement tasks",
+    "financeTasks": "Finance Tasks",
+    "financeTasksDesc": "Tasks related to financial operations and reporting",
+    
+    // Task Items
+    "deadline": "Deadline",
+    "inventoryCheck": "Inventory Check",
+    "inventoryCheckDesc": "Complete inventory count in section A",
+    "packagePreparation": "Package Preparation",
+    "packagePreparationDesc": "Prepare packages for shipping",
+    "loadingSchedule": "Loading Schedule",
+    "loadingScheduleDesc": "Load trucks according to delivery schedule",
+    
+    "postContentSchedule": "Content Schedule",
+    "postContentScheduleDesc": "Create and schedule content for product launch",
+    "productReview": "Product Review",
+    "productReviewDesc": "Create video review for new product",
+    "socialMediaEngagement": "Social Media Engagement",
+    "socialMediaEngagementDesc": "Respond to comments and engage with followers",
+    
+    "processInvoices": "Process Invoices",
+    "processInvoicesDesc": "Review and process vendor invoices",
+    "expenseReports": "Expense Reports",
+    "expenseReportsDesc": "Approve employee expense reports",
+    "payrollProcessing": "Payroll Processing",
+    "payrollProcessingDesc": "Prepare end-of-month payroll data",
+    
+    "noTasksFound": "No tasks found",
+    
+    // Finance Area
+    "workHours": "Work Hours",
+    "currentWeek": "This Week",
+    "lastWeek": "Last Week",
+    "totalHours": "Total",
+    "payrollCycle": "Payroll Cycle",
+    "companyDocuments": "Company Documents",
+    
+    // Documents
+    "reimbursementForm": "Reimbursement Form",
+    "reimbursementFormDesc": "Form to request expense reimbursements",
+    "directDepositForm": "Direct Deposit Form",
+    "directDepositFormDesc": "Update your payment information",
+    "w9Form": "W9 Form",
+    "w9FormDesc": "Tax form for independent contractors",
   },
+  
   zh: {
-    welcome: "欢迎",
-    uploadW9: "上传 W9",
-    uploadNDA: "上传保密协议",
-    uploadEmployment: "上传入职协议",
-    choosePdfFile: "选择 PDF 文件",
-    uploadButton: "上传",
-    uploading: "上传中...",
-    downloadW9: "下载 W9",
-    downloadNDA: "下载保密协议",
-    downloadEmployment: "下载入职协议",
-    uploadSuccess: "上传成功",
-    uploadError: "上传错误",
-    submitButton: "提交",
-    submitting: "提交中...",
-    submitSuccess: "提交成功",
-    submitError: "提交错误",
-    uploadTitle: "文件上传",
-    uploadSubtitle: "支票将开具给此姓名",
-    fullLegalName: "法定全名",
-    fullLegalNamePlaceholder: "请输入您的法定全名",
-    formError: "表单错误",
-    requiredFields: "请填写所有必填字段",
-    submissionSuccess: "成功",
-    submissionEmailSent: "您的提交已收到",
-    fileUploaded: "文件已上传",
-    pdfOnly: "仅允许 PDF 文件",
-    required: "必填",
-    documentUpload: "文件上传",
-    payrollInfoTitle: "工资信息",
-    userAuthentication: "用户认证",
-    calendar: "日历",
-    adminLogin: "管理员登录",
-    welcomeDescription: "欢迎使用 Sphere 签到中心",
-    // Month names
-    january: "一月",
-    february: "二月",
-    march: "三月",
-    april: "四月",
-    may: "五月",
-    june: "六月",
-    july: "七月", 
-    august: "八月",
-    september: "九月",
-    october: "十月",
-    november: "十一月",
-    december: "十二月",
-    // Day names
-    sunday: "日",
-    monday: "一",
-    tuesday: "二",
-    wednesday: "三",
-    thursday: "四",
-    friday: "五",
-    saturday: "六",
-    // Language keys
-    languageEn: "English",
-    languageZh: "中文",
-    languageEs: "Español",
-    // Payroll information
-    payPeriods: "我们的工资周期",
-    payDays: "发薪日",
-    monthEnd: "月末",
-    payByHours: "工资按工时支付，工时请与 Jocelyn 核对。",
-    questionsContact: "如���问题，请联系：acctspheremedia@gmail.com",
-    uploadInstructions: "您可以在此处上传 PDF 版本的表格，或打印后交给 Michael。",
-    payDayExplanation: "Pay Day 的意思是：您将在这一天结束之前拿到上一段时间的工资。",
-    clockInReminder: "请上班下班，午饭准时打卡，如果没有打卡记录造成的工资延时发放问题概不负责",
-    payPeriodStart: "工资周期开始",
-    payDay: "发薪日",
-    // Authentication
-    invalidCredentials: "用户名或密码无效",
-    username: "用户名",
-    password: "密码",
-    login: "登录",
-    loginSuccess: "登录成功！",
-    loginError: "登录失败，请重试。",
-    passwordMismatch: "密码不匹配",
-    registrationSuccess: "注册成功！",
-    registrationError: "注册失败，请重试。",
-    userLogin: "用户登录",
-    userRegistration: "用户注册",
-    needToRegister: "需要注册？",
-    alreadyHaveAccount: "已有账号？",
-    confirmPassword: "确认密码",
-    processing: "处理中...",
-    register: "注册",
-    // File upload
-    uploadFile: "上传文件",
-    fileName: "文件名称",
-    fileDescription: "文件描述",
-    fileType: "文件类型",
-    selectFileType: "选择文件类型",
-    preFile: "预文件",
-    regularFile: "常规文件",
-    chooseFile: "选择文件",
-    upload: "上传",
-    submitForms: "提交表格",
-    // Dashboard and Files
-    preFiles: "入职文件",
-    regularFiles: "普通文件",
-    downloadFile: "下载",
-    noFilesFound: "未找到文件",
-    loading: "加载中...",
-    download: "下载",
-    notUploaded: "未上传",
+    // Common
+    "appTitle": "MS Sphere Media",
+    "welcomeDescription": "欢迎来到 Michael Studio 签到系统。请上传您的 W9 表格并登录以访问您的仪表板。",
+    "loading": "加载中",
+    "noFilesFound": "未找到文件",
+    "download": "下载",
+    "processing": "处理中",
+    "submitForms": "提交表格",
+    "uploading": "上传中",
+    "uploadButton": "上传",
+    "submitting": "提交中",
+    "logout": "登出",
+    "login": "登录",
+    "register": "注册",
+    "calendar": "日历",
+    "questionsContact": "如有任何问题，请联系您的经理。",
+    
+    // Home Page
+    "welcomeBanner": "欢迎来到我们的平台！",
+    "documentUpload": "文件上传",
+    "fullLegalName": "完整法定姓名",
+    "fullLegalNamePlaceholder": "输入您的完整法定姓名",
+    "uploadW9": "上传 W9 表格",
+    "required": "必需",
+    "downloadW9": "下载 W9 表格",
+    "choosePdfFile": "选择 PDF 文件",
+    "userAuthentication": "用户验证",
+    "payrollInfoTitle": "工资信息和日历",
+    "adminLogin": "管理员登录",
+    
+    // File Upload Form
+    "formError": "表格错误",
+    "requiredFields": "请填写所有必填字段。",
+    "uploadError": "上传错误",
+    "pdfOnly": "请上传 PDF 文件。",
+    "uploadSuccess": "上传成功！",
+    "fileUploaded": "文件上传成功。公共 URL",
+    "submissionSuccess": "提交成功！",
+    "submissionEmailSent": "您的提交已收到。确认邮件已发送到您的地址。",
+    
+    // User Auth
+    "userLogin": "用户登录",
+    "userRegistration": "用户注册",
+    "needToRegister": "需要注册？",
+    "alreadyHaveAccount": "已有账户？",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "loginSuccess": "登录成功！",
+    "loginError": "无效的凭据。请重试。",
+    "registrationSuccess": "注册成功！您现在已登录。",
+    "registrationError": "注册失败。请重试。",
+    
+    // Payroll Info
+    "payPeriods": "工资周期",
+    "monthEnd": "月末",
+    "payDays": "发薪日",
+    "payDayExplanation": "员工每两周支付一次工资，在工资期结束后两周支付。",
+    "payByHours": "请在工资期最后一天的下午 5 点前提交您的工时。",
+    "uploadInstructions": "请将所有发票和收据上传到系统。",
+    "clockInReminder": "记得每天打卡！",
+    
+    // User Dashboard
+    "userDashboard": "用户仪表板",
+    "preFiles": "预制作文件",
+    "regularFiles": "常规文件",
+    "downloadFile": "下载文件",
+    
     // Admin Dashboard
-    adminDashboard: "管理员仪表板",
-    logout: "退出登录",
-    employeeSubmissions: "员工提交",
-    submittedAt: "提交时间",
-    w9Form: "W-9 表格",
-    ndaForm: "保密协议",
-    noSubmissions: "没有找到提交记录",
-    userDashboard: "用户面板",
-    appTitle: "Sphere 签到中心",
-    welcomeBanner: "欢迎加入我们的 TEAM!"
+    "adminDashboard": "管理仪表板",
+    "uploadNewFile": "上传新文件",
+    "fileName": "文件名",
+    "fileDescription": "文件描述",
+    "fileType": "文件类型",
+    "fileURL": "文件 URL",
+    "uploadedBy": "上传者",
+    "createFile": "创建文件",
+    "updateFile": "更新文件",
+    "deleteFile": "删除文件",
+    "noFiles": "数据库中没有文件",
+    "deleteConfirmation": "确定要删除此文件吗？",
+    
+    // Basic Auth
+    "basicAuthTitle": "管理员身份验证",
+    "basicAuthDescription": "输入您的凭据以访问管理仪表板。",
+    "username": "用户名",
+    
+    // Not Found Page
+    "notFoundTitle": "404 - 未找到",
+    "notFoundDescription": "您正在查找的页面不存在。",
+    "goHome": "返回首页",
+    
+    // Registration and Auth
+    "userAlreadyExists": "此名称已注册",
+    "passwordTooShort": "密码至少需要6个字符",
+    "passwordRequirements": "密码至少需要6个字符",
+    "invalidCredentials": "名称或密码无效",
+    "logoutSuccess": "成功登出",
+    
+    // Employee Dashboard
+    "employeeDashboard": "员工仪表板",
+    "welcomeUser": "欢迎，{{name}}",
+    "taskArea": "任务区",
+    "financeArea": "财务区",
+    
+    // Task Types
+    "warehouseTasks": "仓库任务",
+    "warehouseTasksDesc": "与库存管理和包装处理相关的任务",
+    "influencerTasks": "网红任务",
+    "influencerTasksDesc": "内容创作和社交媒体互动任务",
+    "financeTasks": "财务任务",
+    "financeTasksDesc": "与财务运营和报告相关的任务",
+    
+    // Task Items
+    "deadline": "截止日期",
+    "inventoryCheck": "库存检查",
+    "inventoryCheckDesc": "完成A区域的库存盘点",
+    "packagePreparation": "包裹准备",
+    "packagePreparationDesc": "准备运输包裹",
+    "loadingSchedule": "装载安排",
+    "loadingScheduleDesc": "根据交付计划装载卡车",
+    
+    "postContentSchedule": "内容日程",
+    "postContentScheduleDesc": "为产品发布创建和安排内容",
+    "productReview": "产品评测",
+    "productReviewDesc": "为新产品创建视频评测",
+    "socialMediaEngagement": "社交媒体互动",
+    "socialMediaEngagementDesc": "回复评论并与粉丝互动",
+    
+    "processInvoices": "处理发票",
+    "processInvoicesDesc": "审核和处理供应商发票",
+    "expenseReports": "费用报告",
+    "expenseReportsDesc": "批准员工费用报告",
+    "payrollProcessing": "工资处理",
+    "payrollProcessingDesc": "准备月末工资数据",
+    
+    "noTasksFound": "没有找到任务",
+    
+    // Finance Area
+    "workHours": "工作时间",
+    "currentWeek": "本周",
+    "lastWeek": "上周",
+    "totalHours": "总计",
+    "payrollCycle": "工资周期",
+    "companyDocuments": "公司文件",
+    
+    // Documents
+    "reimbursementForm": "报销表格",
+    "reimbursementFormDesc": "请求费用报销的表格",
+    "directDepositForm": "直接存款表格",
+    "directDepositFormDesc": "更新您的支付信息",
+    "w9Form": "W9 表格",
+    "w9FormDesc": "独立承包商的税表",
   },
+  
   es: {
-    welcome: "Bienvenido",
-    uploadW9: "Subir W9",
-    uploadNDA: "Subir NDA",
-    uploadEmployment: "Subir Acuerdo de Empleo",
-    choosePdfFile: "Elegir archivo PDF",
-    uploadButton: "Subir",
-    uploading: "Subiendo...",
-    downloadW9: "Descargar W9",
-    downloadNDA: "Descargar NDA",
-    downloadEmployment: "Descargar Acuerdo de Empleo",
-    uploadSuccess: "Subida Exitosa",
-    uploadError: "Error de Subida",
-    submitButton: "Enviar",
-    submitting: "Enviando...",
-    submitSuccess: "Envío Exitoso",
-    submitError: "Error de Envío",
-    uploadTitle: "Subir Documento",
-    uploadSubtitle: "Emitiremos el cheque a este nombre",
-    fullLegalName: "Nombre Legal Completo",
-    fullLegalNamePlaceholder: "Ingrese su nombre legal completo",
-    formError: "Error de Formulario",
-    requiredFields: "Por favor complete todos los campos requeridos",
-    submissionSuccess: "Éxito",
-    submissionEmailSent: "Su envío ha sido recibido",
-    fileUploaded: "Archivo subido",
-    pdfOnly: "Solo se permiten archivos PDF",
-    required: "Requerido",
-    documentUpload: "Subir Documentos",
-    payrollInfoTitle: "Información de Nómina",
-    userAuthentication: "Autenticación de Usuario",
-    calendar: "Calendario",
-    adminLogin: "Acceso de Administrador",
-    welcomeDescription: "Bienvenido a Sphere Check-in Hub",
-    // Month names
-    january: "Enero",
-    february: "Febrero",
-    march: "Marzo",
-    april: "Abril",
-    may: "Mayo",
-    june: "Junio",
-    july: "Julio",
-    august: "Agosto",
-    september: "Septiembre",
-    october: "Octubre",
-    november: "Noviembre",
-    december: "Diciembre",
-    // Day names
-    sunday: "Dom",
-    monday: "Lun",
-    tuesday: "Mar",
-    wednesday: "Mié",
-    thursday: "Jue",
-    friday: "Vie",
-    saturday: "Sáb",
-    // Language keys
-    languageEn: "English",
-    languageZh: "中文",
-    languageEs: "Español",
-    // Payroll information
-    payPeriods: "Períodos de pago",
-    payDays: "Días de pago",
-    monthEnd: "fin de mes",
-    payByHours: "Pago por horas—verifica con Jocelyn.",
-    questionsContact: "Preguntas? Contacta: acctspheremedia@gmail.com",
-    uploadInstructions: "Puede cargar formularios PDF aquí o imprimir y entregar a Michael.",
-    payDayExplanation: "\"Día de pago\" significa que recibirá el pago del período anterior antes de que termine ese día.",
-    clockInReminder: "Por favor, registre entrada/salida a tiempo, incluso para el almuerzo. No seremos responsables por pagos retrasados debido a registros de tiempo faltantes.",
-    payPeriodStart: "Inicio de Período de Pago",
-    payDay: "Día de Pago",
-    // Authentication
-    invalidCredentials: "Usuario o contraseña inválidos",
-    username: "Usuario",
-    password: "Contraseña",
-    login: "Iniciar Sesión",
-    loginSuccess: "¡Inicio de sesión exitoso!",
-    loginError: "Error al iniciar sesión. Por favor, intente de nuevo.",
-    passwordMismatch: "Las contraseñas no coinciden",
-    registrationSuccess: "¡Registro exitoso!",
-    registrationError: "Error al registrarse. Por favor, intente de nuevo.",
-    userLogin: "Inicio de Sesión",
-    userRegistration: "Registro de Usuario",
-    needToRegister: "¿Necesitas registrarte?",
-    alreadyHaveAccount: "¿Ya tienes una cuenta?",
-    confirmPassword: "Confirmar Contraseña",
-    processing: "Procesando...",
-    register: "Registrarse",
-    // File upload
-    uploadFile: "Subir Archivo",
-    fileName: "Nombre del Archivo",
-    fileDescription: "Descripción del Archivo",
-    fileType: "Tipo de Archivo",
-    selectFileType: "Seleccionar Tipo de Archivo",
-    preFile: "Archivo Pre",
-    regularFile: "Archivo Regular",
-    chooseFile: "Elegir Archivo",
-    upload: "Subir",
-    submitForms: "Enviar Formularios",
-    // Dashboard and Files
-    preFiles: "Archivos Pre-empleo",
-    regularFiles: "Archivos Regulares",
-    downloadFile: "Descargar",
-    noFilesFound: "No se encontraron archivos",
-    loading: "Cargando...",
-    download: "Descargar",
-    notUploaded: "No subido",
+    // Common
+    "appTitle": "MS Sphere Media",
+    "welcomeDescription": "Bienvenido al sistema de registro de Michael Studio. Suba su formulario W9 e inicie sesión para acceder a su panel.",
+    "loading": "Cargando",
+    "noFilesFound": "No se encontraron archivos",
+    "download": "Descargar",
+    "processing": "Procesando",
+    "submitForms": "Enviar Formularios",
+    "uploading": "Subiendo",
+    "uploadButton": "Subir",
+    "submitting": "Enviando",
+    "logout": "Cerrar Sesión",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "calendar": "Calendario",
+    "questionsContact": "Si tiene alguna pregunta, por favor contacte a su gerente.",
+    
+    // Home Page
+    "welcomeBanner": "¡Bienvenido a nuestra plataforma!",
+    "documentUpload": "Subir Documento",
+    "fullLegalName": "Nombre Legal Completo",
+    "fullLegalNamePlaceholder": "Ingrese su nombre legal completo",
+    "uploadW9": "Subir Formulario W9",
+    "required": "Requerido",
+    "downloadW9": "Descargar Formulario W9",
+    "choosePdfFile": "Elegir Archivo PDF",
+    "userAuthentication": "Autenticación de Usuario",
+    "payrollInfoTitle": "Información de Nómina y Calendario",
+    "adminLogin": "Inicio de Sesión de Administrador",
+    
+    // File Upload Form
+    "formError": "Error de Formulario",
+    "requiredFields": "Por favor, complete todos los campos requeridos.",
+    "uploadError": "Error al Subir",
+    "pdfOnly": "Por favor, suba un archivo PDF.",
+    "uploadSuccess": "¡Subida Exitosa!",
+    "fileUploaded": "Archivo subido exitosamente. URL Pública",
+    "submissionSuccess": "¡Envío Exitoso!",
+    "submissionEmailSent": "Su envío ha sido recibido. Se ha enviado una confirmación por correo electrónico a su dirección.",
+    
+    // User Auth
+    "userLogin": "Inicio de Sesión de Usuario",
+    "userRegistration": "Registro de Usuario",
+    "needToRegister": "¿Necesita registrarse?",
+    "alreadyHaveAccount": "¿Ya tiene una cuenta?",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "loginSuccess": "¡Inicio de sesión exitoso!",
+    "loginError": "Credenciales inválidas. Por favor, intente de nuevo.",
+    "registrationSuccess": "¡Registro exitoso! Ahora está conectado.",
+    "registrationError": "Error al registrarse. Por favor, intente de nuevo.",
+    
+    // Payroll Info
+    "payPeriods": "Períodos de Pago",
+    "monthEnd": "fin de mes",
+    "payDays": "Días de Pago",
+    "payDayExplanation": "A los empleados se les paga quincenalmente, dos semanas después del final del período de pago.",
+    "payByHours": "Por favor, envíe sus horas antes de las 5 PM del último día del período de pago.",
+    "uploadInstructions": "Por favor, suba todas las facturas y recibos al sistema.",
+    "clockInReminder": "¡Recuerde registrar su entrada y salida cada día!",
+    
+    // User Dashboard
+    "userDashboard": "Panel de Usuario",
+    "preFiles": "Archivos de Preproducción",
+    "regularFiles": "Archivos Regulares",
+    "downloadFile": "Descargar Archivo",
+    
     // Admin Dashboard
-    adminDashboard: "Panel de Administración",
-    logout: "Cerrar sesión",
-    employeeSubmissions: "Presentaciones de empleados",
-    submittedAt: "Fecha de envío",
-    w9Form: "Formulario W-9",
-    ndaForm: "Formulario NDA",
-    noSubmissions: "No se encontraron envíos",
-    userDashboard: "Panel de Usuario",
-    appTitle: "Sphere Check-in Hub",
-    welcomeBanner: "¡Bienvenido a Nuestro EQUIPO!"
+    "adminDashboard": "Panel de Administrador",
+    "uploadNewFile": "Subir Nuevo Archivo",
+    "fileName": "Nombre del Archivo",
+    "fileDescription": "Descripción del Archivo",
+    "fileType": "Tipo de Archivo",
+    "fileURL": "URL del Archivo",
+    "uploadedBy": "Subido Por",
+    "createFile": "Crear Archivo",
+    "updateFile": "Actualizar Archivo",
+    "deleteFile": "Borrar Archivo",
+    "noFiles": "No hay archivos en la base de datos",
+    "deleteConfirmation": "¿Está seguro de que quiere borrar este archivo?",
+    
+    // Basic Auth
+    "basicAuthTitle": "Autenticación de Administrador",
+    "basicAuthDescription": "Ingrese sus credenciales para acceder al panel de administrador.",
+    "username": "Nombre de Usuario",
+    
+    // Not Found Page
+    "notFoundTitle": "404 - No Encontrado",
+    "notFoundDescription": "La página que está buscando no existe.",
+    "goHome": "Ir a la Página Principal",
+    
+    // Registration and Auth
+    "userAlreadyExists": "Este nombre ya está registrado",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "passwordRequirements": "La contraseña debe tener al menos 6 caracteres",
+    "invalidCredentials": "Nombre o contraseña inválidos",
+    "logoutSuccess": "Sesión cerrada con éxito",
+    
+    // Employee Dashboard
+    "employeeDashboard": "Panel del Empleado",
+    "welcomeUser": "Bienvenido, {{name}}",
+    "taskArea": "Área de Tareas (任务区)",
+    "financeArea": "Área Financiera (财务区)",
+    
+    // Task Types
+    "warehouseTasks": "Tareas de Almacén",
+    "warehouseTasksDesc": "Tareas relacionadas con gestión de inventario y manejo de paquetes",
+    "influencerTasks": "Tareas de Influencer",
+    "influencerTasksDesc": "Tareas de creación de contenido e interacción en redes sociales",
+    "financeTasks": "Tareas Financieras",
+    "financeTasksDesc": "Tareas relacionadas con operaciones financieras e informes",
+    
+    // Task Items
+    "deadline": "Fecha límite",
+    "inventoryCheck": "Control de Inventario",
+    "inventoryCheckDesc": "Completar conteo de inventario en sección A",
+    "packagePreparation": "Preparación de Paquetes",
+    "packagePreparationDesc": "Preparar paquetes para envío",
+    "loadingSchedule": "Horario de Carga",
+    "loadingScheduleDesc": "Cargar camiones según horario de entrega",
+    
+    "postContentSchedule": "Calendario de Contenido",
+    "postContentScheduleDesc": "Crear y programar contenido para lanzamiento de producto",
+    "productReview": "Reseña de Producto",
+    "productReviewDesc": "Crear reseña en video para nuevo producto",
+    "socialMediaEngagement": "Interacción en Redes Sociales",
+    "socialMediaEngagementDesc": "Responder comentarios e interactuar con seguidores",
+    
+    "processInvoices": "Procesar Facturas",
+    "processInvoicesDesc": "Revisar y procesar facturas de proveedores",
+    "expenseReports": "Informes de Gastos",
+    "expenseReportsDesc": "Aprobar informes de gastos de empleados",
+    "payrollProcessing": "Procesamiento de Nómina",
+    "payrollProcessingDesc": "Preparar datos de nómina de fin de mes",
+    
+    "noTasksFound": "No se encontraron tareas",
+    
+    // Finance Area
+    "workHours": "Horas de Trabajo",
+    "currentWeek": "Esta Semana",
+    "lastWeek": "Semana Pasada",
+    "totalHours": "Total",
+    "payrollCycle": "Ciclo de Nómina",
+    "companyDocuments": "Documentos de la Empresa",
+    
+    // Documents
+    "reimbursementForm": "Formulario de Reembolso",
+    "reimbursementFormDesc": "Formulario para solicitar reembolsos de gastos",
+    "directDepositForm": "Formulario de Depósito Directo",
+    "directDepositFormDesc": "Actualizar su información de pago",
+    "w9Form": "Formulario W9",
+    "w9FormDesc": "Formulario fiscal para contratistas independientes",
   }
-} as const;
+};

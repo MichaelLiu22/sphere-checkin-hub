@@ -15,19 +15,21 @@ const UserAuth: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Check for existing session on component mount
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       // If user is already logged in, redirect to dashboard
-      navigate('/user-dashboard');
+      navigate('/employee-dashboard');
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
       if (isLogin) {
@@ -39,19 +41,31 @@ const UserAuth: React.FC = () => {
           .eq('password', password)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          setError(t("invalidCredentials"));
+          throw error;
+        }
 
         if (data) {
           toast.success(t("loginSuccess"));
           // Save user info to localStorage for session management
           localStorage.setItem('user', JSON.stringify(data));
-          navigate('/user-dashboard');
+          navigate('/employee-dashboard');
         } else {
+          setError(t("loginError"));
           toast.error(t("loginError"));
         }
       } else {
-        // Registration logic
+        // Registration validation
+        if (password.length < 6) {
+          setError(t("passwordTooShort"));
+          toast.error(t("passwordTooShort"));
+          setLoading(false);
+          return;
+        }
+
         if (password !== confirmPassword) {
+          setError(t("passwordMismatch"));
           toast.error(t("passwordMismatch"));
           setLoading(false);
           return;
@@ -65,7 +79,8 @@ const UserAuth: React.FC = () => {
           .single();
           
         if (existingUser) {
-          toast.error("用户名已存在，请使用其他名称");
+          setError(t("userAlreadyExists"));
+          toast.error(t("userAlreadyExists"));
           setLoading(false);
           return;
         }
@@ -75,20 +90,27 @@ const UserAuth: React.FC = () => {
           .insert([{
             full_name: fullName,
             password: password,
+            // Add a default user_type for new registrations
+            user_type: 'warehouse', // Default user type
           }])
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          setError(t("registrationError"));
+          throw error;
+        }
 
         toast.success(t("registrationSuccess"));
         // Auto-login after registration
         localStorage.setItem('user', JSON.stringify(data));
-        navigate('/user-dashboard');
+        navigate('/employee-dashboard');
       }
     } catch (error: any) {
       console.error("Auth error:", error);
-      toast.error(isLogin ? t("loginError") : t("registrationError"));
+      if (!error) {
+        toast.error(isLogin ? t("loginError") : t("registrationError"));
+      }
     } finally {
       setLoading(false);
     }
@@ -107,11 +129,18 @@ const UserAuth: React.FC = () => {
             setFullName("");
             setPassword("");
             setConfirmPassword("");
+            setError("");
           }}
         >
           {isLogin ? t("needToRegister") : t("alreadyHaveAccount")}
         </Button>
       </div>
+
+      {error && (
+        <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-md text-sm">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -137,6 +166,11 @@ const UserAuth: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          {!isLogin && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("passwordRequirements")}
+            </p>
+          )}
         </div>
 
         {!isLogin && (

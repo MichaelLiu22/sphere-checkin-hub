@@ -12,6 +12,7 @@ import BasicAuth from "./components/BasicAuth";
 import Dashboard from "./pages/Dashboard";
 import UserDashboard from "./pages/UserDashboard";
 import Home from "./pages/Home";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/user-dashboard" element={<UserDashboard />} />
+            <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
             <Route 
               path="/admin" 
               element={
