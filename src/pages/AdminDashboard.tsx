@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,6 +96,7 @@ const AdminDashboard: React.FC = () => {
         
       if (error) throw error;
       
+      console.log("W9 files data:", data);
       setW9Files(data || []);
     } catch (error: any) {
       console.error("Error fetching W9 files:", error);
@@ -200,7 +202,7 @@ const AdminDashboard: React.FC = () => {
         const { error: updateError } = await supabase
           .from('users')
           .update({
-            notes: `W9 File URL: ${urlData.publicUrl}` // Store URL in notes as workaround
+            notes: `W9 File URL: ${urlData.publicUrl}` // Store URL in notes field as workaround
           })
           .eq('id', targetUser);
           

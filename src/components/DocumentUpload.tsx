@@ -36,7 +36,7 @@ const DocumentUpload: React.FC = () => {
     try {
       // Upload W9 file
       const w9FileName = `${fullLegalName}_w9.pdf`;
-      const { error: w9Error, data: w9Data } = await supabase.storage
+      const { error: w9Error } = await supabase.storage
         .from("pdffileupload")
         .upload(`uploads/${w9FileName}`, w9File);
 
@@ -50,7 +50,7 @@ const DocumentUpload: React.FC = () => {
 
       // Upload NDA file
       const ndaFileName = `${fullLegalName}_nda.pdf`;
-      const { error: ndaError, data: ndaData } = await supabase.storage
+      const { error: ndaError } = await supabase.storage
         .from("pdffileupload")
         .upload(`uploads/${ndaFileName}`, ndaFile);
 
@@ -62,7 +62,7 @@ const DocumentUpload: React.FC = () => {
         .from("pdffileupload")
         .getPublicUrl(`uploads/${ndaFileName}`).data.publicUrl;
 
-      // Update the SphereCheckIN table (keep existing functionality)
+      // Update the SphereCheckIN table with both files
       const { error: sphereError } = await supabase
         .from("SphereCheckIN")
         .upsert({

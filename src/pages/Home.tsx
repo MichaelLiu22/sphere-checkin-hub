@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,12 +50,11 @@ const Home: React.FC = () => {
           upsert: true,
         });
 
-      setIsUploading(false);
-
       if (error || !data) {
         toast(t("uploadError"), {
           description: error?.message || "Unknown error",
         });
+        setIsUploading(false);
         return;
       }
 
@@ -68,16 +66,62 @@ const Home: React.FC = () => {
 
       const publicUrl = publicUrlResponse.data.publicUrl;
 
+      // Add to SphereCheckIN table
+      const { error: sphereError } = await supabase
+        .from("SphereCheckIN")
+        .upsert({
+          full_legal_name: fullLegalName,
+          w9_file: publicUrl
+        });
+
+      if (sphereError) {
+        console.error("SphereCheckIN update error:", sphereError);
+        toast(t("uploadError"), {
+          description: sphereError?.message || "Unknown error",
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Create or update user in users table
+      const { data: existingUser, error: findUserError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("full_name", fullLegalName)
+        .maybeSingle();
+
+      if (!findUserError) {
+        if (existingUser) {
+          // Update existing user
+          await supabase
+            .from("users")
+            .update({
+              notes: `W9 File URL: ${publicUrl}`
+            })
+            .eq("id", existingUser.id);
+        } else {
+          // Create new user
+          await supabase
+            .from("users")
+            .insert({
+              full_name: fullLegalName,
+              notes: `W9 File URL: ${publicUrl}`,
+              password_hash: "temporary" // Required field
+            });
+        }
+      }
+
       toast(t("uploadSuccess"), {
-        description: `${t("fileUploaded")}: ${publicUrl}`,
+        description: t("fileUploaded"),
       });
 
     } catch (error: any) {
-      setIsUploading(false);
       console.error("Upload failed:", error);
       toast(t("uploadError"), {
         description: error?.message || "Unknown error",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
