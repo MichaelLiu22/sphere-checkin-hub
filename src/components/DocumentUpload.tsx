@@ -33,21 +33,76 @@ const DocumentUpload: React.FC = () => {
 
     setLoading(true);
     try {
-      // 上传 W9 文件
+      // Upload W9 file
       const w9FileName = `${fullLegalName}_w9.pdf`;
-      const { error: w9Error } = await supabase.storage
+      const { error: w9Error, data: w9Data } = await supabase.storage
         .from("pdffileupload")
         .upload(`uploads/${w9FileName}`, w9File);
 
       if (w9Error) throw w9Error;
 
-      // 上传 NDA 文件
+      // Get public URL for W9
+      const w9PublicUrl = supabase
+        .storage
+        .from("pdffileupload")
+        .getPublicUrl(`uploads/${w9FileName}`).data.publicUrl;
+
+      // Upload NDA file
       const ndaFileName = `${fullLegalName}_nda.pdf`;
-      const { error: ndaError } = await supabase.storage
+      const { error: ndaError, data: ndaData } = await supabase.storage
         .from("pdffileupload")
         .upload(`uploads/${ndaFileName}`, ndaFile);
 
       if (ndaError) throw ndaError;
+
+      // Get public URL for NDA
+      const ndaPublicUrl = supabase
+        .storage
+        .from("pdffileupload")
+        .getPublicUrl(`uploads/${ndaFileName}`).data.publicUrl;
+
+      // Update the SphereCheckIN table (keep existing functionality)
+      const { error: sphereError } = await supabase
+        .from("SphereCheckIN")
+        .upsert({
+          full_legal_name: fullLegalName,
+          w9_file: w9PublicUrl,
+          nda_file: ndaPublicUrl
+        });
+
+      if (sphereError) throw sphereError;
+
+      // Update or find the user in users table by full_name
+      const { data: userData, error: userLookupError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("full_name", fullLegalName)
+        .maybeSingle();
+
+      if (userLookupError) throw userLookupError;
+
+      if (userData) {
+        // User exists, update their record with W9 file URL
+        const { error: userUpdateError } = await supabase
+          .from("users")
+          .update({ 
+            w9_file_url: w9PublicUrl 
+          })
+          .eq("id", userData.id);
+
+        if (userUpdateError) throw userUpdateError;
+      } else {
+        // User does not exist yet, create a new record
+        const { error: userCreateError } = await supabase
+          .from("users")
+          .insert({ 
+            full_name: fullLegalName,
+            w9_file_url: w9PublicUrl,
+            password_hash: "temporary" // Required field, will be updated later
+          });
+
+        if (userCreateError) throw userCreateError;
+      }
 
       toast.success(t("uploadSuccess"));
       setFullLegalName("");
@@ -108,4 +163,4 @@ const DocumentUpload: React.FC = () => {
   );
 };
 
-export default DocumentUpload; 
+export default DocumentUpload;

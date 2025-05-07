@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Download, LogOut, FileText, Users, Upload } from "lucide-react";
+import { Download, LogOut, FileText, Users, Upload, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -44,6 +44,7 @@ interface User {
   task_permission: boolean;
   notes: string | null;
   created_at: string;
+  w9_file_url?: string | null;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -87,15 +88,22 @@ const AdminDashboard: React.FC = () => {
   const fetchW9Files = async () => {
     setW9Loading(true);
     try {
-      // Get all files from SphereCheckIN where w9_file is not null
-      const { data: w9Data, error: w9Error } = await supabase
-        .from('SphereCheckIN')
-        .select('full_legal_name, created_at, w9_file')
-        .not('w9_file', 'is', null);
+      // Get users who have W9 files (not null)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('full_name, created_at, w9_file_url')
+        .not('w9_file_url', 'is', null);
         
-      if (w9Error) throw w9Error;
+      if (userError) throw userError;
       
-      setW9Files(w9Data || []);
+      // Transform to match the expected W9Record format
+      const transformedData: W9Record[] = (userData || []).map(u => ({
+        full_legal_name: u.full_name,
+        created_at: u.created_at,
+        w9_file: u.w9_file_url || ''
+      }));
+      
+      setW9Files(transformedData || []);
     } catch (error: any) {
       console.error("Error fetching W9 files:", error);
       toast.error(`Error fetching W9 files: ${error.message}`);
@@ -194,8 +202,20 @@ const AdminDashboard: React.FC = () => {
       const { data: urlData } = supabase.storage
         .from("pdffileupload")
         .getPublicUrl(`uploads/${fileName}`);
-        
-      // Update or insert into SphereCheckIN table
+      
+      // Update the user's record with the W9 file URL if applicable
+      if (fileType === 'w9') {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            w9_file_url: urlData.publicUrl
+          })
+          .eq('id', targetUser);
+          
+        if (updateError) throw updateError;
+      }
+      
+      // Update or insert into SphereCheckIN table (keeping existing functionality)
       const updateData = {
         full_legal_name: userData.full_name,
         user_id: targetUser
@@ -530,6 +550,14 @@ const AdminDashboard: React.FC = () => {
               <Button variant="outline" className="w-full" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 {t("logout")}
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full mt-2" 
+                onClick={() => navigate('/')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t("backToHome")}
               </Button>
             </div>
           </Sidebar>

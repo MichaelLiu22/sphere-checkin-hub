@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface BasicAuthProps {
   username: string;
@@ -36,7 +38,15 @@ const BasicAuth: React.FC<BasicAuthProps> = ({ username, password, children }) =
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">{t("adminLogin")}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-center flex-1">{t("adminLogin")}</CardTitle>
+            <Link to="/">
+              <Button variant="ghost" size="sm" className="flex items-center">
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                {t("backToHome")}
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
