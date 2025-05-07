@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,11 +87,12 @@ const AdminDashboard: React.FC = () => {
   const fetchW9Files = async () => {
     setW9Loading(true);
     try {
-      // Fetch from SphereCheckIN table which we know contains W9 file data
+      // Fetch from SphereCheckIN table with filter: w9_file IS NOT NULL
       const { data, error } = await supabase
         .from('SphereCheckIN')
         .select('full_legal_name, created_at, w9_file')
-        .not('w9_file', 'is', null);
+        .not('w9_file', 'is', null)
+        .order('created_at', { ascending: false });
         
       if (error) throw error;
       
