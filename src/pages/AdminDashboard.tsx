@@ -43,6 +43,7 @@ interface User {
   upload_permission: boolean;
   task_permission: boolean;
   notes: string | null;
+  created_at: string; // Added this property to fix the TypeScript error
 }
 
 interface W9Record {
