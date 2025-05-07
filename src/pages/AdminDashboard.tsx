@@ -87,7 +87,7 @@ const AdminDashboard: React.FC = () => {
   const fetchW9Files = async () => {
     setW9Loading(true);
     try {
-      // Fetch from SphereCheckIN table with filter: w9_file IS NOT NULL
+      // Fetch directly from SphereCheckIN table where w9_file IS NOT NULL
       const { data, error } = await supabase
         .from('SphereCheckIN')
         .select('full_legal_name, created_at, w9_file')
@@ -307,16 +307,12 @@ const AdminDashboard: React.FC = () => {
                 <TableRow key={`w9-${index}`}>
                   <TableCell>{record.full_legal_name}</TableCell>
                   <TableCell>
-                    {record.w9_file ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={record.w9_file} target="_blank" rel="noopener noreferrer">
-                          <Download className="mr-2" size={16} />
-                          {t("download")}
-                        </a>
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground">{t("notUploaded")}</span>
-                    )}
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={record.w9_file} target="_blank" rel="noopener noreferrer">
+                        <Download className="mr-2" size={16} />
+                        {t("download")}
+                      </a>
+                    </Button>
                   </TableCell>
                   <TableCell>{formatDate(record.created_at)}</TableCell>
                 </TableRow>
