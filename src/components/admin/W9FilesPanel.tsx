@@ -8,23 +8,34 @@ import { Download, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Interface definition
+// Interface definition for database W9 records
 interface W9Record {
   full_legal_name: string;
   created_at: string;
   w9_file: string;
 }
 
+// Interface for storage files
+interface StorageFile {
+  name: string;
+  created_at: string;
+  url: string;
+}
+
 const W9FilesPanel: React.FC = () => {
   const { t } = useLanguage();
   
   const [w9Files, setW9Files] = useState<W9Record[]>([]);
+  const [storageFiles, setStorageFiles] = useState<StorageFile[]>([]);
   const [w9Loading, setW9Loading] = useState(true);
 
   useEffect(() => {
+    // Fetch both database records and storage files
     fetchW9Files();
+    fetchStorageW9Files();
   }, []);
 
+  // Fetch records from SphereCheckIN table
   const fetchW9Files = async () => {
     setW9Loading(true);
     try {
@@ -47,10 +58,42 @@ const W9FilesPanel: React.FC = () => {
     }
   };
 
+  // Fetch files directly from storage bucket
+  const fetchStorageW9Files = async () => {
+    try {
+      // List all files in the uploads folder of pdffileupload bucket
+      const { data, error } = await supabase.storage
+        .from('pdffileupload')
+        .list('uploads', {
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+      
+      if (error) throw error;
+      
+      // Filter only W9 files (files with w9 in their name)
+      const w9Files = data
+        .filter(file => file.name.toLowerCase().includes('w9'))
+        .map(file => ({
+          name: file.name.replace(/_w9\.pdf$/, ''),  // Extract user name from filename
+          created_at: file.created_at,
+          url: supabase.storage.from('pdffileupload').getPublicUrl(`uploads/${file.name}`).data.publicUrl
+        }));
+      
+      console.log("Storage W9 files:", w9Files);
+      setStorageFiles(w9Files);
+    } catch (error: any) {
+      console.error("Error fetching storage W9 files:", error);
+      toast.error(`Error fetching storage W9 files: ${error.message}`);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
+
+  // Determine if we need to show the combined table
+  const hasFiles = w9Files.length > 0 || storageFiles.length > 0;
 
   return (
     <Card className="h-full">
@@ -74,21 +117,40 @@ const W9FilesPanel: React.FC = () => {
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-6">{t("loading")}</TableCell>
               </TableRow>
-            ) : w9Files.length > 0 ? (
-              w9Files.map((record, index) => (
-                <TableRow key={`w9-${index}`}>
-                  <TableCell>{record.full_legal_name}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={record.w9_file} target="_blank" rel="noopener noreferrer">
-                        <Download className="mr-2" size={16} />
-                        {t("download")}
-                      </a>
-                    </Button>
-                  </TableCell>
-                  <TableCell>{formatDate(record.created_at)}</TableCell>
-                </TableRow>
-              ))
+            ) : hasFiles ? (
+              <>
+                {/* Show database records */}
+                {w9Files.map((record, index) => (
+                  <TableRow key={`db-w9-${index}`}>
+                    <TableCell>{record.full_legal_name}</TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={record.w9_file} target="_blank" rel="noopener noreferrer">
+                          <Download className="mr-2" size={16} />
+                          {t("download")} (DB)
+                        </a>
+                      </Button>
+                    </TableCell>
+                    <TableCell>{formatDate(record.created_at)}</TableCell>
+                  </TableRow>
+                ))}
+                
+                {/* Show storage files */}
+                {storageFiles.map((file, index) => (
+                  <TableRow key={`storage-w9-${index}`}>
+                    <TableCell>{file.name}</TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={file.url} target="_blank" rel="noopener noreferrer">
+                          <Download className="mr-2" size={16} />
+                          {t("download")} (Storage)
+                        </a>
+                      </Button>
+                    </TableCell>
+                    <TableCell>{formatDate(file.created_at)}</TableCell>
+                  </TableRow>
+                ))}
+              </>
             ) : (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-6">No W9 files found</TableCell>
