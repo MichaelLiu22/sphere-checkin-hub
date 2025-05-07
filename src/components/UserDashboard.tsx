@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -35,7 +36,14 @@ const UserDashboard: React.FC = () => {
         .or(`file_type.eq.pre,file_type.eq.regular`);
 
       if (error) throw error;
-      setFiles(data || []);
+      
+      // Cast the file_type to the expected type
+      const typedFiles = data?.map(file => ({
+        ...file,
+        file_type: file.file_type as 'pre' | 'regular'
+      })) || [];
+      
+      setFiles(typedFiles);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -115,4 +123,4 @@ const UserDashboard: React.FC = () => {
   );
 };
 
-export default UserDashboard; 
+export default UserDashboard;
