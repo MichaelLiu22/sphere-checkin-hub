@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -82,11 +83,12 @@ const DocumentUpload: React.FC = () => {
       if (userLookupError) throw userLookupError;
 
       if (userData) {
-        // User exists, update their record with W9 file URL
+        // Since w9_file_url doesn't exist in the users table, we'll update existing field
+        // that matches our purpose or just not update this field
         const { error: userUpdateError } = await supabase
           .from("users")
           .update({ 
-            w9_file_url: w9PublicUrl 
+            notes: `W9 File URL: ${w9PublicUrl}` // Store the URL in notes field as a workaround
           })
           .eq("id", userData.id);
 
@@ -97,7 +99,7 @@ const DocumentUpload: React.FC = () => {
           .from("users")
           .insert({ 
             full_name: fullLegalName,
-            w9_file_url: w9PublicUrl,
+            notes: `W9 File URL: ${w9PublicUrl}`, // Store the URL in notes field as a workaround
             password_hash: "temporary" // Required field, will be updated later
           });
 

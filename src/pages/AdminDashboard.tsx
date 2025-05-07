@@ -44,7 +44,6 @@ interface User {
   task_permission: boolean;
   notes: string | null;
   created_at: string;
-  w9_file_url?: string | null;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -88,22 +87,15 @@ const AdminDashboard: React.FC = () => {
   const fetchW9Files = async () => {
     setW9Loading(true);
     try {
-      // Get users who have W9 files (not null)
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('full_name, created_at, w9_file_url')
-        .not('w9_file_url', 'is', null);
+      // Fetch from SphereCheckIN table which we know contains W9 file data
+      const { data, error } = await supabase
+        .from('SphereCheckIN')
+        .select('full_legal_name, created_at, w9_file')
+        .not('w9_file', 'is', null);
         
-      if (userError) throw userError;
+      if (error) throw error;
       
-      // Transform to match the expected W9Record format
-      const transformedData: W9Record[] = (userData || []).map(u => ({
-        full_legal_name: u.full_name,
-        created_at: u.created_at,
-        w9_file: u.w9_file_url || ''
-      }));
-      
-      setW9Files(transformedData || []);
+      setW9Files(data || []);
     } catch (error: any) {
       console.error("Error fetching W9 files:", error);
       toast.error(`Error fetching W9 files: ${error.message}`);
@@ -203,12 +195,12 @@ const AdminDashboard: React.FC = () => {
         .from("pdffileupload")
         .getPublicUrl(`uploads/${fileName}`);
       
-      // Update the user's record with the W9 file URL if applicable
+      // Update the user's record with relevant information
       if (fileType === 'w9') {
         const { error: updateError } = await supabase
           .from('users')
           .update({
-            w9_file_url: urlData.publicUrl
+            notes: `W9 File URL: ${urlData.publicUrl}` // Store URL in notes as workaround
           })
           .eq('id', targetUser);
           
