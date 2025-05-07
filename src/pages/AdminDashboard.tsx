@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -280,8 +279,8 @@ const AdminDashboard: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead>{t("fullLegalName")}</TableHead>
-              <TableHead>{t("submittedAt")}</TableHead>
               <TableHead>W9 {t("file")}</TableHead>
+              <TableHead>{t("submittedAt")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -293,7 +292,6 @@ const AdminDashboard: React.FC = () => {
               w9Files.map((record, index) => (
                 <TableRow key={`w9-${index}`}>
                   <TableCell>{record.full_legal_name}</TableCell>
-                  <TableCell>{formatDate(record.created_at)}</TableCell>
                   <TableCell>
                     {record.w9_file ? (
                       <Button variant="outline" size="sm" asChild>
@@ -306,6 +304,7 @@ const AdminDashboard: React.FC = () => {
                       <span className="text-muted-foreground">{t("notUploaded")}</span>
                     )}
                   </TableCell>
+                  <TableCell>{formatDate(record.created_at)}</TableCell>
                 </TableRow>
               ))
             ) : (
