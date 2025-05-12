@@ -170,6 +170,7 @@ export type Database = {
         Row: {
           created_at: string
           department_id: string | null
+          feature: Database["public"]["Enums"]["user_feature"] | null
           full_name: string
           id: string
           notes: string | null
@@ -181,6 +182,7 @@ export type Database = {
         Insert: {
           created_at?: string
           department_id?: string | null
+          feature?: Database["public"]["Enums"]["user_feature"] | null
           full_name: string
           id?: string
           notes?: string | null
@@ -192,6 +194,7 @@ export type Database = {
         Update: {
           created_at?: string
           department_id?: string | null
+          feature?: Database["public"]["Enums"]["user_feature"] | null
           full_name?: string
           id?: string
           notes?: string | null
@@ -231,6 +234,8 @@ export type Database = {
         | "finance"
         | "others"
         | "unassigned"
+        | "staff"
+      user_feature: "None"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -356,7 +361,9 @@ export const Constants = {
         "finance",
         "others",
         "unassigned",
+        "staff",
       ],
+      user_feature: ["None"],
     },
   },
 } as const

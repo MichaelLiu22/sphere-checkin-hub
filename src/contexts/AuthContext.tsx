@@ -76,12 +76,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (data) {
-        // Create user object
+        // Map database user_type to our application user_type
+        let userType: 'admin' | 'staff' | 'visitor';
+        
+        if (data.user_type === 'admin') {
+          userType = 'admin';
+        } else if (data.user_type === 'staff') {
+          userType = 'staff';
+        } else {
+          userType = 'visitor';
+        }
+        
+        // Create user object with the correct types
         const userData: User = {
           id: data.id,
           full_name: data.full_name,
-          user_type: data.user_type,
-          feature: data.feature
+          user_type: userType,
+          feature: data.feature || null
         };
 
         // Store user in local storage
@@ -89,11 +100,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(userData);
 
         // Redirect based on user type
-        if (data.user_type === 'admin') {
+        if (userData.user_type === 'admin') {
           navigate('/admin-dashboard');
-        } else if (data.user_type === 'staff') {
+        } else if (userData.user_type === 'staff') {
           navigate('/staff-dashboard');
-        } else if (data.user_type === 'visitor') {
+        } else if (userData.user_type === 'visitor') {
           navigate('/guest');
         }
         

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-// Interface definition
+// Updated interface to match the database schema
 interface User {
   id: string;
   full_name: string;
@@ -27,6 +27,8 @@ interface User {
   task_permission: boolean;
   notes: string | null;
   created_at: string;
+  department_id?: string | null;
+  password_hash?: string;
 }
 
 interface UserManagementPanelProps {
@@ -57,7 +59,13 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         
       if (error) throw error;
       
-      setAllUsers(data || []);
+      // Make sure data has all required properties including feature
+      const usersWithFeature = (data || []).map(user => ({
+        ...user,
+        feature: user.feature || null
+      }));
+      
+      setAllUsers(usersWithFeature);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       toast.error(`Failed to load users: ${error.message}`);
