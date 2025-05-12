@@ -63,56 +63,63 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
     try {
       // Query the users table for the matching full_name and password_hash
+      // Using maybeSingle() instead of single() to avoid 406 errors
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('full_name', fullName)
         .eq('password_hash', password)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        toast.error("Invalid username or password");
-        throw error;
+        toast.error("数据库查询错误");
+        throw new Error("数据库查询错误");
       }
 
-      if (data) {
-        // Map database user_type to our application user_type
-        let userType: 'admin' | 'staff' | 'visitor';
-        
-        if (data.user_type === 'admin') {
-          userType = 'admin';
-        } else if (data.user_type === 'staff') {
-          userType = 'staff';
-        } else {
-          userType = 'visitor';
-        }
-        
-        // Create user object with the correct types
-        const userData: User = {
-          id: data.id,
-          full_name: data.full_name,
-          user_type: userType,
-          feature: data.feature || null
-        };
-
-        // Store user in local storage
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-
-        // Redirect based on user type
-        if (userData.user_type === 'admin') {
-          navigate('/admin-dashboard');
-        } else if (userData.user_type === 'staff') {
-          navigate('/staff-dashboard');
-        } else if (userData.user_type === 'visitor') {
-          navigate('/guest');
-        }
-        
-        toast.success("Login successful");
+      if (!data) {
+        toast.error("用户名或密码不正确");
+        throw new Error("用户名或密码不正确");
       }
+
+      // Map database user_type to our application user_type
+      let userType: 'admin' | 'staff' | 'visitor';
+      
+      if (data.user_type === 'admin') {
+        userType = 'admin';
+      } else if (
+        ['manager', 'operator', 'host', 'influencer', 'warehouse', 'finance', 'others'].includes(data.user_type)
+      ) {
+        userType = 'staff';
+      } else {
+        userType = 'visitor';
+      }
+      
+      // Create user object with the correct types
+      const userData: User = {
+        id: data.id,
+        full_name: data.full_name,
+        user_type: userType,
+        feature: data.feature || null
+      };
+
+      // Store user in local storage
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+
+      // Redirect based on user type
+      if (userType === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (userType === 'staff') {
+        navigate('/staff-dashboard');
+      } else if (userType === 'visitor') {
+        navigate('/guest');
+      }
+      
+      toast.success("登录成功");
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || "登录失败");
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -123,7 +130,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('user');
     setUser(null);
     navigate('/');
-    toast.success("Logged out successfully");
+    toast.success("已成功退出登录");
   };
 
   return (
