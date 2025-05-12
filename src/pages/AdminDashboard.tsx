@@ -7,6 +7,9 @@ import W9FilesPanel from "@/components/admin/W9FilesPanel";
 import FileUploadPanel from "@/components/admin/FileUploadPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 // Interface definitions
 interface User {
@@ -24,6 +27,7 @@ const AdminDashboard: React.FC = () => {
   const [unassignedUsers, setUnassignedUsers] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const { logout } = useAuth();
   
   // Active tab/panel state
   const [activeTab, setActiveTab] = useState<string>("w9");
@@ -62,16 +66,24 @@ const AdminDashboard: React.FC = () => {
           <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
           
           {/* Main Content */}
-          <div className="flex-1 p-6 overflow-auto">
-            {activeTab === "w9" && <W9FilesPanel />}
-            {activeTab === "upload" && <FileUploadPanel allUsers={allUsers} />}
-            {activeTab === "users" && (
-              <UserManagementPanel 
-                unassignedUsers={unassignedUsers}
-                allUsers={allUsers}
-                fetchUsers={fetchUsers}
-              />
-            )}
+          <div className="flex-1 flex flex-col">
+            <div className="border-b p-4 flex justify-between items-center">
+              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+              <Button variant="outline" onClick={logout} className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+            
+            <div className="flex-1 p-6 overflow-auto">
+              {activeTab === "w9" && <W9FilesPanel />}
+              {activeTab === "upload" && <FileUploadPanel allUsers={allUsers} />}
+              {activeTab === "users" && (
+                <UserManagementPanel 
+                  fetchUsers={fetchUsers}
+                />
+              )}
+            </div>
           </div>
         </div>
       </SidebarProvider>

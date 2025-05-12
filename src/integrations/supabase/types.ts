@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      departments: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       files: {
         Row: {
           created_at: string
@@ -102,7 +120,15 @@ export type Database = {
           user_id?: string | null
           w9_file?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_file_access: {
         Row: {
@@ -143,45 +169,68 @@ export type Database = {
       users: {
         Row: {
           created_at: string
+          department_id: string | null
           full_name: string
           id: string
           notes: string | null
           password_hash: string
           task_permission: boolean | null
           upload_permission: boolean | null
-          user_type: string | null
+          user_type: Database["public"]["Enums"]["employee_role"] | null
         }
         Insert: {
           created_at?: string
+          department_id?: string | null
           full_name: string
           id?: string
           notes?: string | null
           password_hash: string
           task_permission?: boolean | null
           upload_permission?: boolean | null
-          user_type?: string | null
+          user_type?: Database["public"]["Enums"]["employee_role"] | null
         }
         Update: {
           created_at?: string
+          department_id?: string | null
           full_name?: string
           id?: string
           notes?: string | null
           password_hash?: string
           task_permission?: boolean | null
           upload_permission?: boolean | null
-          user_type?: string | null
+          user_type?: Database["public"]["Enums"]["employee_role"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      employee_role:
+        | "admin"
+        | "manager"
+        | "operator"
+        | "host"
+        | "influencer"
+        | "warehouse"
+        | "finance"
+        | "others"
+        | "unassigned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -296,6 +345,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      employee_role: [
+        "admin",
+        "manager",
+        "operator",
+        "host",
+        "influencer",
+        "warehouse",
+        "finance",
+        "others",
+        "unassigned",
+      ],
+    },
   },
 } as const
