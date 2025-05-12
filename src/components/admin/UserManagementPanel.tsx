@@ -22,7 +22,7 @@ interface User {
   id: string;
   full_name: string;
   user_type: string;
-  feature: string | null;
+  feature: "None" | null;
   upload_permission: boolean;
   task_permission: boolean;
   notes: string | null;
@@ -42,7 +42,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [userFeature, setUserFeature] = useState<string>("");
+  const [userFeature, setUserFeature] = useState<"None" | null>("None");
   const [usersLoading, setUsersLoading] = useState(true);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
     setSelectedUser(userId);
     const user = allUsers.find(u => u.id === userId);
     if (user) {
-      setUserFeature(user.feature || "");
+      setUserFeature(user.feature);
     }
   };
 
@@ -89,7 +89,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       const { error } = await supabase
         .from('users')
         .update({
-          feature: userFeature || null
+          feature: userFeature
         })
         .eq('id', selectedUser);
         
@@ -166,13 +166,17 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="feature">Update Feature</Label>
-                    <Input 
-                      id="feature"
-                      value={userFeature}
-                      onChange={(e) => setUserFeature(e.target.value)}
-                      placeholder="Enter feature value"
-                      className="mt-1"
-                    />
+                    <Select 
+                      value={userFeature || "None"}
+                      onValueChange={(value) => setUserFeature(value as "None")}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select feature" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="None">None</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex items-end">
                     <Button 
