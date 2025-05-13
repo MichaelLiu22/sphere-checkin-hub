@@ -81,18 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error("用户名或密码不正确");
       }
 
-      // Map database user_type to our application user_type
-      let userType: 'admin' | 'staff' | 'visitor';
-      
-      if (data.user_type === 'admin') {
-        userType = 'admin';
-      } else if (
-        ['manager', 'operator', 'host', 'influencer', 'warehouse', 'finance', 'others'].includes(data.user_type)
-      ) {
-        userType = 'staff';
-      } else {
-        userType = 'visitor';
-      }
+      // Replace the mapping logic with direct type assertion
+      const userType = data.user_type as 'admin' | 'staff' | 'visitor';
       
       // Create user object with the correct types
       const userData: User = {
