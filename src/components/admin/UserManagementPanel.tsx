@@ -31,6 +31,12 @@ interface User {
   password_hash?: string;
 }
 
+interface Department {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
 interface UserManagementPanelProps {
   fetchUsers: () => Promise<void>;
 }
@@ -41,12 +47,16 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   const { t } = useLanguage();
   
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [userFeature, setUserFeature] = useState<"None" | null>("None");
+  const [userDepartment, setUserDepartment] = useState<string | null>(null);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
 
   useEffect(() => {
     loadUsers();
+    loadDepartments();
   }, []);
 
   const loadUsers = async () => {
@@ -74,11 +84,31 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
     }
   };
 
+  const loadDepartments = async () => {
+    setDepartmentsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('*')
+        .order('name', { ascending: true });
+        
+      if (error) throw error;
+      
+      setDepartments(data || []);
+    } catch (error: any) {
+      console.error("Error fetching departments:", error);
+      toast.error(`Failed to load departments: ${error.message}`);
+    } finally {
+      setDepartmentsLoading(false);
+    }
+  };
+
   const handleUserSelect = (userId: string) => {
     setSelectedUser(userId);
     const user = allUsers.find(u => u.id === userId);
     if (user) {
       setUserFeature(user.feature);
+      setUserDepartment(user.department_id);
     }
   };
 
@@ -103,13 +133,37 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
     }
   };
 
+  const handleUpdateUserDepartment = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          department_id: userDepartment
+        })
+        .eq('id', selectedUser);
+        
+      if (error) throw error;
+      
+      toast.success("User department updated successfully");
+      loadUsers(); // Refresh the user list
+      fetchUsers(); // Update parent component's user list
+    } catch (error: any) {
+      toast.error(`Failed to update user department: ${error.message}`);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
 
-  // Filter to only show staff users for feature management
-  const staffUsers = allUsers.filter(user => user.user_type === 'staff');
+  const getDepartmentName = (departmentId: string | null | undefined): string => {
+    if (!departmentId) return "—";
+    const dept = departments.find(d => d.id === departmentId);
+    return dept ? dept.name : "Unknown";
+  };
   
   return (
     <Card className="h-full">
@@ -131,6 +185,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>User Type</TableHead>
+                    <TableHead>Department</TableHead>
                     <TableHead>Feature</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Action</TableHead>
@@ -141,6 +196,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                     <TableRow key={user.id} className={selectedUser === user.id ? "bg-blue-50" : ""}>
                       <TableCell>{user.full_name}</TableCell>
                       <TableCell>{user.user_type}</TableCell>
+                      <TableCell>{getDepartmentName(user.department_id)}</TableCell>
                       <TableCell>{user.feature || "—"}</TableCell>
                       <TableCell>{formatDate(user.created_at)}</TableCell>
                       <TableCell>
@@ -159,11 +215,37 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
             )}
           </div>
 
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-medium mb-4">Manage Staff Features</h3>
-            {selectedUser ? (
+          {selectedUser && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium mb-4">Edit User</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="department">Department</Label>
+                    <Select 
+                      value={userDepartment || ""}
+                      onValueChange={setUserDepartment}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="null">None</SelectItem>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={handleUpdateUserDepartment}
+                      className="mt-2"
+                    >
+                      Update Department
+                    </Button>
+                  </div>
+                  
                   <div>
                     <Label htmlFor="feature">Update Feature</Label>
                     <Select 
@@ -177,23 +259,17 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                         <SelectItem value="None">None</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex items-end">
                     <Button 
                       onClick={handleUpdateUserFeature}
-                      className="w-full md:w-auto"
+                      className="mt-2"
                     >
                       Update Feature
                     </Button>
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                Select a user to manage their feature settings
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
