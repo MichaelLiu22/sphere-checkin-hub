@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,7 +132,7 @@ const PermissionConfigPanel: React.FC = () => {
    * 处理模块权限勾选变化
    * @param userId - 用户ID
    * @param moduleId - 模块ID
-   * @param checked - 是否勾选
+   * @param checked - 是��勾选
    */
   const handleModuleChange = (userId: string, moduleId: string, checked: boolean) => {
     setUserModules(prev => {
@@ -269,7 +268,7 @@ const PermissionConfigPanel: React.FC = () => {
                           <SelectValue placeholder="选择部门" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="unassigned">未分配</SelectItem>
+                          <SelectItem value="">未分配</SelectItem>
                           {departments.map((dept) => (
                             <SelectItem key={dept.id} value={dept.id}>
                               {dept.name}

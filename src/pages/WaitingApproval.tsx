@@ -18,7 +18,7 @@ const WaitingApproval: React.FC = () => {
         <CardHeader>
           <CardTitle className="text-center text-2xl">等待管理员审核</CardTitle>
           <CardDescription className="text-center">
-            您的账号正在等待管理员审核
+            您的账号正在等待管理员审批部门分配
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -27,7 +27,7 @@ const WaitingApproval: React.FC = () => {
               <span className="font-semibold">{username}</span>，您已成功注册！
             </p>
             <p className="text-center mt-2">
-              您的账号需要管理员审核后才能使用。审核通过后，您将收到通知。
+              您的账号需要管理员分配部门后才能使用。请耐心等待。
             </p>
           </div>
           
@@ -35,7 +35,7 @@ const WaitingApproval: React.FC = () => {
             <h3 className="text-sm font-medium">注意事项：</h3>
             <ul className="list-disc pl-5 space-y-1 text-sm">
               <li>审核过程通常需要1-2个工作日</li>
-              <li>审核通过后，您可以使用您的用户名和密码登录系统</li>
+              <li>部门分配后，您可以使用您的用户名和密码登录系统</li>
               <li>如有疑问，请联系系统管理员</li>
             </ul>
           </div>

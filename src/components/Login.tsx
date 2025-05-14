@@ -94,18 +94,28 @@ const Login: React.FC = () => {
         throw new Error(t("userAlreadyExists"));
       }
 
+      // 获取"None"部门的ID
+      const { data: noneDept, error: deptError } = await supabase
+        .from('departments')
+        .select('id')
+        .eq('name', 'None')
+        .single();
+        
+      if (deptError) {
+        throw new Error("无法获取部门信息");
+      }
+
       // 创建新用户
       const { error: insertError, data: newUser } = await supabase
         .from('users')
         .insert([{
           full_name: fullName,
           password_hash: password,
-          // 为新注册用户设置默认值
-          user_type: 'unassigned', // 默认用户类型为unassigned，等待管理员审核
-          department_id: null,   // 默认部门为null
-          enabled_modules: [],   // 默认启用模块为空数组
-          // 新增注册状态字段，标记为等待审核
-          approved: false,       // 默认为未批准状态
+          // 注册时默认为employee类型
+          user_type: 'employee',
+          // 默认部门为None，需要管理员分配
+          department_id: noneDept.id,
+          enabled_modules: [],
         }])
         .select()
         .single();
