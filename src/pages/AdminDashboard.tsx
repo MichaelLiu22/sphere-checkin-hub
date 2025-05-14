@@ -11,7 +11,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-// Interface definitions
+/**
+ * 用户接口定义
+ * 包含用户的详细信息和权限
+ */
 interface User {
   id: string;
   full_name: string;
@@ -22,24 +25,35 @@ interface User {
   created_at: string;
 }
 
+/**
+ * 管理员仪表板页面组件
+ * 
+ * 提供管理员功能，包括W9文件管理、文件上传和用户管理
+ */
 const AdminDashboard: React.FC = () => {
-  // Panel 3: User Management
+  // 用户管理面板状态
   const [unassignedUsers, setUnassignedUsers] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  
+  // 获取登出功能
   const { logout } = useAuth();
   
-  // Active tab/panel state
+  // 活动选项卡/面板状态
   const [activeTab, setActiveTab] = useState<string>("w9");
   
+  // 组件加载时获取用户数据
   useEffect(() => {
     fetchUsers();
   }, []);
   
+  /**
+   * 从数据库获取用户数据
+   */
   const fetchUsers = async () => {
     setUsersLoading(true);
     try {
-      // Get all users
+      // 获取所有用户
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -47,6 +61,7 @@ const AdminDashboard: React.FC = () => {
         
       if (userError) throw userError;
       
+      // 过滤未分配的用户
       const unassigned = userData?.filter(user => user.user_type === 'unassigned') || [];
       
       setAllUsers(userData || []);
@@ -62,11 +77,12 @@ const AdminDashboard: React.FC = () => {
     <Layout>
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
-          {/* Sidebar */}
+          {/* 侧边栏导航 */}
           <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {/* Main Content */}
+          {/* 主要内容区域 */}
           <div className="flex-1 flex flex-col">
+            {/* 顶部标题栏 */}
             <div className="border-b p-4 flex justify-between items-center">
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
               <Button variant="outline" onClick={logout} className="flex items-center gap-2">
@@ -75,6 +91,7 @@ const AdminDashboard: React.FC = () => {
               </Button>
             </div>
             
+            {/* 内容面板，根据活动选项卡显示不同面板 */}
             <div className="flex-1 p-6 overflow-auto">
               {activeTab === "w9" && <W9FilesPanel />}
               {activeTab === "upload" && <FileUploadPanel allUsers={allUsers} />}

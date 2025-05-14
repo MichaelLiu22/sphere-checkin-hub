@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Define types for our user and auth context
+/**
+ * 用户信息接口定义
+ * 包含用户基本信息和权限
+ */
 interface User {
   id: string;
   full_name: string;
@@ -12,6 +15,10 @@ interface User {
   feature: string | null;
 }
 
+/**
+ * 认证上下文类型接口定义
+ * 包含用户信息、加载状态和认证方法
+ */
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -19,7 +26,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-// Create the context with a default value
+// 创建认证上下文并设置默认值
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -27,43 +34,63 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-// Hook to use the auth context
+// 导出认证上下文使用钩子
 export const useAuth = () => useContext(AuthContext);
 
+/**
+ * 认证提供者组件的属性接口
+ */
 interface AuthProviderProps {
   children: ReactNode;
 }
 
+/**
+ * 认证提供者组件
+ * 管理用户的认证状态和相关操作
+ * @param {AuthProviderProps} props - 组件属性
+ */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // 用户状态管理
   const [user, setUser] = useState<User | null>(null);
+  // 加载状态管理
   const [loading, setLoading] = useState(true);
+  // 路由导航钩子
   const navigate = useNavigate();
 
-  // Initialize - check if user is already logged in
+  // 初始化 - 检查用户是否已登录
   useEffect(() => {
-    // Check local storage for user data
+    // 检查本地存储中的用户数据
     const checkUserSession = () => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
+          // 解析并设置用户数据
           setUser(JSON.parse(storedUser));
         } catch (error) {
           console.error("Failed to parse user data:", error);
+          // 清除无效的用户数据
           localStorage.removeItem('user');
         }
       }
+      // 完成加载过程
       setLoading(false);
     };
 
     checkUserSession();
   }, []);
 
-  // Login function using Supabase to verify credentials
+  /**
+   * 登录功能
+   * 使用Supabase验证用户凭据
+   * @param {string} fullName - 用户全名
+   * @param {string} password - 用户密码
+   */
   const login = async (fullName: string, password: string) => {
+    // 开始加载状态
     setLoading(true);
     try {
-      // Query the users table for the matching full_name and password_hash
-      // Using maybeSingle() instead of single() to avoid 406 errors
+      // 查询用户表以匹配全名和密码
+      // 使用maybeSingle()而非single()以避免406错误
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -81,10 +108,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error("用户名或密码不正确");
       }
 
-      // Replace the mapping logic with direct type assertion
+      // 将数据类型断言为用户角色类型
       const userType = data.user_type as 'admin' | 'staff' | 'visitor';
       
-      // Create user object with the correct types
+      // 创建具有正确类型的用户对象
       const userData: User = {
         id: data.id,
         full_name: data.full_name,
@@ -92,11 +119,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         feature: data.feature || null
       };
 
-      // Store user in local storage
+      // 将用户数据存储到本地存储中
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
 
-      // Redirect based on user type
+      // 根据用户类型重定向
       if (userType === 'admin') {
         navigate('/admin-dashboard');
       } else if (userType === 'staff') {
@@ -111,11 +138,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       toast.error(error.message || "登录失败");
       throw error;
     } finally {
+      // 结束加载状态
       setLoading(false);
     }
   };
 
-  // Logout function
+  /**
+   * 登出功能
+   * 清除用户会话并重定向到首页
+   */
   const logout = async () => {
     localStorage.removeItem('user');
     setUser(null);
@@ -123,6 +154,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     toast.success("已成功退出登录");
   };
 
+  // 提供认证上下文给子组件
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
