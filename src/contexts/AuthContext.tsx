@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +14,7 @@ interface User {
   user_type: 'admin' | 'staff' | 'visitor' | 'employee' | 'unassigned';
   department_id?: string | null;
   enabled_modules?: string[] | null;
-  approved?: boolean;  // 添加审核状态字段
+  approved: boolean;  // 添加审核状态字段
 }
 
 /**
@@ -125,7 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user_type: userType,
         department_id: data.department_id || null,
         enabled_modules: data.enabled_modules || [],
-        approved: data.approved
+        approved: data.approved ?? true // 默认为true，以处理旧数据
       };
 
       // 将用户数据存储到本地存储中

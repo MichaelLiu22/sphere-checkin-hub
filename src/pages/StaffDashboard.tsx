@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import WorkHours from "@/components/WorkHours";
 import DocumentUpload from "@/components/DocumentUpload";
 import DailyTasks from "@/components/DailyTasks";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import UserSidebar from "@/components/user/UserSidebar";
 
 /**
  * StaffDashboard组件
@@ -25,6 +26,8 @@ const StaffDashboard: React.FC = () => {
   // 特性状态管理
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  // 活动标签页
+  const [activeTab, setActiveTab] = useState("overview");
   
   // 当用户信息变化时，更新特性状态
   useEffect(() => {
@@ -60,26 +63,37 @@ const StaffDashboard: React.FC = () => {
   const isModuleEnabled = (moduleName: string): boolean => {
     return enabledModules.includes(moduleName);
   };
-
-  return (
-    <Layout>
-      <div className="container mx-auto p-4">
-        {/* 顶部欢迎信息和登出按钮 */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">员工仪表板</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground">
-              欢迎，{user?.full_name || "员工"}
-            </span>
-            <Button variant="outline" onClick={handleLogout}>
-              登出
-            </Button>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center p-8">加载中...</div>
-        ) : (
+  
+  // 函数来渲染当前活动标签页的内容
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case "host_schedule":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>主持人排班</CardTitle>
+              <CardDescription>查看和管理排班信息</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkHours userId={user?.id || ''} />
+            </CardContent>
+          </Card>
+        );
+      case "finance":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>财务报表</CardTitle>
+              <CardDescription>上传和管理财务数据</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DocumentUpload />
+            </CardContent>
+          </Card>
+        );
+      case "overview":
+      default:
+        return (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {/* 工时管理模块 */}
             {isModuleEnabled("host_schedule") && (
@@ -92,7 +106,11 @@ const StaffDashboard: React.FC = () => {
                   <WorkHours userId={user?.id || ''} />
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setActiveTab("host_schedule")}
+                  >
                     查看更多详情
                   </Button>
                 </CardFooter>
@@ -110,7 +128,11 @@ const StaffDashboard: React.FC = () => {
                   <DocumentUpload />
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setActiveTab("finance")}
+                  >
                     查看财务报表
                   </Button>
                 </CardFooter>
@@ -126,11 +148,6 @@ const StaffDashboard: React.FC = () => {
               <CardContent>
                 <DailyTasks userId={user?.id || ''} />
               </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  管理任务
-                </Button>
-              </CardFooter>
             </Card>
             
             {/* 如果没有启用任何特殊模块，显示提示信息 */}
@@ -147,9 +164,32 @@ const StaffDashboard: React.FC = () => {
               </Card>
             )}
           </div>
-        )}
-      </div>
-    </Layout>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <UserSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+          
+          <main className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold">员工仪表板</h1>
+              </div>
+              
+              {loading ? (
+                <div className="text-center p-8">加载中...</div>
+              ) : (
+                renderActiveTabContent()
+              )}
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </div>
   );
 };
 
