@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Login Component
@@ -20,6 +21,8 @@ const Login: React.FC = () => {
   const { t } = useLanguage();
   // 从认证上下文获取登录函数和加载状态
   const { login, loading } = useAuth();
+  // 导航钩子
+  const navigate = useNavigate();
   
   // 当前活动的标签（登录或注册）
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
@@ -98,9 +101,11 @@ const Login: React.FC = () => {
           full_name: fullName,
           password_hash: password,
           // 为新注册用户设置默认值
-          user_type: 'employee', // 默认用户类型为employee
+          user_type: 'unassigned', // 默认用户类型为unassigned，等待管理员审核
           department_id: null,   // 默认部门为null
           enabled_modules: [],   // 默认启用模块为空数组
+          // 新增注册状态字段，标记为等待审核
+          approved: false,       // 默认为未批准状态
         }])
         .select()
         .single();
@@ -109,10 +114,14 @@ const Login: React.FC = () => {
         throw new Error(insertError.message);
       }
 
-      toast.success(t("registrationSuccess") || "注册成功");
+      toast.success(t("registrationSuccess") || "注册成功，等待管理员审核");
       
-      // 注册成功后自动登录
-      await login(fullName, password);
+      // 注册成功后重定向到等待审批页面
+      navigate('/waiting-approval', { 
+        state: { 
+          username: fullName 
+        } 
+      });
       
     } catch (error: any) {
       // 处理注册错误

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +15,7 @@ import EmployeeDashboard from "./pages/EmployeeDashboard";
 import StaffDashboard from "./pages/StaffDashboard";
 import GuestPage from "./pages/GuestPage";
 import AuthGuard from "./components/AuthGuard";
+import WaitingApproval from "./pages/WaitingApproval";
 
 // 创建 QueryClient 实例，用于管理数据获取和缓存
 const queryClient = new QueryClient();
@@ -43,6 +43,7 @@ const App = () => (
               <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/waiting-approval" element={<WaitingApproval />} />
               
               {/* 受保护的员工路由 */}
               <Route path="/employee-dashboard" element={

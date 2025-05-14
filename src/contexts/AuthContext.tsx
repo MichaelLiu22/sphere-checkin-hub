@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,9 +10,10 @@ import { toast } from 'sonner';
 interface User {
   id: string;
   full_name: string;
-  user_type: 'admin' | 'staff' | 'visitor' | 'employee';
+  user_type: 'admin' | 'staff' | 'visitor' | 'employee' | 'unassigned';
   department_id?: string | null;
   enabled_modules?: string[] | null;
+  approved?: boolean;  // 添加审核状态字段
 }
 
 /**
@@ -109,8 +109,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error("用户名或密码不正确");
       }
 
+      // 检查用户是否已获得审批
+      if (data.approved === false) {
+        toast.error("您的账号正在等待管理员审核，请稍后再试");
+        throw new Error("账号待审核");
+      }
+
       // 将数据类型断言为用户角色类型
-      const userType = data.user_type as 'admin' | 'staff' | 'visitor' | 'employee';
+      const userType = data.user_type as 'admin' | 'staff' | 'visitor' | 'employee' | 'unassigned';
       
       // 创建具有正确类型的用户对象
       const userData: User = {
@@ -118,7 +124,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         full_name: data.full_name,
         user_type: userType,
         department_id: data.department_id || null,
-        enabled_modules: data.enabled_modules || []
+        enabled_modules: data.enabled_modules || [],
+        approved: data.approved
       };
 
       // 将用户数据存储到本地存储中
@@ -134,6 +141,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         navigate('/guest');
       } else if (userType === 'employee') {
         navigate('/employee-dashboard');
+      } else if (userType === 'unassigned') {
+        // 未分配角色但已审批的用户
+        navigate('/waiting-assignment');
       }
       
       toast.success("登录成功");
@@ -165,4 +175,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
