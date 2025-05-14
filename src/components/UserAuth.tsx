@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * 用户认证组件
@@ -23,6 +23,7 @@ const UserAuth: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { login } = useAuth();
 
   /**
    * 检查用户会话状态
@@ -49,33 +50,7 @@ const UserAuth: React.FC = () => {
     try {
       if (isLogin) {
         // 登录逻辑
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('full_name', fullName)
-          .eq('password_hash', password)
-          .single();
-
-        if (error) {
-          setError(t("invalidCredentials"));
-          throw error;
-        }
-
-        if (data) {
-          toast.success(t("loginSuccess"));
-          // 将用户信息保存到localStorage用于会话管理
-          localStorage.setItem('user', JSON.stringify(data));
-          
-          // 根据用户类型重定向
-          if (data.user_type === 'admin') {
-            navigate('/admin-dashboard');
-          } else {
-            navigate('/employee-dashboard');
-          }
-        } else {
-          setError(t("loginError"));
-          toast.error(t("loginError"));
-        }
+        await login(fullName, password);
       } else {
         // 注册验证
         // 检查密码是否匹配
@@ -116,6 +91,21 @@ const UserAuth: React.FC = () => {
           return;
         }
 
+        // 获取 None 部门的 ID
+        const { data: noneDept, error: deptError } = await supabase
+          .from('departments')
+          .select('id')
+          .eq('name', 'None')
+          .single();
+
+        if (deptError || !noneDept) {
+          console.error("Failed to get None department:", deptError);
+          setError("Error: 00099 - 系统异常");
+          toast.error("Error: 00099 - 系统异常");
+          setLoading(false);
+          return;
+        }
+
         // 创建新用户
         const { error, data } = await supabase
           .from('users')
@@ -124,7 +114,7 @@ const UserAuth: React.FC = () => {
             password_hash: password,
             // 为新注册用户设置默认值
             user_type: 'employee', // 默认用户类型为employee
-            department_id: null,   // 默认部门为null
+            department_id: noneDept.id,   // 默认部门为None
             enabled_modules: [],   // 默认启用模块为空数组
           }])
           .select()
@@ -134,7 +124,7 @@ const UserAuth: React.FC = () => {
           // 处理特定的Supabase错误
           if (error.code === '23505') { // 唯一约束冲突
             setError("Error: 00003 - 用户已存在");
-            toast.error("Error: 00003 - 用户已存在");
+            toast.error("Error: 00003 - 用��已存在");
           } else {
             // 所有其他情况的通用错误
             setError("Error: 00099 - 系统异常");
@@ -145,9 +135,8 @@ const UserAuth: React.FC = () => {
         }
 
         toast.success(t("registrationSuccess"));
-        // 注册后自动登录
-        localStorage.setItem('user', JSON.stringify(data));
-        navigate('/employee-dashboard');
+        // 注册成功后重定向到等待审批页面
+        navigate('/waiting-approval', { state: { username: fullName } });
       }
     } catch (error: any) {
       console.error("Auth error:", error);
