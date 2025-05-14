@@ -89,7 +89,7 @@ const StaffDashboard: React.FC = () => {
                   <CardDescription>查看和管理排班信息</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <WorkHours />
+                  <WorkHours userId={user?.id || ''} />
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full">
@@ -124,7 +124,7 @@ const StaffDashboard: React.FC = () => {
                 <CardDescription>查看和完成今日任务</CardDescription>
               </CardHeader>
               <CardContent>
-                <DailyTasks />
+                <DailyTasks userId={user?.id || ''} />
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full">
