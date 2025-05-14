@@ -262,14 +262,14 @@ const PermissionConfigPanel: React.FC = () => {
                     <TableCell>{getDepartmentName(user.department_id)}</TableCell>
                     <TableCell>
                       <Select
-                        value={userDepartments[user.id] || ""}
+                        value={userDepartments[user.id] || undefined}
                         onValueChange={(value) => handleDepartmentChange(user.id, value || null)}
                       >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="选择部门" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">未分配</SelectItem>
+                          <SelectItem value="unassigned">未分配</SelectItem>
                           {departments.map((dept) => (
                             <SelectItem key={dept.id} value={dept.id}>
                               {dept.name}
