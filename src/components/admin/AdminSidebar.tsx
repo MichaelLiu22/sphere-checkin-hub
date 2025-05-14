@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -14,15 +14,32 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
+/**
+ * 侧边栏属性接口
+ * 控制侧边栏的活动选项卡和状态
+ */
 interface AdminSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
 
+/**
+ * 管理员侧边栏组件
+ * 提供管理员仪表板的导航菜单
+ * 
+ * @param {AdminSidebarProps} 组件属性
+ * @returns {React.ReactElement} 渲染的组件
+ */
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) => {
+  // 多语言支持
   const { t } = useLanguage();
+  // 路由导航
   const navigate = useNavigate();
 
+  /**
+   * 登出操作
+   * 清除用户会话并重定向到首页
+   */
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
@@ -63,6 +80,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             >
               <Users className="mr-2" />
               <span>👥 用户管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          {/* 新增权限配置选项卡 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "permissions"}
+              onClick={() => setActiveTab("permissions")}
+              tooltip="Permission Configuration"
+            >
+              <Settings className="mr-2" />
+              <span>🔑 权限配置</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -7,25 +7,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * 用户认证组件
+ * 提供用户登录和注册功能
+ */
 const UserAuth: React.FC = () => {
+  // 多语言支持
   const { t } = useLanguage();
+  // 路由导航
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  // 状态管理
+  const [isLogin, setIsLogin] = useState(true); // 是否为登录模式（否则为注册模式）
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Check for existing session on component mount
+  /**
+   * 检查用户会话状态
+   * 如果用户已登录，则重定向到仪表板
+   */
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
-      // If user is already logged in, redirect to dashboard
+      // 如果用户已登录，重定向到仪表板
       navigate('/employee-dashboard');
     }
   }, [navigate]);
 
+  /**
+   * 表单提交处理
+   * 处理登录或注册请求
+   * @param e - 表单提交事件
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -33,7 +48,7 @@ const UserAuth: React.FC = () => {
 
     try {
       if (isLogin) {
-        // Login logic
+        // 登录逻辑
         const { data, error } = await supabase
           .from('users')
           .select('*')
@@ -48,16 +63,22 @@ const UserAuth: React.FC = () => {
 
         if (data) {
           toast.success(t("loginSuccess"));
-          // Save user info to localStorage for session management
+          // 将用户信息保存到localStorage用于会话管理
           localStorage.setItem('user', JSON.stringify(data));
-          navigate('/employee-dashboard');
+          
+          // 根据用户类型重定向
+          if (data.user_type === 'admin') {
+            navigate('/admin-dashboard');
+          } else {
+            navigate('/employee-dashboard');
+          }
         } else {
           setError(t("loginError"));
           toast.error(t("loginError"));
         }
       } else {
-        // Registration validation
-        // Check if passwords match
+        // 注册验证
+        // 检查密码是否匹配
         if (password !== confirmPassword) {
           setError("Error: 00001 - 密码不一致");
           toast.error("Error: 00001 - 密码不一致");
@@ -65,7 +86,7 @@ const UserAuth: React.FC = () => {
           return;
         }
 
-        // Check if required fields are filled
+        // 检查必填字段
         if (!fullName || !password) {
           setError("Error: 00004 - 信息不完整");
           toast.error("Error: 00004 - 信息不完整");
@@ -73,7 +94,7 @@ const UserAuth: React.FC = () => {
           return;
         }
 
-        // Check password length
+        // 检查密码长度
         if (password.length < 6) {
           setError("Error: 00005 - 密码太短");
           toast.error("Error: 00005 - 密码太短");
@@ -81,7 +102,7 @@ const UserAuth: React.FC = () => {
           return;
         }
 
-        // Check if user already exists
+        // 检查用户是否已存在
         const { data: existingUser } = await supabase
           .from('users')
           .select('*')
@@ -95,24 +116,27 @@ const UserAuth: React.FC = () => {
           return;
         }
 
+        // 创建新用户
         const { error, data } = await supabase
           .from('users')
           .insert([{
             full_name: fullName,
             password_hash: password,
-            // Add a default user_type for new registrations
-            user_type: 'unassigned', // Default user type
+            // 为新注册用户设置默认值
+            user_type: 'employee', // 默认用户类型为employee
+            department_id: null,   // 默认部门为null
+            enabled_modules: [],   // 默认启用模块为空数组
           }])
           .select()
           .single();
 
         if (error) {
-          // Handle specific Supabase errors
-          if (error.code === '23505') { // Unique constraint violation
+          // 处理特定的Supabase错误
+          if (error.code === '23505') { // 唯一约束冲突
             setError("Error: 00003 - 用户已存在");
             toast.error("Error: 00003 - 用户已存在");
           } else {
-            // Generic error for all other cases
+            // 所有其他情况的通用错误
             setError("Error: 00099 - 系统异常");
             toast.error("Error: 00099 - 系统异常");
             console.error("Registration error details:", error);
@@ -121,7 +145,7 @@ const UserAuth: React.FC = () => {
         }
 
         toast.success(t("registrationSuccess"));
-        // Auto-login after registration
+        // 注册后自动登录
         localStorage.setItem('user', JSON.stringify(data));
         navigate('/employee-dashboard');
       }

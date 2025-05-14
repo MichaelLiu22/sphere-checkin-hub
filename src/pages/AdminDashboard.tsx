@@ -6,6 +6,7 @@ import Layout from "@/components/Layout";
 import W9FilesPanel from "@/components/admin/W9FilesPanel";
 import FileUploadPanel from "@/components/admin/FileUploadPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
+import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ interface User {
 /**
  * 管理员仪表板页面组件
  * 
- * 提供管理员功能，包括W9文件管理、文件上传和用户管理
+ * 提供管理员功能，包括W9文件管理、文件上传、用户管理和权限配置
  */
 const AdminDashboard: React.FC = () => {
   // 用户管理面板状态
@@ -100,6 +101,8 @@ const AdminDashboard: React.FC = () => {
                   fetchUsers={fetchUsers}
                 />
               )}
+              {/* 添加新的权限配置面板 */}
+              {activeTab === "permissions" && <PermissionConfigPanel />}
             </div>
           </div>
         </div>

@@ -40,6 +40,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, allowedRoles }) => {
       return <Navigate to="/admin-dashboard" replace />;
     } else if (user.user_type === 'staff') {
       return <Navigate to="/staff-dashboard" replace />;
+    } else if (user.user_type === 'employee') {
+      return <Navigate to="/employee-dashboard" replace />;
     } else {
       return <Navigate to="/guest" replace />;
     }

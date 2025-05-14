@@ -11,8 +11,9 @@ import { toast } from 'sonner';
 interface User {
   id: string;
   full_name: string;
-  user_type: 'admin' | 'staff' | 'visitor';
-  feature: string | null;
+  user_type: 'admin' | 'staff' | 'visitor' | 'employee';
+  department_id?: string | null;
+  enabled_modules?: string[] | null;
 }
 
 /**
@@ -109,14 +110,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // 将数据类型断言为用户角色类型
-      const userType = data.user_type as 'admin' | 'staff' | 'visitor';
+      const userType = data.user_type as 'admin' | 'staff' | 'visitor' | 'employee';
       
       // 创建具有正确类型的用户对象
       const userData: User = {
         id: data.id,
         full_name: data.full_name,
         user_type: userType,
-        feature: data.feature || null
+        department_id: data.department_id || null,
+        enabled_modules: data.enabled_modules || []
       };
 
       // 将用户数据存储到本地存储中
@@ -130,6 +132,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         navigate('/staff-dashboard');
       } else if (userType === 'visitor') {
         navigate('/guest');
+      } else if (userType === 'employee') {
+        navigate('/employee-dashboard');
       }
       
       toast.success("登录成功");
@@ -161,3 +165,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

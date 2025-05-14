@@ -43,7 +43,13 @@ const App = () => (
               <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/user-dashboard" element={<UserDashboard />} />
-              <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
+              
+              {/* 受保护的员工路由 */}
+              <Route path="/employee-dashboard" element={
+                <AuthGuard allowedRoles={["employee"]}>
+                  <EmployeeDashboard />
+                </AuthGuard>
+              } />
               
               {/* 受保护的管理员路由 */}
               <Route path="/admin-dashboard" element={
