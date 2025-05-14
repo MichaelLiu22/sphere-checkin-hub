@@ -111,7 +111,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       // 检查用户是否已获得审批
-      if (data.approved === false) {
+      const isApproved = data.approved ?? true; // 默认为true，以处理旧数据
+      if (isApproved === false) {
         toast.error("您的账号正在等待管理员审核，请稍后再试");
         throw new Error("账号待审核");
       }
@@ -126,7 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user_type: userType,
         department_id: data.department_id || null,
         enabled_modules: data.enabled_modules || [],
-        approved: data.approved ?? true // 默认为true，以处理旧数据
+        approved: isApproved
       };
 
       // 将用户数据存储到本地存储中

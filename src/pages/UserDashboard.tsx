@@ -50,7 +50,14 @@ const UserDashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFiles(data || []);
+      if (data) {
+        // Cast the file_type to the expected type
+        const typedFiles = data.map(file => ({
+          ...file,
+          file_type: file.file_type as 'pre' | 'regular'
+        }));
+        setFiles(typedFiles);
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -85,7 +92,7 @@ const UserDashboard: React.FC = () => {
             <CardContent>
               <DocumentUpload />
               <div className="mt-6">
-                <FinanceArea />
+                <FinanceArea userId={user?.id || ''} />
               </div>
             </CardContent>
           </Card>
