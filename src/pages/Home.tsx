@@ -1,16 +1,14 @@
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import UserAuth from "@/components/UserAuth";
-import Layout from "@/components/Layout";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import Layout from "@/components/Layout";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import Login from "@/components/Login";
 import PayrollCalendar from "@/components/PayrollCalendar";
 import PayrollInfo from "@/components/PayrollInfo";
 
@@ -251,7 +249,7 @@ const Home: React.FC = () => {
                 <CardTitle>{t("userAuthentication")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <UserAuth />
+                <Login />
               </CardContent>
             </Card>
           </div>
@@ -271,16 +269,6 @@ const Home: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Admin Login Button */}
-            <div className="text-center mt-4">
-              <Link to="/admin">
-                <Button variant="outline" size="lg">
-                  {t("adminLogin")}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
       </div>
