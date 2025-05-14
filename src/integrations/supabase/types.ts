@@ -168,6 +168,7 @@ export type Database = {
       }
       users: {
         Row: {
+          approved: boolean | null
           created_at: string
           department_id: string | null
           enabled_modules: string[] | null
@@ -181,6 +182,7 @@ export type Database = {
           user_type: Database["public"]["Enums"]["employee_role"] | null
         }
         Insert: {
+          approved?: boolean | null
           created_at?: string
           department_id?: string | null
           enabled_modules?: string[] | null
@@ -194,6 +196,7 @@ export type Database = {
           user_type?: Database["public"]["Enums"]["employee_role"] | null
         }
         Update: {
+          approved?: boolean | null
           created_at?: string
           department_id?: string | null
           enabled_modules?: string[] | null

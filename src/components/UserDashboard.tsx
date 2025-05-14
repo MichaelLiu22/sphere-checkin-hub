@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface File {
   id: string;
@@ -14,22 +15,23 @@ interface File {
   file_type: 'pre' | 'regular';
   file_url: string;
   created_at: string;
+  uploaded_by: string;
 }
 
 const UserDashboard: React.FC = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchFiles();
-  }, []);
+    if (user) {
+      fetchFiles();
+    }
+  }, [user]);
 
   const fetchFiles = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data, error } = await supabase
         .from('files')
         .select('*')
@@ -37,13 +39,15 @@ const UserDashboard: React.FC = () => {
 
       if (error) throw error;
       
-      // Cast the file_type to the expected type
-      const typedFiles = data?.map(file => ({
-        ...file,
-        file_type: file.file_type as 'pre' | 'regular'
-      })) || [];
-      
-      setFiles(typedFiles);
+      if (data) {
+        // Type assertion to ensure file_type is handled correctly
+        const typedFiles = data.map(file => ({
+          ...file,
+          file_type: file.file_type as 'pre' | 'regular'
+        }));
+        
+        setFiles(typedFiles);
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {
