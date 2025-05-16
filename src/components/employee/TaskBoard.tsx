@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -260,14 +259,14 @@ const TaskBoard: React.FC = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.from("tasks").insert({
+      const { data, error } = await supabase.from("tasks").insert({
         title: values.title,
         description: values.description || null,
         priority: values.priority,
         deadline: values.deadline ? values.deadline.toISOString() : null,
         assigner_id: user.id,
         assignee_id: values.assignee_id,
-      });
+      }).select().single();
 
       if (error) throw error;
 
@@ -277,38 +276,29 @@ const TaskBoard: React.FC = () => {
 
       // Refresh the task list
       if (values.assignee_id === user.id) {
-        const { data: newTask } = await supabase
-          .from("tasks")
-          .select("*")
-          .eq("assigner_id", user.id)
-          .eq("assignee_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (newTask) {
+        if (data) {
           const typedNewTask = {
-            ...newTask,
-            priority: newTask.priority as "high" | "medium" | "low"
+            ...data,
+            priority: data.priority as "high" | "medium" | "low"
           };
           setPersonalTasks([typedNewTask as Task, ...personalTasks]);
         }
       } else {
         // Refresh assigned by me tasks
-        const { data: newTask } = await supabase
+        const { data: newTaskData } = await supabase
           .from("tasks")
           .select(`
             *,
             assignee:users!tasks_assignee_id_fkey(id, full_name)
           `)
-          .eq("id", newTask.id)
+          .eq("id", data.id)
           .single();
 
-        if (newTask) {
+        if (newTaskData) {
           const typedNewTask = {
-            ...newTask,
-            assignee_name: newTask.assignee?.full_name || "未知",
-            priority: newTask.priority as "high" | "medium" | "low"
+            ...newTaskData,
+            assignee_name: newTaskData.assignee?.full_name || "未知",
+            priority: newTaskData.priority as "high" | "medium" | "low"
           };
           setTasksAssignedByMe([typedNewTask as Task, ...tasksAssignedByMe]);
         }
