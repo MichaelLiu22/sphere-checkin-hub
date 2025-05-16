@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,7 +92,6 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         .order('name', { ascending: true });
         
       if (error) throw error;
-      
       setDepartments(data || []);
     } catch (error: any) {
       console.error("Error fetching departments:", error);
@@ -140,16 +138,28 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       const { error } = await supabase
         .from('users')
         .update({
-          department_id: userDepartment
+          department_id: userDepartment || null
         })
         .eq('id', selectedUser);
         
       if (error) throw error;
       
+      // Update the local state immediately
+      setAllUsers(prevUsers => {
+        const updatedUsers = prevUsers.map(user => 
+          user.id === selectedUser 
+            ? { ...user, department_id: userDepartment }
+            : user
+        );
+        return updatedUsers;
+      });
+      
       toast.success("User department updated successfully");
-      loadUsers(); // Refresh the user list
+      await loadDepartments(); // Reload departments first
+      await loadUsers(); // Then reload users
       fetchUsers(); // Update parent component's user list
     } catch (error: any) {
+      console.error('Error updating department:', error);
       toast.error(`Failed to update user department: ${error.message}`);
     }
   };
@@ -230,7 +240,6 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="null">None</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>
                             {dept.name}
@@ -256,7 +265,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                         <SelectValue placeholder="Select feature" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="None">None</SelectItem>
+                        <SelectItem value="b9ffca1c-004d-4a26-9773-5602821d1d27">None</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button 
