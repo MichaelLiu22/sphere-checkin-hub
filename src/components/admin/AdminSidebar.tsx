@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, Task } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -82,7 +82,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               <span>👥 用户管理</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          {/* 新增权限配置选项卡 */}
+          {/* 权限配置选项卡 */}
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "permissions"}
@@ -91,6 +91,47 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             >
               <Settings className="mr-2" />
               <span>🔑 权限配置</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {/* 管理员可访问的所有模块 */}
+          <SidebarMenuItem>
+            <h3 className="px-4 py-2 text-xs font-medium text-muted-foreground">模块功能</h3>
+          </SidebarMenuItem>
+          
+          {/* 任务模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "tasks"}
+              onClick={() => navigate('/employee-dashboard/tasks')}
+              tooltip="Task Management"
+            >
+              <Task className="mr-2" />
+              <span>📋 任务管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {/* 财务模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "finance"}
+              onClick={() => navigate('/employee-dashboard/finance')}
+              tooltip="Finance"
+            >
+              <DollarSign className="mr-2" />
+              <span>💰 财务管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {/* 日程模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "calendar"}
+              onClick={() => navigate('/employee-dashboard/calendar')}
+              tooltip="Calendar"
+            >
+              <Calendar className="mr-2" />
+              <span>📅 日程安排</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
