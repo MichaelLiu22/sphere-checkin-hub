@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils";
 interface User {
   id: string;
   full_name: string;
+  department_id?: string | null;
 }
 
 interface Task {
@@ -96,11 +97,13 @@ const TaskBoard: React.FC = () => {
   const { t } = useLanguage();
   const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
   const [personalTasks, setPersonalTasks] = useState<Task[]>([]);
-  const [employees, setEmployees] = useState<User[]>([]);
+  const [tasksAssignedByMe, setTasksAssignedByMe] = useState<Task[]>([]);
+  const [departmentEmployees, setDepartmentEmployees] = useState<User[]>([]);
   const [hasTaskPermission, setHasTaskPermission] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isPersonalTaskDialogOpen, setIsPersonalTaskDialogOpen] = useState(false);
+  const [showTaskAssignmentForm, setShowTaskAssignmentForm] = useState(false);
 
   const taskForm = useForm<z.infer<typeof taskFormSchema>>({
     resolver: zodResolver(taskFormSchema),
@@ -123,28 +126,42 @@ const TaskBoard: React.FC = () => {
     },
   });
 
+  const assignTaskForm = useForm<z.infer<typeof taskFormSchema>>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: "medium", 
+      deadline: null,
+      assignee_id: "",
+    },
+  });
+
   // Check if current user has task permission
   useEffect(() => {
     if (user && user.enabled_modules) {
-      setHasTaskPermission(user.enabled_modules.includes("task"));
+      const hasPermission = user.enabled_modules.includes("task");
+      setHasTaskPermission(hasPermission);
+      setShowTaskAssignmentForm(hasPermission);
     }
   }, [user]);
 
-  // Fetch tasks assigned to current user
+  // Fetch tasks assigned to current user and by current user
   useEffect(() => {
     const fetchTasks = async () => {
       if (!user) return;
       setIsLoading(true);
 
       try {
-        // Get tasks assigned to me - Use explicit column reference in the join
+        // Get tasks assigned to me
         const { data: assignedData, error: assignedError } = await supabase
           .from("tasks")
           .select(`
             *,
             users!tasks_assigner_id_fkey(id, full_name)
           `)
-          .eq("assignee_id", user.id);
+          .eq("assignee_id", user.id)
+          .neq("assigner_id", user.id); // Exclude tasks I assigned to myself
 
         if (assignedError) throw assignedError;
 
@@ -156,17 +173,35 @@ const TaskBoard: React.FC = () => {
           .eq("assignee_id", user.id);
 
         if (personalError) throw personalError;
+        
+        // Get tasks assigned by me to others
+        const { data: assignedByMeData, error: assignedByMeError } = await supabase
+          .from("tasks")
+          .select(`
+            *,
+            assignee:users!tasks_assignee_id_fkey(id, full_name)
+          `)
+          .eq("assigner_id", user.id)
+          .neq("assignee_id", user.id); // Exclude tasks I assigned to myself
+
+        if (assignedByMeError) throw assignedByMeError;
 
         // Format the assigned tasks
-        const formattedAssignedTasks = (assignedData || [])
-          .filter(task => !(task.assigner_id === user.id && task.assignee_id === user.id))
-          .map((task) => ({
-            ...task,
-            assigner_name: task.users?.full_name || "未知",
-            priority: task.priority as "high" | "medium" | "low"
-          }));
+        const formattedAssignedTasks = (assignedData || []).map((task) => ({
+          ...task,
+          assigner_name: task.users?.full_name || "未知",
+          priority: task.priority as "high" | "medium" | "low"
+        }));
+
+        // Format tasks assigned by me
+        const formattedAssignedByMeTasks = (assignedByMeData || []).map((task) => ({
+          ...task,
+          assignee_name: task.assignee?.full_name || "未知",
+          priority: task.priority as "high" | "medium" | "low"
+        }));
 
         setAssignedTasks(formattedAssignedTasks as Task[]);
+        setTasksAssignedByMe(formattedAssignedByMeTasks as Task[]);
         setPersonalTasks((personalData || []).map(task => ({
           ...task,
           priority: task.priority as "high" | "medium" | "low"
@@ -182,29 +217,44 @@ const TaskBoard: React.FC = () => {
     fetchTasks();
   }, [user]);
 
-  // Fetch employees for task assignment
+  // Fetch employees from the same department as the current user
   useEffect(() => {
-    const fetchEmployees = async () => {
-      if (!hasTaskPermission) return;
+    const fetchDepartmentEmployees = async () => {
+      if (!user || !hasTaskPermission) return;
 
       try {
-        const { data, error } = await supabase
+        // First get current user's department
+        const { data: userData, error: userError } = await supabase
           .from("users")
-          .select("id, full_name")
+          .select("department_id")
+          .eq("id", user.id)
+          .single();
+
+        if (userError) throw userError;
+
+        if (!userData.department_id) {
+          console.log("User has no department assigned");
+          return;
+        }
+
+        // Then get all employees in that department
+        const { data: employeesData, error: employeesError } = await supabase
+          .from("users")
+          .select("id, full_name, department_id")
+          .eq("department_id", userData.department_id)
+          .neq("id", user.id) // Exclude current user
           .order("full_name");
 
-        if (error) throw error;
-        setEmployees(data || []);
+        if (employeesError) throw employeesError;
+        setDepartmentEmployees(employeesData || []);
       } catch (error) {
-        console.error("Error fetching employees:", error);
-        toast.error("获取员工列表失败");
+        console.error("Error fetching department employees:", error);
+        toast.error("获取部门员工列表失败");
       }
     };
 
-    if (hasTaskPermission) {
-      fetchEmployees();
-    }
-  }, [hasTaskPermission]);
+    fetchDepartmentEmployees();
+  }, [user, hasTaskPermission]);
 
   const onTaskFormSubmit = async (values: z.infer<typeof taskFormSchema>) => {
     if (!user) return;
@@ -242,6 +292,25 @@ const TaskBoard: React.FC = () => {
             priority: newTask.priority as "high" | "medium" | "low"
           };
           setPersonalTasks([typedNewTask as Task, ...personalTasks]);
+        }
+      } else {
+        // Refresh assigned by me tasks
+        const { data: newTask } = await supabase
+          .from("tasks")
+          .select(`
+            *,
+            assignee:users!tasks_assignee_id_fkey(id, full_name)
+          `)
+          .eq("id", newTask.id)
+          .single();
+
+        if (newTask) {
+          const typedNewTask = {
+            ...newTask,
+            assignee_name: newTask.assignee?.full_name || "未知",
+            priority: newTask.priority as "high" | "medium" | "low"
+          };
+          setTasksAssignedByMe([typedNewTask as Task, ...tasksAssignedByMe]);
         }
       }
     } catch (error) {
@@ -286,6 +355,43 @@ const TaskBoard: React.FC = () => {
     }
   };
 
+  const onAssignTaskFormSubmit = async (values: z.infer<typeof taskFormSchema>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.from("tasks").insert({
+        title: values.title,
+        description: values.description || null,
+        priority: values.priority,
+        deadline: values.deadline ? values.deadline.toISOString() : null,
+        assigner_id: user.id,
+        assignee_id: values.assignee_id,
+        completed: false,
+        completed_at: null
+      }).select(`
+        *,
+        assignee:users!tasks_assignee_id_fkey(id, full_name)
+      `).single();
+
+      if (error) throw error;
+
+      assignTaskForm.reset();
+      toast.success("任务已成功分配");
+      
+      if (data) {
+        const typedNewTask = {
+          ...data,
+          assignee_name: data.assignee?.full_name || "未知",
+          priority: data.priority as "high" | "medium" | "low"
+        };
+        setTasksAssignedByMe([typedNewTask as Task, ...tasksAssignedByMe]);
+      }
+    } catch (error) {
+      console.error("Error assigning task:", error);
+      toast.error("分配任务失败");
+    }
+  };
+
   const handleTaskComplete = async (task: Task, completed: boolean) => {
     try {
       const { error } = await supabase
@@ -308,10 +414,17 @@ const TaskBoard: React.FC = () => {
             t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
           )
         );
-      } else {
+      } else if (task.assignee_id === user?.id) {
         // Assigned task
         setAssignedTasks(
           assignedTasks.map((t) =>
+            t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
+          )
+        );
+      } else if (task.assigner_id === user?.id) {
+        // Task assigned by me
+        setTasksAssignedByMe(
+          tasksAssignedByMe.map((t) =>
             t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
           )
         );
@@ -322,7 +435,7 @@ const TaskBoard: React.FC = () => {
     }
   };
 
-  const handleDeleteTask = async (taskId: string, isPersonal: boolean) => {
+  const handleDeleteTask = async (taskId: string, taskType: 'personal' | 'assigned' | 'assignedByMe') => {
     if (!confirm("确定要删除此任务吗？")) return;
 
     try {
@@ -335,11 +448,17 @@ const TaskBoard: React.FC = () => {
 
       toast.success("任务已删除");
 
-      // Update local state
-      if (isPersonal) {
-        setPersonalTasks(personalTasks.filter((t) => t.id !== taskId));
-      } else {
-        setAssignedTasks(assignedTasks.filter((t) => t.id !== taskId));
+      // Update local state based on task type
+      switch (taskType) {
+        case 'personal':
+          setPersonalTasks(personalTasks.filter((t) => t.id !== taskId));
+          break;
+        case 'assigned':
+          setAssignedTasks(assignedTasks.filter((t) => t.id !== taskId));
+          break;
+        case 'assignedByMe':
+          setTasksAssignedByMe(tasksAssignedByMe.filter((t) => t.id !== taskId));
+          break;
       }
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -374,33 +493,330 @@ const TaskBoard: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Assigned Tasks */}
-      <Card className="h-full">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle>已分配任务</CardTitle>
-          {hasTaskPermission && (
-            <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+    <div className="space-y-6">
+      {/* Task Assignment Form - Only show if user has task permission */}
+      {showTaskAssignmentForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">发布任务</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...assignTaskForm}>
+              <form onSubmit={assignTaskForm.handleSubmit(onAssignTaskFormSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={assignTaskForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>任务标题</FormLabel>
+                        <FormControl>
+                          <Input placeholder="请输入任务标题" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={assignTaskForm.control}
+                    name="assignee_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>指定员工</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="选择员工" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {departmentEmployees.length > 0 ? (
+                              departmentEmployees.map((employee) => (
+                                <SelectItem key={employee.id} value={employee.id}>
+                                  {employee.full_name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>
+                                没有可选择的同部门员工
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={assignTaskForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>任务描述</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="请输入任务详细描述（可选）" 
+                          className="min-h-[100px]" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={assignTaskForm.control}
+                    name="deadline"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>截止日期</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "yyyy-MM-dd")
+                                ) : (
+                                  <span>选择日期（可选）</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value || undefined}
+                              onSelect={field.onChange}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={assignTaskForm.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>优先级</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="选择优先级" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="high">紧急</SelectItem>
+                            <SelectItem value="medium">一般</SelectItem>
+                            <SelectItem value="low">宽松</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button type="submit">发布任务</Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Tasks Assigned By Me */}
+        {hasTaskPermission && (
+          <Card className="h-full">
+            <CardHeader className="pb-2 space-y-0">
+              <CardTitle>我发布的任务</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <p className="text-muted-foreground">加载中...</p>
+                </div>
+              ) : tasksAssignedByMe.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40">
+                  <p className="text-muted-foreground">你还没有发布任何任务</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tasksAssignedByMe.map((task) => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        "border rounded-md p-3",
+                        task.completed ? "bg-muted/50" : ""
+                      )}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
+                            {task.title}
+                          </h4>
+                          {task.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {task.description}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
+                              {getPriorityText(task.priority)}
+                            </span>
+                            {task.deadline && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                                截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
+                              </span>
+                            )}
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
+                              分配给: {task.assignee_name}
+                            </span>
+                            <span className={cn(
+                              "text-xs px-2 py-0.5 rounded border",
+                              task.completed 
+                                ? "bg-green-100 text-green-800 border-green-300" 
+                                : "bg-gray-100 text-gray-800 border-gray-300"
+                            )}>
+                              {task.completed ? "已完成" : "未完成"}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteTask(task.id, 'assignedByMe')}
+                          className="h-8 w-8"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Assigned Tasks */}
+        <Card className="h-full">
+          <CardHeader className="pb-2 space-y-0">
+            <CardTitle>我收到的任务</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-0">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <p className="text-muted-foreground">加载中...</p>
+              </div>
+            ) : assignedTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40">
+                <p className="text-muted-foreground">没有分配给你的任务</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {assignedTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      "border rounded-md p-3",
+                      task.completed ? "bg-muted/50" : ""
+                    )}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          checked={task.completed}
+                          onCheckedChange={(checked) => 
+                            handleTaskComplete(task, checked as boolean)
+                          }
+                        />
+                        <div>
+                          <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
+                            {task.title}
+                          </h4>
+                          {task.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {task.description}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
+                              {getPriorityText(task.priority)}
+                            </span>
+                            {task.deadline && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                                截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
+                              </span>
+                            )}
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
+                              来自: {task.assigner_name}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Personal Tasks */}
+        <Card className="h-full md:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle>个人待办</CardTitle>
+            <Dialog
+              open={isPersonalTaskDialogOpen}
+              onOpenChange={setIsPersonalTaskDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8">
                   <Plus className="mr-2 h-4 w-4" />
-                  分配任务
+                  添加待办
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>分配新任务</DialogTitle>
+                  <DialogTitle>添加个人待办</DialogTitle>
                 </DialogHeader>
-                <Form {...taskForm}>
-                  <form onSubmit={taskForm.handleSubmit(onTaskFormSubmit)} className="space-y-4">
+                <Form {...personalTaskForm}>
+                  <form
+                    onSubmit={personalTaskForm.handleSubmit(
+                      onPersonalTaskFormSubmit
+                    )}
+                    className="space-y-4"
+                  >
                     <FormField
-                      control={taskForm.control}
+                      control={personalTaskForm.control}
                       name="title"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>标题</FormLabel>
                           <FormControl>
-                            <Input placeholder="任务标题" {...field} />
+                            <Input placeholder="待办标题" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -408,13 +824,13 @@ const TaskBoard: React.FC = () => {
                     />
 
                     <FormField
-                      control={taskForm.control}
+                      control={personalTaskForm.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>描述</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="任务描述（可选）" {...field} />
+                            <Textarea placeholder="待办描述（可选）" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -423,7 +839,7 @@ const TaskBoard: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
-                        control={taskForm.control}
+                        control={personalTaskForm.control}
                         name="priority"
                         render={({ field }) => (
                           <FormItem>
@@ -449,7 +865,7 @@ const TaskBoard: React.FC = () => {
                       />
 
                       <FormField
-                        control={taskForm.control}
+                        control={personalTaskForm.control}
                         name="deadline"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
@@ -477,9 +893,9 @@ const TaskBoard: React.FC = () => {
                                 <Calendar
                                   mode="single"
                                   selected={field.value || undefined}
-                                  onSelect={(date) => field.onChange(date)}
+                                  onSelect={field.onChange}
                                   initialFocus
-                                  className="pointer-events-auto"
+                                  className={cn("p-3 pointer-events-auto")}
                                 />
                               </PopoverContent>
                             </Popover>
@@ -489,304 +905,78 @@ const TaskBoard: React.FC = () => {
                       />
                     </div>
 
-                    <FormField
-                      control={taskForm.control}
-                      name="assignee_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>分配给</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="选择员工" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {employees.map((employee) => (
-                                <SelectItem key={employee.id} value={employee.id}>
-                                  {employee.full_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
                     <DialogFooter>
-                      <Button type="submit">创建任务</Button>
+                      <Button type="submit">添加待办</Button>
                     </DialogFooter>
                   </form>
                 </Form>
               </DialogContent>
             </Dialog>
-          )}
-        </CardHeader>
-        <CardContent className="pb-0">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-40">
-              <p className="text-muted-foreground">加载中...</p>
-            </div>
-          ) : assignedTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40">
-              <p className="text-muted-foreground">没有分配给你的任务</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {assignedTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={cn(
-                    "border rounded-md p-3",
-                    task.completed ? "bg-muted/50" : ""
-                  )}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        checked={task.completed}
-                        onCheckedChange={(checked) => 
-                          handleTaskComplete(task, checked as boolean)
-                        }
-                      />
-                      <div>
-                        <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
-                          {task.title}
-                        </h4>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {task.description}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
-                            {getPriorityText(task.priority)}
-                          </span>
-                          {task.deadline && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
-                              截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
-                            </span>
+          </CardHeader>
+          <CardContent className="pb-0">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <p className="text-muted-foreground">加载中...</p>
+              </div>
+            ) : personalTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40">
+                <p className="text-muted-foreground">没有个人待办事项</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {personalTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      "border rounded-md p-3",
+                      task.completed ? "bg-muted/50" : ""
+                    )}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          checked={task.completed}
+                          onCheckedChange={(checked) =>
+                            handleTaskComplete(task, checked as boolean)
+                          }
+                        />
+                        <div>
+                          <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
+                            {task.title}
+                          </h4>
+                          {task.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {task.description}
+                            </p>
                           )}
-                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
-                            来自: {task.assigner_name}
-                          </span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
+                              {getPriorityText(task.priority)}
+                            </span>
+                            {task.deadline && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                                截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {(task.assigner_id === user?.id || hasTaskPermission) && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteTask(task.id, false)}
+                        onClick={() => handleDeleteTask(task.id, 'personal')}
                         className="h-8 w-8"
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Personal Tasks */}
-      <Card className="h-full">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle>个人待办</CardTitle>
-          <Dialog
-            open={isPersonalTaskDialogOpen}
-            onOpenChange={setIsPersonalTaskDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button size="sm" className="h-8">
-                <Plus className="mr-2 h-4 w-4" />
-                添加待办
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>添加个人待办</DialogTitle>
-              </DialogHeader>
-              <Form {...personalTaskForm}>
-                <form
-                  onSubmit={personalTaskForm.handleSubmit(
-                    onPersonalTaskFormSubmit
-                  )}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={personalTaskForm.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>标题</FormLabel>
-                        <FormControl>
-                          <Input placeholder="待办标题" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={personalTaskForm.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>描述</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="待办描述（可选）" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={personalTaskForm.control}
-                      name="priority"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>优先级</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="选择优先级" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="high">紧急</SelectItem>
-                              <SelectItem value="medium">一般</SelectItem>
-                              <SelectItem value="low">宽松</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={personalTaskForm.control}
-                      name="deadline"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>截止日期</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "yyyy-MM-dd")
-                                  ) : (
-                                    <span>选择日期（可选）</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value || undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                                className="pointer-events-auto"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <DialogFooter>
-                    <Button type="submit">添加待办</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent className="pb-0">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-40">
-              <p className="text-muted-foreground">加载中...</p>
-            </div>
-          ) : personalTasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40">
-              <p className="text-muted-foreground">没有个人待办事项</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {personalTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={cn(
-                    "border rounded-md p-3",
-                    task.completed ? "bg-muted/50" : ""
-                  )}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        checked={task.completed}
-                        onCheckedChange={(checked) =>
-                          handleTaskComplete(task, checked as boolean)
-                        }
-                      />
-                      <div>
-                        <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
-                          {task.title}
-                        </h4>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {task.description}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
-                            {getPriorityText(task.priority)}
-                          </span>
-                          {task.deadline && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
-                              截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteTask(task.id, true)}
-                      className="h-8 w-8"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
