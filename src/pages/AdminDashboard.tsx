@@ -34,7 +34,7 @@ const ModuleContentPlaceholder: React.FC<{ title: string }> = ({ title }) => {
   return (
     <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed">
       <h3 className="text-xl font-medium mb-2">{title}</h3>
-      <p className="text-muted-foreground">此模块功能正在开发中...</p>
+      <p className="text-muted-foreground">此模块功能函数正在进行开发测试，请稍作等待</p>
     </div>
   );
 };
