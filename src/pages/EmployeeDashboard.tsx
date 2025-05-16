@@ -1,26 +1,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { LogOut, Download, ClipboardList, Calendar, Clock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import Layout from "@/components/Layout";
+import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
+import TaskBoard from "@/components/employee/TaskBoard";
 import TaskArea from "@/components/TaskArea";
 import FinanceArea from "@/components/FinanceArea";
-
-/**
- * 用户接口定义
- * 描述用户数据结构
- */
-interface User {
-  id: string;
-  full_name: string;
-  user_type?: string;
-  enabled_modules?: string[] | null;
-}
 
 /**
  * 员工仪表板组件
@@ -31,9 +19,10 @@ const EmployeeDashboard: React.FC = () => {
   const { t } = useLanguage();
   // 路由导航
   const navigate = useNavigate();
-  // 用户状态管理
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // 认证状态
+  const { user, loading } = useAuth();
+  // 活动标签管理
+  const [activeTab, setActiveTab] = useState<string>("overview");
 
   /**
    * 组件加载时检查用户登录状态
@@ -41,43 +30,11 @@ const EmployeeDashboard: React.FC = () => {
    */
   useEffect(() => {
     // 检查用户是否已登录
-    const userJson = localStorage.getItem('user');
-    if (!userJson) {
+    if (!loading && !user) {
       navigate('/');
       return;
     }
-
-    try {
-      const userData = JSON.parse(userJson);
-      setUser(userData);
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-      localStorage.removeItem('user');
-      navigate('/');
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
-  /**
-   * 登出操作
-   * 清除用户会话并重定向到首页
-   */
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    toast.success(t("logoutSuccess"));
-    navigate('/');
-  };
-
-  /**
-   * 检查用户是否有特定模块的权限
-   * @param moduleName - 模块名称
-   * @returns 是否有权限
-   */
-  const hasModulePermission = (moduleName: string): boolean => {
-    if (!user || !user.enabled_modules) return false;
-    return user.enabled_modules.includes(moduleName);
-  };
+  }, [user, loading, navigate]);
 
   // 显示加载状态
   if (loading) {
@@ -92,87 +49,88 @@ const EmployeeDashboard: React.FC = () => {
 
   // 如果用户未登录，重定向到登录页面
   if (!user) {
-    navigate('/');
     return null;
   }
 
-  return (
-    <Layout>
-      <div className="min-h-screen bg-background">
-        <header className="bg-white border-b border-border sticky top-0 z-10">
-          <div className="container py-4 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-brand-dark">
-              {t("employeeDashboard")}
-            </h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">
-                {t("welcomeUser", { name: user.full_name })}
-              </span>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                {t("logout")}
-              </Button>
+  /**
+   * 检查用户是否有特定模块的权限
+   * @param moduleName - 模块名称
+   * @returns 是否有权限
+   */
+  const hasModulePermission = (moduleName: string): boolean => {
+    if (!user || !user.enabled_modules) return false;
+    return user.enabled_modules.includes(moduleName);
+  };
+
+  // 根据活动标签渲染对应的内容区域
+  const renderContent = () => {
+    switch (activeTab) {
+      case "overview":
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6">欢迎, {user.full_name}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="font-medium text-lg mb-2">您的模块权限</h3>
+                {user.enabled_modules && user.enabled_modules.length > 0 ? (
+                  <ul className="list-disc pl-5 space-y-1">
+                    {user.enabled_modules.includes("host_schedule") && (
+                      <li>Host 排班</li>
+                    )}
+                    {user.enabled_modules.includes("finance") && (
+                      <li>财务管理</li>
+                    )}
+                    {user.enabled_modules.includes("task") && (
+                      <li>分配任务 (可分配任务给其他员工)</li>
+                    )}
+                    <li>当前任务 (所有员工默认权限)</li>
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">您目前没有特殊模块权限</p>
+                )}
+              </div>
             </div>
           </div>
-        </header>
-
-        <main className="container py-8">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* 任务区域 - 仅当有host_schedule权限时显示 */}
-            {hasModulePermission("host_schedule") && (
-              <div className="md:col-span-7">
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ClipboardList className="h-5 w-5" />
-                      {t("taskArea")} - Host日历
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TaskArea userType={user.user_type || 'employee'} userId={user.id} />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* 财务区域 - 仅当有finance权限时显示 */}
-            {hasModulePermission("finance") && (
-              <div className={`md:col-span-${hasModulePermission("host_schedule") ? "5" : "12"}`}>
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      {t("financeArea")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <FinanceArea userId={user.id} />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* 无权限提示 */}
-            {(!hasModulePermission("host_schedule") && !hasModulePermission("finance")) && (
-              <div className="md:col-span-12">
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      等待授权
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-12">
-                      <p className="text-muted-foreground">
-                        您的账户目前没有分配任何功能模块的权限。请联系管理员为您分配相应权限。
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+        );
+      case "tasks":
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6">当前任务</h2>
+            <TaskBoard />
           </div>
+        );
+      case "host_schedule":
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6">Host 排班</h2>
+            <TaskArea userType={user.user_type || 'employee'} userId={user.id} />
+          </div>
+        );
+      case "finance":
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6">财务管理</h2>
+            <FinanceArea userId={user.id} />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6">未知模块</h2>
+            <p>该模块不存在或您没有权限访问。</p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="flex min-h-screen">
+        <aside className="sticky top-0 h-screen">
+          <EmployeeSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        </aside>
+        <main className="flex-1 bg-gray-50">
+          {renderContent()}
         </main>
       </div>
     </Layout>

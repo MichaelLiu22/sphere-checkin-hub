@@ -1,0 +1,782 @@
+
+import React, { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  Card, 
+  CardContent, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarIcon, Plus, Check, X } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { cn } from "@/lib/utils";
+
+interface User {
+  id: string;
+  full_name: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: "high" | "medium" | "low";
+  deadline: string | null;
+  completed: boolean;
+  completed_at: string | null;
+  created_at: string;
+  assigner_id: string;
+  assignee_id: string;
+  assigner_name?: string;
+  assignee_name?: string;
+}
+
+const taskFormSchema = z.object({
+  title: z.string().min(1, { message: "标题不能为空" }),
+  description: z.string().optional(),
+  priority: z.enum(["high", "medium", "low"], {
+    required_error: "请选择优先级",
+  }),
+  deadline: z.date().optional().nullable(),
+  assignee_id: z.string().min(1, { message: "请选择分配对象" }),
+});
+
+const personalTaskSchema = z.object({
+  title: z.string().min(1, { message: "标题不能为空" }),
+  description: z.string().optional(),
+  priority: z.enum(["high", "medium", "low"], {
+    required_error: "请选择优先级",
+  }),
+  deadline: z.date().optional().nullable(),
+});
+
+const TaskBoard: React.FC = () => {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
+  const [personalTasks, setPersonalTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [hasTaskPermission, setHasTaskPermission] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isPersonalTaskDialogOpen, setIsPersonalTaskDialogOpen] = useState(false);
+
+  const taskForm = useForm<z.infer<typeof taskFormSchema>>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: "medium",
+      deadline: null,
+      assignee_id: "",
+    },
+  });
+
+  const personalTaskForm = useForm<z.infer<typeof personalTaskSchema>>({
+    resolver: zodResolver(personalTaskSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: "medium",
+      deadline: null,
+    },
+  });
+
+  // Check if current user has task permission
+  useEffect(() => {
+    if (user && user.enabled_modules) {
+      setHasTaskPermission(user.enabled_modules.includes("task"));
+    }
+  }, [user]);
+
+  // Fetch tasks assigned to current user
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!user) return;
+      setIsLoading(true);
+
+      try {
+        // Get tasks assigned to me
+        const { data: assignedData, error: assignedError } = await supabase
+          .from("tasks")
+          .select(`
+            *,
+            assigner:assigner_id(full_name)
+          `)
+          .eq("assignee_id", user.id);
+
+        if (assignedError) throw assignedError;
+
+        // Get personal tasks (where I'm both assigner and assignee)
+        const { data: personalData, error: personalError } = await supabase
+          .from("tasks")
+          .select("*")
+          .eq("assigner_id", user.id)
+          .eq("assignee_id", user.id);
+
+        if (personalError) throw personalError;
+
+        // Format the assigned tasks
+        const formattedAssignedTasks = (assignedData || [])
+          .filter(task => !(task.assigner_id === user.id && task.assignee_id === user.id))
+          .map((task) => ({
+            ...task,
+            assigner_name: task.assigner?.full_name || "未知",
+          }));
+
+        setAssignedTasks(formattedAssignedTasks);
+        setPersonalTasks(personalData || []);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        toast.error("获取任务数据失败");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [user]);
+
+  // Fetch employees for task assignment
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!hasTaskPermission) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("id, full_name")
+          .order("full_name");
+
+        if (error) throw error;
+        setEmployees(data || []);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+        toast.error("获取员工列表失败");
+      }
+    };
+
+    if (hasTaskPermission) {
+      fetchEmployees();
+    }
+  }, [hasTaskPermission]);
+
+  const onTaskFormSubmit = async (values: z.infer<typeof taskFormSchema>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.from("tasks").insert({
+        title: values.title,
+        description: values.description || null,
+        priority: values.priority,
+        deadline: values.deadline ? values.deadline.toISOString() : null,
+        assigner_id: user.id,
+        assignee_id: values.assignee_id,
+      });
+
+      if (error) throw error;
+
+      taskForm.reset();
+      setIsTaskDialogOpen(false);
+      toast.success("任务已分配");
+
+      // Refresh the task list
+      if (values.assignee_id === user.id) {
+        const { data: newTask } = await supabase
+          .from("tasks")
+          .select("*")
+          .eq("assigner_id", user.id)
+          .eq("assignee_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (newTask) {
+          setPersonalTasks([newTask, ...personalTasks]);
+        }
+      }
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast.error("创建任务失败");
+    }
+  };
+
+  const onPersonalTaskFormSubmit = async (values: z.infer<typeof personalTaskSchema>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert({
+          title: values.title,
+          description: values.description || null,
+          priority: values.priority,
+          deadline: values.deadline ? values.deadline.toISOString() : null,
+          assigner_id: user.id,
+          assignee_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      personalTaskForm.reset();
+      setIsPersonalTaskDialogOpen(false);
+      toast.success("个人任务已创建");
+      
+      if (data) {
+        setPersonalTasks([data, ...personalTasks]);
+      }
+    } catch (error) {
+      console.error("Error creating personal task:", error);
+      toast.error("创建个人任务失败");
+    }
+  };
+
+  const handleTaskComplete = async (task: Task, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          completed,
+          completed_at: completed ? new Date().toISOString() : null,
+        })
+        .eq("id", task.id);
+
+      if (error) throw error;
+
+      toast.success(completed ? "任务已完成" : "任务已重新打开");
+      
+      // Update local state
+      if (task.assigner_id === user?.id && task.assignee_id === user?.id) {
+        // Personal task
+        setPersonalTasks(
+          personalTasks.map((t) =>
+            t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
+          )
+        );
+      } else {
+        // Assigned task
+        setAssignedTasks(
+          assignedTasks.map((t) =>
+            t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("更新任务状态失败");
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string, isPersonal: boolean) => {
+    if (!confirm("确定要删除此任务吗？")) return;
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      toast.success("任务已删除");
+
+      // Update local state
+      if (isPersonal) {
+        setPersonalTasks(personalTasks.filter((t) => t.id !== taskId));
+      } else {
+        setAssignedTasks(assignedTasks.filter((t) => t.id !== taskId));
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("删除任务失败");
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800 border-red-300";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "low":
+        return "bg-green-100 text-green-800 border-green-300";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "紧急";
+      case "medium":
+        return "一般";
+      case "low":
+        return "宽松";
+      default:
+        return "未设置";
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Assigned Tasks */}
+      <Card className="h-full">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardTitle>已分配任务</CardTitle>
+          {hasTaskPermission && (
+            <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="h-8">
+                  <Plus className="mr-2 h-4 w-4" />
+                  分配任务
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>分配新任务</DialogTitle>
+                </DialogHeader>
+                <Form {...taskForm}>
+                  <form onSubmit={taskForm.handleSubmit(onTaskFormSubmit)} className="space-y-4">
+                    <FormField
+                      control={taskForm.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>标题</FormLabel>
+                          <FormControl>
+                            <Input placeholder="任务标题" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={taskForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>描述</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="任务描述（可选）" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={taskForm.control}
+                        name="priority"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>优先级</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="选择优先级" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="high">紧急</SelectItem>
+                                <SelectItem value="medium">一般</SelectItem>
+                                <SelectItem value="low">宽松</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={taskForm.control}
+                        name="deadline"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>截止日期</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "yyyy-MM-dd")
+                                    ) : (
+                                      <span>选择日期（可选）</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value || undefined}
+                                  onSelect={(date) => field.onChange(date)}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={taskForm.control}
+                      name="assignee_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>分配给</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="选择员工" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {employees.map((employee) => (
+                                <SelectItem key={employee.id} value={employee.id}>
+                                  {employee.full_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button type="submit">创建任务</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </CardHeader>
+        <CardContent className="pb-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-muted-foreground">加载中...</p>
+            </div>
+          ) : assignedTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40">
+              <p className="text-muted-foreground">没有分配给你的任务</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {assignedTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={cn(
+                    "border rounded-md p-3",
+                    task.completed ? "bg-muted/50" : ""
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        checked={task.completed}
+                        onCheckedChange={(checked) => 
+                          handleTaskComplete(task, checked as boolean)
+                        }
+                      />
+                      <div>
+                        <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
+                          {task.title}
+                        </h4>
+                        {task.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {task.description}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
+                            {getPriorityText(task.priority)}
+                          </span>
+                          {task.deadline && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                              截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
+                            </span>
+                          )}
+                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
+                            来自: {task.assigner_name}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {(task.assigner_id === user?.id || hasTaskPermission) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteTask(task.id, false)}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Personal Tasks */}
+      <Card className="h-full">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardTitle>个人待办</CardTitle>
+          <Dialog
+            open={isPersonalTaskDialogOpen}
+            onOpenChange={setIsPersonalTaskDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button size="sm" className="h-8">
+                <Plus className="mr-2 h-4 w-4" />
+                添加待办
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>添加个人待办</DialogTitle>
+              </DialogHeader>
+              <Form {...personalTaskForm}>
+                <form
+                  onSubmit={personalTaskForm.handleSubmit(
+                    onPersonalTaskFormSubmit
+                  )}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={personalTaskForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>标题</FormLabel>
+                        <FormControl>
+                          <Input placeholder="待办标题" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={personalTaskForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>描述</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="待办描述（可选）" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={personalTaskForm.control}
+                      name="priority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>优先级</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="选择优先级" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="high">紧急</SelectItem>
+                              <SelectItem value="medium">一般</SelectItem>
+                              <SelectItem value="low">宽松</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={personalTaskForm.control}
+                      name="deadline"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>截止日期</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "yyyy-MM-dd")
+                                  ) : (
+                                    <span>选择日期（可选）</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="submit">添加待办</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent className="pb-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-muted-foreground">加载中...</p>
+            </div>
+          ) : personalTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40">
+              <p className="text-muted-foreground">没有个人待办事项</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {personalTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={cn(
+                    "border rounded-md p-3",
+                    task.completed ? "bg-muted/50" : ""
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        checked={task.completed}
+                        onCheckedChange={(checked) =>
+                          handleTaskComplete(task, checked as boolean)
+                        }
+                      />
+                      <div>
+                        <h4 className={cn("font-medium", task.completed && "line-through text-muted-foreground")}>
+                          {task.title}
+                        </h4>
+                        {task.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {task.description}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
+                            {getPriorityText(task.priority)}
+                          </span>
+                          {task.deadline && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                              截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteTask(task.id, true)}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default TaskBoard;

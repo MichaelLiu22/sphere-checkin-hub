@@ -130,6 +130,60 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          assignee_id: string | null
+          assigner_id: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          priority: string | null
+          title: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          assigner_id?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          title: string
+        }
+        Update: {
+          assignee_id?: string | null
+          assigner_id?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assigner_id_fkey"
+            columns: ["assigner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_file_access: {
         Row: {
           created_at: string
