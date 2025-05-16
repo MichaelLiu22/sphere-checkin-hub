@@ -103,7 +103,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "tasks"}
-              onClick={() => navigate('/employee-dashboard/tasks')}
+              onClick={() => setActiveTab("tasks")}
               tooltip="Task Management"
             >
               <CheckSquare className="mr-2" />
@@ -115,7 +115,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "finance"}
-              onClick={() => navigate('/employee-dashboard/finance')}
+              onClick={() => setActiveTab("finance")}
               tooltip="Finance"
             >
               <DollarSign className="mr-2" />
@@ -127,7 +127,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "calendar"}
-              onClick={() => navigate('/employee-dashboard/calendar')}
+              onClick={() => setActiveTab("calendar")}
               tooltip="Calendar"
             >
               <Calendar className="mr-2" />

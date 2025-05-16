@@ -27,6 +27,19 @@ interface User {
 }
 
 /**
+ * 模块内容占位符组件
+ * 为未开发的功能提供占位符显示
+ */
+const ModuleContentPlaceholder: React.FC<{ title: string }> = ({ title }) => {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-lg border border-dashed">
+      <h3 className="text-xl font-medium mb-2">{title}</h3>
+      <p className="text-muted-foreground">此模块功能正在开发中...</p>
+    </div>
+  );
+};
+
+/**
  * 管理员仪表板页面组件
  * 
  * 提供管理员功能，包括W9文件管理、文件上传、用户管理和权限配置
@@ -101,8 +114,18 @@ const AdminDashboard: React.FC = () => {
                   fetchUsers={fetchUsers}
                 />
               )}
-              {/* 添加新的权限配置面板 */}
               {activeTab === "permissions" && <PermissionConfigPanel />}
+              
+              {/* 模块功能区域 */}
+              {activeTab === "tasks" && (
+                <ModuleContentPlaceholder title="任务管理" />
+              )}
+              {activeTab === "finance" && (
+                <ModuleContentPlaceholder title="财务管理" />
+              )}
+              {activeTab === "calendar" && (
+                <ModuleContentPlaceholder title="日程安排" />
+              )}
             </div>
           </div>
         </div>
