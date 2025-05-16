@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, Task } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -106,7 +106,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => navigate('/employee-dashboard/tasks')}
               tooltip="Task Management"
             >
-              <Task className="mr-2" />
+              <CheckSquare className="mr-2" />
               <span>📋 任务管理</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
