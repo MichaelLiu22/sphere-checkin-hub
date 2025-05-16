@@ -142,7 +142,7 @@ const TaskBoard: React.FC = () => {
           .from("tasks")
           .select(`
             *,
-            assigner:assigner_id(full_name)
+            assigner:assigner_id(id, full_name)
           `)
           .eq("assignee_id", user.id);
 
@@ -163,10 +163,14 @@ const TaskBoard: React.FC = () => {
           .map((task) => ({
             ...task,
             assigner_name: task.assigner?.full_name || "未知",
+            priority: task.priority as "high" | "medium" | "low"
           }));
 
-        setAssignedTasks(formattedAssignedTasks);
-        setPersonalTasks(personalData || []);
+        setAssignedTasks(formattedAssignedTasks as Task[]);
+        setPersonalTasks((personalData || []).map(task => ({
+          ...task,
+          priority: task.priority as "high" | "medium" | "low"
+        })) as Task[]);
       } catch (error) {
         console.error("Error fetching tasks:", error);
         toast.error("获取任务数据失败");
@@ -233,7 +237,11 @@ const TaskBoard: React.FC = () => {
           .single();
 
         if (newTask) {
-          setPersonalTasks([newTask, ...personalTasks]);
+          const typedNewTask = {
+            ...newTask,
+            priority: newTask.priority as "high" | "medium" | "low"
+          };
+          setPersonalTasks([typedNewTask as Task, ...personalTasks]);
         }
       }
     } catch (error) {
@@ -266,7 +274,11 @@ const TaskBoard: React.FC = () => {
       toast.success("个人任务已创建");
       
       if (data) {
-        setPersonalTasks([data, ...personalTasks]);
+        const typedNewTask = {
+          ...data,
+          priority: data.priority as "high" | "medium" | "low"
+        };
+        setPersonalTasks([typedNewTask as Task, ...personalTasks]);
       }
     } catch (error) {
       console.error("Error creating personal task:", error);
