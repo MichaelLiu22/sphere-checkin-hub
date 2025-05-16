@@ -24,10 +24,10 @@ const PayrollInfo: React.FC = () => {
         </p>
         
         <p className="italic">{t("payDayExplanation")}</p>
-        <p>{t("payByHours")}</p>
+        <p>{t("checkEmployeePage")}</p>
         <p>{t("questionsContact")}</p>
-        <p>{t("uploadInstructions")}</p>
-        <p className="font-bold text-destructive">{t("clockInReminder")}</p>
+        <p>{t("w9Reminder")}</p>
+        <p className="font-bold text-destructive">{t("noPayWarning")}</p>
       </div>
     </div>
   );

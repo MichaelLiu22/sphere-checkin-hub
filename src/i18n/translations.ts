@@ -57,9 +57,10 @@ export const translations = {
     "monthEnd": "month-end",
     "payDays": "Pay Days",
     "payDayExplanation": "Employees are paid bi-weekly, two weeks after the end of the pay period.",
-    "payByHours": "Please submit your hours by 5 PM on the last day of the pay period.",
-    "uploadInstructions": "Please upload all invoices and receipts to the system.",
-    "clockInReminder": "Remember to clock in and out each day!",
+    "checkEmployeePage": "You can view your commission and work hours on the employee page.",
+    "questionsContact": "If you have any questions, please leave a message for your manager.",
+    "w9Reminder": "Please ensure you have uploaded your W9 form and provided your full legal name.",
+    "noPayWarning": "Employees who have not submitted W9 forms or clocked in/out will not be paid.",
     
     // User Dashboard
     "userDashboard": "User Dashboard",
@@ -212,9 +213,10 @@ export const translations = {
     "monthEnd": "月末",
     "payDays": "发薪日",
     "payDayExplanation": "员工每两周支付一次工资，在工资期结束后两周支付。",
-    "payByHours": "请在工资期最后一天的下午 5 点前提交您的工时。",
-    "uploadInstructions": "请将所有发票和收据上传到系统。",
-    "clockInReminder": "记得每天打卡！",
+    "checkEmployeePage": "您可以在员工页面看到您的提成和工作时长。",
+    "questionsContact": "如有任何疑问，请给您的经理留言。",
+    "w9Reminder": "请确认您已经上传W9表格和您的全名。",
+    "noPayWarning": "没有提交W9或未打卡的员工不会发放工资。",
     
     // User Dashboard
     "userDashboard": "用户仪表板",
@@ -363,13 +365,14 @@ export const translations = {
     "registrationError": "Error al registrarse. Por favor, intente de nuevo.",
     
     // Payroll Info
-    "payPeriods": "Períodos de Pago",
+    "payPeriods": "Períodos de pago",
     "monthEnd": "fin de mes",
-    "payDays": "Días de Pago",
+    "payDays": "Días de pago",
     "payDayExplanation": "A los empleados se les paga quincenalmente, dos semanas después del final del período de pago.",
-    "payByHours": "Por favor, envíe sus horas antes de las 5 PM del último día del período de pago.",
-    "uploadInstructions": "Por favor, suba todas las facturas y recibos al sistema.",
-    "clockInReminder": "¡Recuerde registrar su entrada y salida cada día!",
+    "checkEmployeePage": "Puede ver su comisión y horas de trabajo en la página de empleados.",
+    "questionsContact": "Si tiene alguna pregunta, deje un mensaje para su gerente.",
+    "w9Reminder": "Asegúrese de haber cargado su formulario W9 y proporcionado su nombre legal completo.",
+    "noPayWarning": "Los empleados que no hayan presentado formularios W9 o no hayan registrado entrada/salida no recibirán pago.",
     
     // User Dashboard
     "userDashboard": "Panel de Usuario",
