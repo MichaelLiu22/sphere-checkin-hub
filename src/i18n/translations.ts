@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     // Common
@@ -15,7 +16,6 @@ export const translations = {
     "login": "Login",
     "register": "Register",
     "calendar": "Calendar",
-    "questionsContact": "If you have any questions, please contact your manager.",
     
     // Home Page
     "welcomeBanner": "Welcome to our platform!",
@@ -171,7 +171,6 @@ export const translations = {
     "login": "登录",
     "register": "注册",
     "calendar": "日历",
-    "questionsContact": "如有任何问题，请联系您的经理。",
     
     // Home Page
     "welcomeBanner": "欢迎来到我们的平台！",
@@ -327,7 +326,6 @@ export const translations = {
     "login": "Iniciar Sesión",
     "register": "Registrarse",
     "calendar": "Calendario",
-    "questionsContact": "Si tiene alguna pregunta, por favor contacte a su gerente.",
     
     // Home Page
     "welcomeBanner": "¡Bienvenido a nuestra plataforma!",
