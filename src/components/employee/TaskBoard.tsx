@@ -137,12 +137,12 @@ const TaskBoard: React.FC = () => {
       setIsLoading(true);
 
       try {
-        // Get tasks assigned to me
+        // Get tasks assigned to me - Use explicit column reference in the join
         const { data: assignedData, error: assignedError } = await supabase
           .from("tasks")
           .select(`
             *,
-            assigner:assigner_id(id, full_name)
+            users!tasks_assigner_id_fkey(id, full_name)
           `)
           .eq("assignee_id", user.id);
 
@@ -162,7 +162,7 @@ const TaskBoard: React.FC = () => {
           .filter(task => !(task.assigner_id === user.id && task.assignee_id === user.id))
           .map((task) => ({
             ...task,
-            assigner_name: task.assigner?.full_name || "未知",
+            assigner_name: task.users?.full_name || "未知",
             priority: task.priority as "high" | "medium" | "low"
           }));
 
