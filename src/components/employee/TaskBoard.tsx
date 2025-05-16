@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,6 +73,11 @@ interface Task {
   assignee_name?: string;
 }
 
+interface TaskBoardProps {
+  canAssignTasks: boolean;
+  isAdmin: boolean;
+}
+
 const taskFormSchema = z.object({
   title: z.string().min(1, { message: "标题不能为空" }),
   description: z.string().optional(),
@@ -91,18 +97,17 @@ const personalTaskSchema = z.object({
   deadline: z.date().optional().nullable(),
 });
 
-const TaskBoard: React.FC = () => {
+const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
   const [personalTasks, setPersonalTasks] = useState<Task[]>([]);
   const [tasksAssignedByMe, setTasksAssignedByMe] = useState<Task[]>([]);
   const [departmentEmployees, setDepartmentEmployees] = useState<User[]>([]);
-  const [hasTaskPermission, setHasTaskPermission] = useState(false);
+  const [allEmployees, setAllEmployees] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isPersonalTaskDialogOpen, setIsPersonalTaskDialogOpen] = useState(false);
-  const [showTaskAssignmentForm, setShowTaskAssignmentForm] = useState(false);
 
   const taskForm = useForm<z.infer<typeof taskFormSchema>>({
     resolver: zodResolver(taskFormSchema),
@@ -135,15 +140,6 @@ const TaskBoard: React.FC = () => {
       assignee_id: "",
     },
   });
-
-  // Check if current user has task permission
-  useEffect(() => {
-    if (user && user.enabled_modules) {
-      const hasPermission = user.enabled_modules.includes("task");
-      setHasTaskPermission(hasPermission);
-      setShowTaskAssignmentForm(hasPermission);
-    }
-  }, [user]);
 
   // Fetch tasks assigned to current user and by current user
   useEffect(() => {
@@ -216,44 +212,56 @@ const TaskBoard: React.FC = () => {
     fetchTasks();
   }, [user]);
 
-  // Fetch employees from the same department as the current user
+  // Fetch employees depending on user role
   useEffect(() => {
-    const fetchDepartmentEmployees = async () => {
-      if (!user || !hasTaskPermission) return;
+    const fetchEmployees = async () => {
+      if (!user || !canAssignTasks) return;
 
       try {
-        // First get current user's department
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("department_id")
-          .eq("id", user.id)
-          .single();
+        // For admin, fetch all employees
+        if (isAdmin) {
+          const { data: employeesData, error: employeesError } = await supabase
+            .from("users")
+            .select("id, full_name, department_id")
+            .neq("id", user.id) // Exclude current user
+            .order("full_name");
 
-        if (userError) throw userError;
+          if (employeesError) throw employeesError;
+          setAllEmployees(employeesData || []);
+        } else {
+          // For regular users with task permission, fetch department users
+          const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("department_id")
+            .eq("id", user.id)
+            .single();
 
-        if (!userData.department_id) {
-          console.log("User has no department assigned");
-          return;
+          if (userError) throw userError;
+
+          if (!userData.department_id) {
+            console.log("User has no department assigned");
+            return;
+          }
+
+          // Get all employees in the same department
+          const { data: departmentData, error: deptError } = await supabase
+            .from("users")
+            .select("id, full_name, department_id")
+            .eq("department_id", userData.department_id)
+            .neq("id", user.id) // Exclude current user
+            .order("full_name");
+
+          if (deptError) throw deptError;
+          setDepartmentEmployees(departmentData || []);
         }
-
-        // Then get all employees in that department
-        const { data: employeesData, error: employeesError } = await supabase
-          .from("users")
-          .select("id, full_name, department_id")
-          .eq("department_id", userData.department_id)
-          .neq("id", user.id) // Exclude current user
-          .order("full_name");
-
-        if (employeesError) throw employeesError;
-        setDepartmentEmployees(employeesData || []);
       } catch (error) {
-        console.error("Error fetching department employees:", error);
-        toast.error("获取部门员工列表失败");
+        console.error("Error fetching employees:", error);
+        toast.error("获取员工列表失败");
       }
     };
 
-    fetchDepartmentEmployees();
-  }, [user, hasTaskPermission]);
+    fetchEmployees();
+  }, [user, canAssignTasks, isAdmin]);
 
   const onTaskFormSubmit = async (values: z.infer<typeof taskFormSchema>) => {
     if (!user) return;
@@ -485,7 +493,7 @@ const TaskBoard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Task Assignment Form - Only show if user has task permission */}
-      {showTaskAssignmentForm && (
+      {canAssignTasks && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">发布任务</CardTitle>
@@ -521,16 +529,30 @@ const TaskBoard: React.FC = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {departmentEmployees.length > 0 ? (
-                              departmentEmployees.map((employee) => (
-                                <SelectItem key={employee.id} value={employee.id}>
-                                  {employee.full_name}
+                            {isAdmin ? (
+                              allEmployees.length > 0 ? (
+                                allEmployees.map((employee) => (
+                                  <SelectItem key={employee.id} value={employee.id}>
+                                    {employee.full_name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="" disabled>
+                                  没有可选择的员工
                                 </SelectItem>
-                              ))
+                              )
                             ) : (
-                              <SelectItem value="" disabled>
-                                没有可选择的同部门员工
-                              </SelectItem>
+                              departmentEmployees.length > 0 ? (
+                                departmentEmployees.map((employee) => (
+                                  <SelectItem key={employee.id} value={employee.id}>
+                                    {employee.full_name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="" disabled>
+                                  没有可选择的同部门员工
+                                </SelectItem>
+                              )
                             )}
                           </SelectContent>
                         </Select>
@@ -636,8 +658,8 @@ const TaskBoard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Tasks Assigned By Me */}
-        {hasTaskPermission && (
+        {/* Tasks Assigned By Me - Only show if user has task permission */}
+        {canAssignTasks && (
           <Card className="h-full">
             <CardHeader className="pb-2 space-y-0">
               <CardTitle>我发布的任务</CardTitle>
@@ -710,7 +732,7 @@ const TaskBoard: React.FC = () => {
           </Card>
         )}
 
-        {/* Assigned Tasks */}
+        {/* Assigned Tasks - All users can see this */}
         <Card className="h-full">
           <CardHeader className="pb-2 space-y-0">
             <CardTitle>我收到的任务</CardTitle>
@@ -774,7 +796,7 @@ const TaskBoard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Personal Tasks */}
+        {/* Personal Tasks - All users can see this */}
         <Card className="h-full md:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle>个人待办</CardTitle>

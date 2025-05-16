@@ -63,6 +63,14 @@ const EmployeeDashboard: React.FC = () => {
     return user.enabled_modules.includes(moduleName);
   };
 
+  /**
+   * 检查用户是否可以分配任务
+   * 条件：是管理员或拥有task模块权限
+   */
+  const canAssignTasks = (): boolean => {
+    return user.user_type === 'admin' || hasModulePermission('task');
+  };
+
   // 根据活动标签渲染对应的内容区域
   const renderContent = () => {
     switch (activeTab) {
@@ -97,7 +105,7 @@ const EmployeeDashboard: React.FC = () => {
         return (
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-6">当前任务</h2>
-            <TaskBoard />
+            <TaskBoard canAssignTasks={canAssignTasks()} isAdmin={user.user_type === 'admin'} />
           </div>
         );
       case "host_schedule":
