@@ -9,6 +9,7 @@ import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
 import TaskBoard from "@/components/employee/TaskBoard";
 import TaskArea from "@/components/TaskArea";
 import FinanceArea from "@/components/FinanceArea";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 /**
  * 员工仪表板组件
@@ -125,14 +126,16 @@ const EmployeeDashboard: React.FC = () => {
 
   return (
     <Layout>
-      <div className="flex min-h-screen">
-        <aside className="sticky top-0 h-screen">
-          <EmployeeSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-        </aside>
-        <main className="flex-1 bg-gray-50">
-          {renderContent()}
-        </main>
-      </div>
+      <SidebarProvider>
+        <div className="flex w-full min-h-screen">
+          <aside className="sticky top-0 h-screen">
+            <EmployeeSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+          </aside>
+          <main className="flex-1 bg-gray-50">
+            {renderContent()}
+          </main>
+        </div>
+      </SidebarProvider>
     </Layout>
   );
 };
