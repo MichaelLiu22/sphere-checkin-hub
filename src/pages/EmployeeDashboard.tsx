@@ -104,7 +104,7 @@ const EmployeeDashboard: React.FC = () => {
       case "tasks":
         return (
           <div className="p-6">
-            <h2 className="text-2xl font-bold mb-6">当前任务</h2>
+            <h2 className="text-2xl font-bold mb-6">任务管理</h2>
             <TaskBoard canAssignTasks={canAssignTasks()} isAdmin={user.user_type === 'admin'} />
           </div>
         );
