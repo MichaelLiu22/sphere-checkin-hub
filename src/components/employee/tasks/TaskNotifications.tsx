@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 interface TaskNotificationsProps {
   className?: string; // 可选的CSS类名，用于自定义样式
@@ -120,9 +121,12 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
   return (
     <div className="relative cursor-pointer" onClick={resetNotificationCount}>
       <Bell className={cn("h-5 w-5", className)} />
-      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+      <Badge 
+        variant="destructive" 
+        className="absolute -top-1 -right-1 flex items-center justify-center px-1 min-w-[16px] h-4 text-[10px] font-bold"
+      >
         {unreadCount > 99 ? '99+' : unreadCount}
-      </span>
+      </Badge>
     </div>
   );
 };

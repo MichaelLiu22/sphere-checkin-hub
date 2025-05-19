@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Home, Settings, Users, Calendar, FileText, LogOut, ArrowLeft } from "lucide-react";
+import { Home, Settings, Calendar, FileText, LogOut, ArrowLeft } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import TaskNotifications from "./tasks/TaskNotifications";
 
 interface EmployeeSidebarProps {
   activeTab: string;
@@ -39,6 +40,9 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
     await logout();
     navigate('/');
   };
+
+  // 检查用户是否有任务权限
+  const hasTaskPermission = user?.task_permission || user?.user_type === 'admin';
 
   return (
     <Sidebar>
@@ -64,20 +68,13 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
               isActive={activeTab === "tasks"}
               onClick={() => setActiveTab("tasks")}
               tooltip="Tasks"
+              className="flex justify-between"
             >
-              <FileText className="mr-2 h-4 w-4" />
-              <span>任务</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === "team"}
-              onClick={() => setActiveTab("team")}
-              tooltip="Team"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              <span>团队</span>
+              <div className="flex items-center">
+                <FileText className="mr-2 h-4 w-4" />
+                <span>任务与团队</span>
+              </div>
+              <TaskNotifications className="h-4 w-4" />
             </SidebarMenuButton>
           </SidebarMenuItem>
           
@@ -109,6 +106,9 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
         <div className="text-sm text-muted-foreground mb-2">
           <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
           <div>部门: {user?.department_id ? "已分配" : "未分配"}</div>
+          {hasTaskPermission && (
+            <div className="text-green-600 font-medium">✓ 可发布任务</div>
+          )}
         </div>
         <div className="space-y-2">
           <Button variant="outline" className="w-full" onClick={handleLogout}>

@@ -39,6 +39,8 @@ export interface Task {
   attachments?: string[];
   comments: Comment[];
   completed_by: Record<string, boolean | string>;
+  is_new?: boolean; // 添加标记是否为新任务的属性
+  read_by?: Record<string, boolean>; // 添加已读标记属性
 }
 
 // Format date to YYYY-MM-DD
@@ -113,6 +115,38 @@ export const getRepeatTypeText = (type: string): string => {
   }
 };
 
+// Helper function to check if a task is new for a user
+export const isTaskNewForUser = (task: Task, userId: string): boolean => {
+  if (!task.read_by) return true;
+  return !task.read_by[userId];
+};
+
+// Helper function to mark task as read
+export const markTaskAsRead = async (
+  taskId: string, 
+  userId: string,
+  supabase: any
+): Promise<void> => {
+  try {
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('read_by')
+      .eq('id', taskId)
+      .single();
+    
+    const readBy = task?.read_by || {};
+    readBy[userId] = true;
+    
+    await supabase
+      .from('tasks')
+      .update({ read_by: readBy })
+      .eq('id', taskId);
+      
+  } catch (error) {
+    console.error("Error marking task as read:", error);
+  }
+};
+
 // Helper function to convert database task to Task interface
 export const convertDatabaseTaskToTask = (dbTask: any): Task => {
   // Make sure to properly convert the priority type
@@ -133,6 +167,10 @@ export const convertDatabaseTaskToTask = (dbTask: any): Task => {
   const completed_by: Record<string, boolean | string> = 
     typeof dbTask.completed_by === 'object' ? dbTask.completed_by : {};
   
+  // Parse read_by from JSON if needed
+  const read_by: Record<string, boolean> =
+    typeof dbTask.read_by === 'object' ? dbTask.read_by : {};
+    
   return {
     id: dbTask.id,
     title: dbTask.title,
@@ -152,7 +190,9 @@ export const convertDatabaseTaskToTask = (dbTask: any): Task => {
     repeat_interval: dbTask.repeat_interval || 1,
     attachments: Array.isArray(dbTask.attachments) ? dbTask.attachments : [],
     comments: comments,
-    completed_by: completed_by
+    completed_by: completed_by,
+    is_new: dbTask.is_new || false,
+    read_by: read_by
   };
 };
 
@@ -161,7 +201,8 @@ export const convertTaskToDatabase = (task: Task): any => {
   return {
     ...task,
     comments: task.comments || [],
-    completed_by: task.completed_by || {}
+    completed_by: task.completed_by || {},
+    read_by: task.read_by || {}
   };
 };
 

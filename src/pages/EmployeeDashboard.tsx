@@ -13,6 +13,8 @@ import TaskReportPanel from "@/components/admin/TaskReportPanel";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import TaskAssignmentForm from "@/components/employee/tasks/TaskAssignmentForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 /**
  * 员工仪表板组件
@@ -29,6 +31,8 @@ const EmployeeDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   // 新建任务状态
   const [newTask, setNewTask] = useState<any>(null);
+  // 显示任务分配表单
+  const [showTaskAssignmentForm, setShowTaskAssignmentForm] = useState(false);
 
   /**
    * 组件加载时检查用户登录状态
@@ -73,13 +77,14 @@ const EmployeeDashboard: React.FC = () => {
    * 条件：是管理员或拥有task模块权限
    */
   const canAssignTasks = (): boolean => {
-    return user.user_type === 'admin' || hasModulePermission('task');
+    return user.user_type === 'admin' || user.task_permission || hasModulePermission('task');
   };
 
   // 处理任务创建
   const handleTaskCreated = (task: any) => {
     setNewTask(task);
     toast.success("任务已成功发布");
+    setShowTaskAssignmentForm(false);
   };
 
   // 根据活动标签渲染对应的内容区域
@@ -88,7 +93,16 @@ const EmployeeDashboard: React.FC = () => {
       case "overview":
         return (
           <div className="p-6">
-            <h2 className="text-2xl font-bold mb-6">欢迎, {user.full_name}</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">欢迎, {user.full_name}</h2>
+              {canAssignTasks() && (
+                <Button onClick={() => setShowTaskAssignmentForm(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  发布新任务
+                </Button>
+              )}
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="font-medium text-lg mb-2">您的模块权限</h3>
@@ -100,7 +114,7 @@ const EmployeeDashboard: React.FC = () => {
                     {user.enabled_modules.includes("finance") && (
                       <li>财务管理</li>
                     )}
-                    {user.enabled_modules.includes("task") && (
+                    {(user.enabled_modules.includes("task") || user.task_permission) && (
                       <li>分配任务 (可分配任务给其他员工)</li>
                     )}
                     <li>当前任务 (所有员工默认权限)</li>
@@ -112,7 +126,7 @@ const EmployeeDashboard: React.FC = () => {
             </div>
             
             {/* 任务发布区域 - 只对有task权限的用户显示 */}
-            {hasModulePermission('task') && (
+            {canAssignTasks() && showTaskAssignmentForm && (
               <Card className="mt-8">
                 <CardHeader>
                   <CardTitle className="text-lg">发布新任务</CardTitle>
@@ -130,7 +144,38 @@ const EmployeeDashboard: React.FC = () => {
       case "tasks":
         return (
           <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">任务与团队</h2>
+              {canAssignTasks() && (
+                <Button onClick={() => setShowTaskAssignmentForm(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  发布新任务
+                </Button>
+              )}
+            </div>
             <TaskBoard canAssignTasks={canAssignTasks()} isAdmin={user.user_type === 'admin'} />
+            
+            {/* 任务发布表单弹窗 */}
+            {canAssignTasks() && showTaskAssignmentForm && (
+              <Card className="mt-8">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">发布新任务</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowTaskAssignmentForm(false)}
+                  >
+                    关闭
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <TaskAssignmentForm 
+                    isAdmin={user.user_type === 'admin'} 
+                    onTaskCreated={handleTaskCreated}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
       case "tasks_report":
