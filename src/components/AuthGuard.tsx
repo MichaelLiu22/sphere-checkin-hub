@@ -72,15 +72,20 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, allowedRoles }) => {
     return <Navigate to="/waiting-approval" state={{ username: user.full_name }} replace />;
   }
 
-  // 如果用户角色不在允许的角色列表中，根据其角色重定向到适当的仪表板
+  // 如果当前用户角色不在允许的角色列表中，重定向到相应的仪表板页面
+  // 修正：不要从admin-dashboard重定向到employee-dashboard，保持用户在各自的dashboard
   if (!allowedRoles.includes(user.user_type)) {
-    if (user.user_type === 'admin') {
+    // 检查当前路径，避免循环重定向
+    const currentPath = location.pathname;
+    
+    // 根据用户角色决定重定向目标
+    if (user.user_type === 'admin' && currentPath !== '/admin-dashboard') {
       return <Navigate to="/admin-dashboard" replace />;
-    } else if (user.user_type === 'staff') {
+    } else if (user.user_type === 'staff' && currentPath !== '/staff-dashboard') {
       return <Navigate to="/staff-dashboard" replace />;
-    } else if (user.user_type === 'employee') {
+    } else if (user.user_type === 'employee' && currentPath !== '/employee-dashboard') {
       return <Navigate to="/employee-dashboard" replace />;
-    } else {
+    } else if (user.user_type === 'visitor' && currentPath !== '/guest') {
       return <Navigate to="/guest" replace />;
     }
   }

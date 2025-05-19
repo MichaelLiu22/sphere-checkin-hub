@@ -2,7 +2,7 @@
  * 任务项组件
  * 显示单个任务的详情、状态和操作选项
  */
-import React from "react";
+import React, { useState } from "react";
 import { Task } from "./utils";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,14 +14,17 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { Badge } from "@/components/ui/badge";
+import TaskDetail from "./TaskDetail";
+import { Trash2, AlertCircle, Clock, Users } from "lucide-react";
 
 interface TaskItemProps {
-  task: Task;                           // 任务数据
-  onTaskUpdate?: (task: Task) => void;  // 任务更新后回调
-  onDelete?: () => void;                // 删除任务回调
-  showAssigner?: boolean;               // 是否显示任务发布者
-  showAssignee?: boolean;               // 是否显示任务接收者
-  showCompletionTime?: boolean;         // 是否显示完成时间
+  task: any; // Using any for now to handle the conversion issue
+  onTaskUpdate: (task: Task) => void;
+  onDelete?: () => void;
+  showAssigner?: boolean;
+  showAssignee?: boolean;
+  showCompletionTime?: boolean;
 }
 
 /**
@@ -31,15 +34,24 @@ interface TaskItemProps {
  * @param {TaskItemProps} props - 组件属性
  * @returns {React.ReactElement} 渲染的任务项卡片
  */
-const TaskItem: React.FC<TaskItemProps> = ({ 
-  task, 
-  onTaskUpdate, 
-  onDelete, 
-  showAssigner, 
-  showAssignee,
-  showCompletionTime
+const TaskItem: React.FC<TaskItemProps> = ({
+  task: taskData,
+  onTaskUpdate,
+  onDelete,
+  showAssigner = false,
+  showAssignee = false,
+  showCompletionTime = false,
 }) => {
-  const { user } = useAuth(); // 获取当前用户信息
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const { user } = useAuth();
+  
+  // Convert task data to match our Task type
+  const task: Task = {
+    ...taskData,
+    comments: Array.isArray(taskData.comments) ? taskData.comments : [],
+    completed_by: typeof taskData.completed_by === 'object' ? taskData.completed_by : {},
+  };
 
   /**
    * 获取任务优先级对应的颜色样式类
@@ -176,64 +188,76 @@ const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   return (
-    <Card className={cn("border rounded-md p-3", task.completed ? "bg-muted/50" : "")}>
-      <CardContent className="p-0">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id={`task-${task.id}`}
-              checked={getCheckedState()}
-              onCheckedChange={handleCompletedChange}
-            />
-            <div>
-              <h4 className={cn("font-medium", task.completed ? "line-through text-muted-foreground" : "")}>
-                {task.title}
-              </h4>
-              {task.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {task.description}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
-                  {getPriorityText(task.priority)}
-                </span>
-                {task.deadline && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
-                    截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
-                  </span>
+    <>
+      <Card className={cn("border rounded-md p-3", task.completed ? "bg-muted/50" : "")}>
+        <CardContent className="p-0">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id={`task-${task.id}`}
+                checked={getCheckedState()}
+                onCheckedChange={handleCompletedChange}
+              />
+              <div>
+                <h4 className={cn("font-medium", task.completed ? "line-through text-muted-foreground" : "")}>
+                  {task.title}
+                </h4>
+                {task.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {task.description}
+                  </p>
                 )}
-                {showAssigner && task.assigner_name && (
-                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
-                    发布者: {task.assigner_name}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
+                    {getPriorityText(task.priority)}
                   </span>
-                )}
-                {showAssignee && task.assignee_name && (
-                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-300">
-                    接收者: {task.assignee_name}
-                  </span>
-                )}
-                {showCompletionTime && task.completed_at && (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-300">
-                    完成时间: {format(new Date(task.completed_at), "yyyy-MM-dd HH:mm")}
-                  </span>
-                )}
+                  {task.deadline && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                      截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
+                    </span>
+                  )}
+                  {showAssigner && task.assigner_name && (
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
+                      发布者: {task.assigner_name}
+                    </span>
+                  )}
+                  {showAssignee && task.assignee_name && (
+                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-300">
+                      接收者: {task.assignee_name}
+                    </span>
+                  )}
+                  {showCompletionTime && task.completed_at && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-300">
+                      完成时间: {format(new Date(task.completed_at), "yyyy-MM-dd HH:mm")}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onDelete}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onDelete}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      {/* Make sure you handle the Task type correctly in the TaskDetail component */}
+      {showDetail && (
+        <TaskDetail 
+          task={task}
+          open={showDetail}
+          onOpenChange={setShowDetail}
+          onTaskUpdate={onTaskUpdate}
+        />
+      )}
+    </>
   );
 };
 
