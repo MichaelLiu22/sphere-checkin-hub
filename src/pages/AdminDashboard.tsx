@@ -11,6 +11,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import TaskBoard from "@/components/employee/TaskBoard";
 
 /**
  * 用户接口定义
@@ -116,10 +117,11 @@ const AdminDashboard: React.FC = () => {
               )}
               {activeTab === "permissions" && <PermissionConfigPanel />}
               
-              {/* 模块功能区域 */}
+              {/* 将任务管理占位符替换为完整的任务管理组件 */}
               {activeTab === "tasks" && (
-                <ModuleContentPlaceholder title="任务管理" />
+                <TaskBoard canAssignTasks={true} isAdmin={true} />
               )}
+              
               {activeTab === "finance" && (
                 <ModuleContentPlaceholder title="财务管理" />
               )}
