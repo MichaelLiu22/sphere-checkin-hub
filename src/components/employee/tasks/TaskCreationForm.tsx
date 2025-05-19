@@ -64,7 +64,7 @@ const taskSchema = z.object({
   priority: z.enum(["high", "medium", "low"], {
     required_error: "请选择优先级",
   }),
-  due_date: z.date().optional().nullable(),
+  deadline: z.date().optional().nullable(),
   repeat_type: z.enum(["none", "daily", "weekly", "monthly", "custom"], {
     required_error: "请选择重复类型",
   }),
@@ -99,7 +99,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       description: "",
       assignee_ids: defaultAssigneeIds,
       priority: "medium",
-      due_date: null,
+      deadline: null,
       repeat_type: "none",
       repeat_interval: null,
     },
@@ -176,7 +176,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
         description: values.description || null,
         assigner_id: user.id,
         assignee_ids: values.assignee_ids,
-        due_date: values.due_date ? values.due_date.toISOString() : null,
+        deadline: values.deadline ? values.deadline.toISOString() : null,
         priority: values.priority,
         repeat_type: values.repeat_type,
         repeat_interval: values.repeat_interval,
@@ -296,6 +296,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
                       placeholder="输入任务详情描述（可选）"
                       className="min-h-[100px]"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -397,7 +398,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
 
               <FormField
                 control={form.control}
-                name="due_date"
+                name="deadline"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>截止日期</FormLabel>
@@ -478,6 +479,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
                           placeholder="输入天数"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />

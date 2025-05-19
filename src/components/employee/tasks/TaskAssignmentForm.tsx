@@ -105,8 +105,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
       toast.success("任务已成功分配");
       
       if (data) {
-        // Fix the TypeScript error by properly handling the type conversion
-        // First cast to unknown, then to Task type with proper type checks
+        // First cast to Record<string, any> and then construct a proper Task object
         const taskResponse = data as Record<string, any>;
         
         // Create a properly typed Task object from the response
@@ -171,6 +170,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
                   placeholder="请输入任务详细描述（可选）" 
                   className="min-h-[100px]" 
                   {...field} 
+                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />

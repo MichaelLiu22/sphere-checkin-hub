@@ -1,11 +1,11 @@
 
 import React from "react";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { TaskFormValues } from "../schemas/taskFormSchema";
@@ -47,7 +47,6 @@ export function DeadlineField({ form }: DeadlineFieldProps) {
                 selected={field.value || undefined}
                 onSelect={field.onChange}
                 initialFocus
-                className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
           </Popover>
