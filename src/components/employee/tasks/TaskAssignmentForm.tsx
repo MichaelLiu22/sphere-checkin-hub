@@ -105,7 +105,26 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
       toast.success("任务已成功分配");
       
       if (data) {
-        onTaskCreated(data as Task);
+        // Fix the TypeScript error by properly handling the type conversion
+        // First cast to unknown, then to Task type with proper type checks
+        const taskResponse = data as Record<string, any>;
+        
+        // Create a properly typed Task object from the response
+        const newTask: Task = {
+          id: taskResponse.id,
+          title: taskResponse.title,
+          description: taskResponse.description,
+          priority: taskResponse.priority as "high" | "medium" | "low",
+          deadline: taskResponse.deadline,
+          completed: Boolean(taskResponse.completed),
+          completed_at: taskResponse.completed_at,
+          created_at: taskResponse.created_at || new Date().toISOString(),
+          assigner_id: taskResponse.assigner_id,
+          assignee_id: taskResponse.assignee_id,
+          assignee_name: taskResponse.assignee_name
+        };
+        
+        onTaskCreated(newTask);
       }
     } catch (error) {
       console.error("Error assigning task:", error);
