@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { taskFormSchema } from "./schemas/taskFormSchema";
+import { taskFormSchema, TaskFormValues } from "./schemas/taskFormSchema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,7 +41,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const { allEmployees, departmentEmployees, loading: employeeLoading } = useEmployeeData(isAdmin, user?.department_id);
 
-  const form = useForm({
+  const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: "",
@@ -62,7 +62,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
     }
   }, [defaultAssigneeIds, form]);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: TaskFormValues) => {
     setIsCreating(true);
     try {
       const { title, description, priority, deadline, assignee_id, assignee_ids } = values;

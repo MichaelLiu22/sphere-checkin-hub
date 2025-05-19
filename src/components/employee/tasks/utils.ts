@@ -115,8 +115,12 @@ export const getRepeatTypeText = (type: string): string => {
 
 // Helper function to convert database task to Task interface
 export const convertDatabaseTaskToTask = (dbTask: any): Task => {
+  // Make sure to properly convert the priority type
+  const priority = dbTask.priority as 'high' | 'medium' | 'low';
+  
   return {
     ...dbTask,
+    priority: priority || 'medium', // Ensure it's one of the allowed values
     comments: Array.isArray(dbTask.comments) 
       ? dbTask.comments.map((c: any) => ({
           id: c.id || crypto.randomUUID(),
@@ -127,6 +131,15 @@ export const convertDatabaseTaskToTask = (dbTask: any): Task => {
         }))
       : [],
     completed_by: typeof dbTask.completed_by === 'object' ? dbTask.completed_by : {}
+  };
+};
+
+// Helper function to convert Task to database format
+export const convertTaskToDatabase = (task: Task): any => {
+  return {
+    ...task,
+    comments: task.comments || [],
+    completed_by: task.completed_by || {}
   };
 };
 

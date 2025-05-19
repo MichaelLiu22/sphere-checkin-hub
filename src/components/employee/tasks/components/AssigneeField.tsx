@@ -1,58 +1,65 @@
 
-import React from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import React from 'react';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UseFormReturn } from "react-hook-form";
 import { User } from "../utils";
 
-// 组件属性接口
-export interface AssigneeFieldProps {
-  form: any;
-  isAdmin?: boolean;
+interface AssigneeFieldProps {
+  form: UseFormReturn<any, any>;
+  isAdmin: boolean;
   allEmployees: User[];
   departmentEmployees: User[];
 }
 
-/**
- * 任务接收者选择组件
- * 
- * @param {AssigneeFieldProps} props - 组件属性
- * @returns {React.ReactElement} 渲染的接收者选择组件
- */
-export const AssigneeField: React.FC<AssigneeFieldProps> = ({ 
+export const AssigneeField = ({ 
   form, 
-  isAdmin = false,
-  allEmployees = [],
-  departmentEmployees = []
-}) => {
-  const employees = isAdmin ? allEmployees : departmentEmployees;
-  
+  isAdmin, 
+  allEmployees, 
+  departmentEmployees 
+}: AssigneeFieldProps) => {
   return (
     <FormField
       control={form.control}
       name="assignee_id"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>分配给</FormLabel>
+          <FormLabel>任务接收人</FormLabel>
           <Select
             onValueChange={field.onChange}
             defaultValue={field.value}
+            value={field.value}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder="选择接收者" />
+                <SelectValue placeholder="选择接收人" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {employees.length > 0 ? (
-                employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.full_name}
+              {isAdmin ? (
+                allEmployees.length > 0 ? (
+                  allEmployees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.full_name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no_employees" disabled>
+                    没有可用的员工
                   </SelectItem>
-                ))
+                )
               ) : (
-                <SelectItem value="" disabled>
-                  无可选员工
-                </SelectItem>
+                departmentEmployees.length > 0 ? (
+                  departmentEmployees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.full_name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no_dept_employees" disabled>
+                    部门中没有可用的员工
+                  </SelectItem>
+                )
               )}
             </SelectContent>
           </Select>

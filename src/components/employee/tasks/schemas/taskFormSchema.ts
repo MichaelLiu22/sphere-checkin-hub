@@ -24,10 +24,20 @@ export const taskFormSchema = z.object({
   // 截止日期，可选，允许为null
   deadline: z.date().optional().nullable(),
   
-  // 接收者ID，必须是有效值
-  assignee_id: z.string().refine(value => value !== "no_employees" && value !== "no_dept_employees", {
-    message: "请选择有效的分配对象",
-  }),
+  // 完成状态
+  completed: z.boolean().default(false),
+  
+  // 接收者ID
+  assignee_id: z.string().optional(),
+  
+  // 多人任务的接收者ID数组
+  assignee_ids: z.array(z.string()).optional(),
+  
+  // 重复类型
+  repeat_type: z.string().default('never'),
+  
+  // 重复间隔
+  repeat_interval: z.number().default(1),
 });
 
 // 导出任务表单值的TypeScript类型，基于上面的zod模式

@@ -20,13 +20,15 @@ import {
   formatDate, 
   formatDateTime, 
   getPriorityColor, 
-  getPriorityText, 
+  getPriorityText,
   getRepeatTypeText,
   addTaskComment,
+  convertTaskToDatabase,
   type Task,
   type Comment
 } from "./utils";
 import { AlertCircle, Calendar, Clock, FileText, Send, User, Users } from "lucide-react";
+import { CheckedState } from "@radix-ui/react-checkbox";
 
 interface TaskDetailProps {
   task: Task;
@@ -44,8 +46,11 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
     setTask(initialTask);
   }, [initialTask]);
 
-  const handleStatusChange = async (completed: boolean) => {
+  const handleStatusChange = async (completed: CheckedState) => {
     if (!user) return;
+    
+    // Convert CheckedState to boolean
+    const isCompleted = completed === true;
 
     try {
       let updatedTaskData: Partial<Task> = {};
@@ -53,41 +58,51 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
       if (task.assignee_id) {
         // 单人任务
         updatedTaskData = {
-          completed,
-          completed_at: completed ? new Date().toISOString() : null,
+          completed: isCompleted,
+          completed_at: isCompleted ? new Date().toISOString() : null,
         };
       } else if (task.assignee_ids && task.assignee_ids.includes(user.id)) {
         // 多人任务
         const updatedCompletedBy = {
           ...task.completed_by,
-          [user.id]: completed,
+          [user.id]: isCompleted,
         };
         updatedTaskData = {
           completed_by: updatedCompletedBy,
         };
       }
 
+      // Convert the task data to database format
+      const taskForDb = convertTaskToDatabase({
+        ...task,
+        ...updatedTaskData
+      });
+
       const { data, error } = await supabase
         .from('tasks')
-        .update(updatedTaskData)
+        .update(taskForDb)
         .eq('id', task.id)
         .select()
         .single();
 
       if (error) throw error;
 
+      // Ensure the priority is typed correctly
+      const priority = data.priority as 'high' | 'medium' | 'low';
+
       const updatedTask: Task = {
         ...task,
         ...data,
+        priority: priority,
         completed: data.completed,
         completed_at: data.completed_at,
-        completed_by: data.completed_by as Record<string, boolean>,
+        completed_by: data.completed_by as Record<string, boolean | string>,
         comments: task.comments // preserve existing comments
       };
 
       setTask(updatedTask);
       onTaskUpdate(updatedTask);
-      toast.success(`任务已标记为${completed ? '完成' : '未完成'}`);
+      toast.success(`任务已标记为${isCompleted ? '完成' : '未完成'}`);
     } catch (error) {
       console.error('Error updating task status:', error);
       toast.error('更新任务状态失败');
@@ -110,9 +125,18 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
       // Update the task with the new comment
       const updatedComments = [...(task.comments || []), comment];
       
+      // Convert comments to database format
+      const dbComments = updatedComments.map(comment => ({
+        id: comment.id,
+        user_id: comment.user_id,
+        user_name: comment.user_name,
+        content: comment.content,
+        created_at: comment.created_at
+      }));
+      
       const { error } = await supabase
         .from('tasks')
-        .update({ comments: updatedComments })
+        .update({ comments: dbComments })
         .eq('id', task.id);
         
       if (error) throw error;
@@ -200,9 +224,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
               <Checkbox
                 id="completed"
                 checked={
-                  task.assignee_id ? task.completed : (task.completed_by && task.completed_by[user?.id])
+                  task.assignee_id ? task.completed : Boolean(task.completed_by && task.completed_by[user?.id])
                 }
-                onCheckedChange={(checked) => handleStatusChange(!!checked)}
+                onCheckedChange={handleStatusChange}
               />
               <Label htmlFor="completed">
                 {task.assignee_id ? (
