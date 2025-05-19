@@ -41,7 +41,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const handleCompletedChange = async (checked: CheckedState) => {
     if (!user) return;
     
-    // Convert the CheckedState to boolean
+    // Convert the CheckedState to boolean - ensure it's only true or false
     const isChecked = checked === true;
     
     const result = await markTaskCompleted(task, user.id, isChecked);
