@@ -23,28 +23,15 @@ import { Button } from "@/components/ui/button";
 
 // 导入组件和hooks
 import { taskFormSchema, TaskFormValues } from "./schemas/taskFormSchema";
-import { useEmployeeData } from "./hooks/useEmployeeData";
+import useEmployeeData from "./hooks/useEmployeeData";
 import { AssigneeField } from "./components/AssigneeField";
 import { PriorityField } from "./components/PriorityField";
 import { DeadlineField } from "./components/DeadlineField";
+import { Task } from "./utils";
 
 /**
- * 任务接口定义
+ * 任务分配表单组件接口
  */
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  priority: "high" | "medium" | "low";
-  deadline: string | null;
-  completed: boolean;
-  completed_at: string | null;
-  created_at: string;
-  assigner_id: string;
-  assignee_id: string;
-  assignee_name?: string;
-}
-
 interface TaskAssignmentFormProps {
   isAdmin: boolean;                   // 是否为管理员
   onTaskCreated: (task: Task) => void; // 任务创建后回调
@@ -61,7 +48,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 使用自定义钩子获取员工数据
-  const { departmentEmployees, allEmployees } = useEmployeeData({ isAdmin });
+  const { departmentUsers, allUsers } = useEmployeeData();
 
   // 初始化表单，使用zod进行验证
   const form = useForm<TaskFormValues>({
@@ -140,7 +127,8 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
           created_at: taskResponse.created_at || new Date().toISOString(),
           assigner_id: taskResponse.assigner_id,
           assignee_id: taskResponse.assignee_id,
-          assignee_name: taskResponse.assignee_name
+          assignee_name: taskResponse.assignee_name,
+          comments: []
         };
         
         onTaskCreated(newTask);
@@ -175,8 +163,8 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
           <AssigneeField 
             form={form}
             isAdmin={isAdmin}
-            allEmployees={allEmployees}
-            departmentEmployees={departmentEmployees}
+            allEmployees={allUsers}
+            departmentEmployees={departmentUsers}
           />
         </div>
         

@@ -1,9 +1,9 @@
-
 /**
  * 任务项组件
  * 显示单个任务的详情、状态和操作选项
  */
 import React from "react";
+import { Task } from "./utils";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Task } from "./utils";
 import { CheckedState } from "@radix-ui/react-checkbox";
 
 interface TaskItemProps {

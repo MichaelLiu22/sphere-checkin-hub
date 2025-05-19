@@ -18,7 +18,7 @@ export interface Department {
 }
 
 // 员工数据钩子
-const useEmployeeData = (excludeSelf = false) => {
+export const useEmployeeData = (excludeSelf = false) => {
   // 当前用户、部门用户和所有用户的状态
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [departmentUsers, setDepartmentUsers] = useState<User[]>([]);
@@ -143,4 +143,5 @@ const useEmployeeData = (excludeSelf = false) => {
   };
 };
 
+// Also provide a default export for backward compatibility
 export default useEmployeeData;

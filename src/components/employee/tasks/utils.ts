@@ -1,195 +1,188 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { addDays, format, parseISO } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
+import { Json } from "@/integrations/supabase/types";
 
-// 任务状态标签样式映射
-export const STATUS_STYLES = {
-  pending: {
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-800',
-    borderColor: 'border-yellow-200',
-  },
-  inProgress: {
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-800',
-    borderColor: 'border-blue-200',
-  },
-  completed: {
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-800',
-    borderColor: 'border-green-200',
-  },
-  overdue: {
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-800',
-    borderColor: 'border-red-200',
-  },
-};
+// 评论接口
+export interface Comment {
+  id: string;
+  user_id: string;
+  user_name: string;
+  content: string;
+  created_at: string;
+}
 
-// 任务优先级样式映射
-export const PRIORITY_STYLES = {
-  low: {
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-800',
-    icon: '🔽',
-  },
-  medium: {
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-800',
-    icon: '➖',
-  },
-  high: {
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-800',
-    icon: '🔼',
-  },
-};
+// 任务接口
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: "high" | "medium" | "low";
+  deadline: string | null;
+  completed: boolean;
+  completed_at: string | null;
+  created_at: string;
+  assigner_id: string;
+  assigner_name?: string;
+  assignee_id: string | null;
+  assignee_name?: string;
+  assignee_ids?: string[] | null;
+  department_id?: string | null;
+  comments: Comment[];
+  repeat_type?: string;
+  repeat_interval?: number;
+  completed_by?: Record<string, boolean>;
+  attachments?: string[];
+}
 
-// 获取任务状态和样式
-export const getTaskStatusAndStyle = (task) => {
-  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && !task.completed;
-  
-  if (task.completed) {
-    return {
-      status: 'completed',
-      label: '已完成',
-      ...STATUS_STYLES.completed,
-    };
-  } else if (isOverdue) {
-    return {
-      status: 'overdue',
-      label: '已逾期',
-      ...STATUS_STYLES.overdue,
-    };
-  } else {
-    return {
-      status: 'pending',
-      label: '待处理',
-      ...STATUS_STYLES.pending,
-    };
+// 用户接口
+export interface User {
+  id: string;
+  full_name: string;
+  department_id?: string;
+  user_type?: string;
+}
+
+/**
+ * 获取任务优先级样式
+ * @param priority 优先级
+ * @returns 样式对象
+ */
+export const getPriorityStyles = (priority: string) => {
+  switch (priority) {
+    case "high":
+      return {
+        badge: "bg-red-100 text-red-800",
+        text: "text-red-800",
+        border: "border-red-300",
+        icon: "text-red-500"
+      };
+    case "medium":
+      return {
+        badge: "bg-yellow-100 text-yellow-800",
+        text: "text-yellow-800",
+        border: "border-yellow-300",
+        icon: "text-yellow-500"
+      };
+    case "low":
+      return {
+        badge: "bg-green-100 text-green-800",
+        text: "text-green-800",
+        border: "border-green-300",
+        icon: "text-green-500"
+      };
+    default:
+      return {
+        badge: "bg-gray-100 text-gray-800",
+        text: "text-gray-800",
+        border: "border-gray-300",
+        icon: "text-gray-500"
+      };
   }
 };
 
-// 计算新任务数量
-export const calculateNewTasksCount = (tasks = []) => {
-  // 筛选过去24小时内创建且未完成的任务
-  const oneDayAgo = new Date();
-  oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+/**
+ * 格式化日期显示
+ * @param dateString 日期字符串
+ * @returns 格式化的日期字符串
+ */
+export const formatDate = (dateString: string | null) => {
+  if (!dateString) return "无截止日期";
+  
+  const date = new Date(dateString);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const taskDate = new Date(date);
+  taskDate.setHours(0, 0, 0, 0);
+  
+  // 计算相差天数
+  const diffTime = taskDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // 格式化日期
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+  
+  // 处理特殊日期显示
+  if (taskDate.getTime() === today.getTime()) {
+    return `今天 ${hours}:${minutes}`;
+  } else if (taskDate.getTime() === tomorrow.getTime()) {
+    return `明天 ${hours}:${minutes}`;
+  } else if (taskDate.getTime() === yesterday.getTime()) {
+    return `昨天 ${hours}:${minutes}`;
+  } else if (diffDays > 0 && diffDays <= 7) {
+    return `${diffDays}天后 ${formattedDate}`;
+  } else if (diffDays < 0 && diffDays >= -7) {
+    return `${Math.abs(diffDays)}天前 ${formattedDate}`;
+  } else {
+    return formattedDate;
+  }
+};
 
+/**
+ * 格式化评论数据
+ * @param commentsData 评论原始数据
+ * @returns 格式化后的评论数组
+ */
+export const formatComments = (commentsData: any): Comment[] => {
+  if (!commentsData || !Array.isArray(commentsData)) {
+    return [];
+  }
+  
+  return commentsData.map((comment: any) => ({
+    id: comment.id || crypto.randomUUID(),
+    user_id: comment.user_id || "",
+    user_name: comment.user_name || "未知用户",
+    content: comment.content || "",
+    created_at: comment.created_at || new Date().toISOString(),
+  }));
+};
+
+/**
+ * 获取未完成任务数量
+ * @param tasks 任务数组
+ * @param userId 用户ID
+ * @returns 未完成任务数量
+ */
+export const getIncompleteTasks = (tasks: Task[], userId: string): number => {
   return tasks.filter(task => {
-    const creationDate = new Date(task.created_at);
-    return !task.completed && creationDate >= oneDayAgo;
+    // 单人任务
+    if (task.assignee_id === userId) {
+      return !task.completed;
+    }
+    // 多人任务
+    if (task.assignee_ids && task.assignee_ids.includes(userId)) {
+      const completedBy = task.completed_by || {};
+      return !completedBy[userId];
+    }
+    return false;
   }).length;
 };
 
-// 格式化日期 (如: 2023年5月10日)
-export const formatDate = (date) => {
-  if (!date) return '未设置';
+/**
+ * 格式化任务完成时间显示
+ * @param dateString 日期字符串
+ * @returns 格式化的日期时间字符串
+ */
+export const formatCompletionTime = (dateString: string | null): string => {
+  if (!dateString) return "未完成";
   
-  let dateObj;
-  if (typeof date === 'string') {
-    dateObj = parseISO(date);
-  } else {
-    dateObj = date;
-  }
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
   
-  return format(dateObj, 'yyyy年MM月dd日', { locale: zhCN });
-};
-
-// 格式化日期时间 (如: 2023年5月10日 14:30)
-export const formatDateTime = (date) => {
-  if (!date) return '未设置';
-  
-  let dateObj;
-  if (typeof date === 'string') {
-    dateObj = parseISO(date);
-  } else {
-    dateObj = date;
-  }
-  
-  return format(dateObj, 'yyyy年MM月dd日 HH:mm', { locale: zhCN });
-};
-
-// 获取优先级颜色
-export const getPriorityColor = (priority) => {
-  switch (priority) {
-    case 'high':
-      return 'text-red-600';
-    case 'medium':
-      return 'text-yellow-600';
-    case 'low':
-      return 'text-blue-600';
-    default:
-      return 'text-gray-600';
-  }
-};
-
-// 获取优先级显示文本
-export const getPriorityText = (priority) => {
-  const texts = {
-    high: '高',
-    medium: '中',
-    low: '低',
-  };
-  
-  return texts[priority] || '未设置';
-};
-
-// 获取重复类型文本
-export const getRepeatTypeText = (repeatType) => {
-  const types = {
-    daily: '每天',
-    weekly: '每周',
-    monthly: '每月',
-    none: '不重复',
-  };
-  
-  return types[repeatType] || '未设置';
-};
-
-// 评论接口类型
-export interface Comment {
-  user_id: string;
-  user_name: string;
-  text: string;
-  timestamp: string;
-}
-
-// 添加任务评论
-export const addTaskComment = async (taskId, userId, userName, commentText) => {
-  try {
-    // 先获取当前评论
-    const { data: task, error: fetchError } = await supabase
-      .from('tasks')
-      .select('comments')
-      .eq('id', taskId)
-      .single();
-      
-    if (fetchError) throw fetchError;
-    
-    // 准备新评论
-    const newComment = {
-      user_id: userId,
-      user_name: userName,
-      text: commentText,
-      timestamp: new Date().toISOString(),
-    };
-    
-    const currentComments = task.comments || [];
-    const updatedComments = [...currentComments, newComment];
-    
-    // 更新评论
-    const { error: updateError } = await supabase
-      .from('tasks')
-      .update({ comments: updatedComments })
-      .eq('id', taskId);
-      
-    if (updateError) throw updateError;
-    
-    return updatedComments;
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    throw error;
-  }
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 };

@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { AssigneeField } from "./components/AssigneeField";
 import { PriorityField } from "./components/PriorityField";
 import { DeadlineField } from "./components/DeadlineField";
-import { User } from "./hooks/useEmployeeData";
+import { User, Task } from "./utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 // 表单值类型
@@ -31,6 +31,11 @@ interface TaskCreationFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   isAdmin?: boolean;
+  onTaskCreated?: (task: Task) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  isPersonalTask?: boolean;
+  defaultAssigneeIds?: string[];
 }
 
 /**
@@ -45,6 +50,11 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   onSuccess,
   onCancel,
   isAdmin = false,
+  onTaskCreated,
+  open,
+  onOpenChange,
+  isPersonalTask = false,
+  defaultAssigneeIds = [],
 }) => {
   // 状态管理
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -180,8 +190,36 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       // 调用成功回调
       if (onSuccess) onSuccess();
       
+      if (onTaskCreated && data) {
+        // 构造一个类型安全的Task对象
+        const taskResponse = data as Record<string, any>;
+        
+        // 创建一个类型正确的Task对象
+        const newTask: Task = {
+          id: taskResponse.id,
+          title: taskResponse.title,
+          description: taskResponse.description,
+          priority: taskResponse.priority as "high" | "medium" | "low",
+          deadline: taskResponse.deadline,
+          completed: Boolean(taskResponse.completed),
+          completed_at: taskResponse.completed_at,
+          created_at: taskResponse.created_at || new Date().toISOString(),
+          assigner_id: taskResponse.assigner_id,
+          assignee_id: taskResponse.assignee_id,
+          assignee_name: taskResponse.assignee_name,
+          comments: []
+        };
+        
+        onTaskCreated(newTask);
+      }
+      
       // 重置表单
       form.reset();
+      
+      // 如果需要关闭弹窗
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error creating task:", error);
       toast({
@@ -235,7 +273,31 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
           />
           
           {/* 优先级选择 */}
-          <PriorityField control={form.control} />
+          <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>优先级</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择优先级" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">高</SelectItem>
+                      <SelectItem value="medium">中</SelectItem>
+                      <SelectItem value="low">低</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           {/* 部门选择 (仅管理员) */}
           {isAdmin && (
@@ -258,12 +320,33 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
           
           {/* 指派给谁 */}
           <AssigneeField
-            control={form.control}
-            users={selectedDepartment ? departmentUsers : users}
+            form={form}
+            allEmployees={users}
+            departmentEmployees={departmentUsers}
+            isAdmin={isAdmin}
           />
           
           {/* 截止日期 */}
-          <DeadlineField control={form.control} />
+          <FormField
+            control={form.control}
+            name="deadline"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>截止日期</FormLabel>
+                <FormControl>
+                  <Input
+                    type="datetime-local"
+                    value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
+                    onChange={(e) => {
+                      const date = new Date(e.target.value);
+                      field.onChange(date);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           {/* 表单操作按钮 */}
           <div className="flex justify-end space-x-2 pt-2">
