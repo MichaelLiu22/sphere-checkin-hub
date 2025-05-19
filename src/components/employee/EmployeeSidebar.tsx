@@ -1,19 +1,14 @@
 
+/**
+ * 员工侧边栏组件
+ * 提供员工仪表板的导航菜单
+ */
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { 
-  FileText, 
-  LogOut, 
-  Calendar, 
-  Home,
-  ClipboardList,
-  DollarSign,
-  BarChart2
-} from "lucide-react";
-import TaskNotifications from "./tasks/TaskNotifications";
+import { Home, Settings, Users, Calendar, FileText, LogOut, ArrowLeft } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,21 +24,20 @@ interface EmployeeSidebarProps {
   setActiveTab: (tab: string) => void;
 }
 
+/**
+ * 员工侧边栏组件
+ * 
+ * @param {EmployeeSidebarProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的员工侧边栏
+ */
 const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveTab }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   
-  const enabledModules = user?.enabled_modules || [];
-  const isAdmin = user?.user_type === 'admin';
-
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (error) {
-      console.error("登出失败:", error);
-    }
+    await logout();
+    navigate('/');
   };
 
   return (
@@ -51,6 +45,7 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
       <SidebarHeader className="flex justify-between items-center p-4">
         <h2 className="text-lg font-semibold">{t("employeeDashboard")}</h2>
       </SidebarHeader>
+      
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -59,77 +54,76 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
               onClick={() => setActiveTab("overview")}
               tooltip="Overview"
             >
-              <Home className="mr-2" />
-              <span>📊 概览</span>
+              <Home className="mr-2 h-4 w-4" />
+              <span>概览</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          {/* Tasks module - always visible */}
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "tasks"}
               onClick={() => setActiveTab("tasks")}
-              tooltip="Task Board"
+              tooltip="Tasks"
             >
-              <ClipboardList className="mr-2" />
-              <span className="flex items-center">
-                📋 当前任务
-                {activeTab !== "tasks" && <TaskNotifications className="ml-2" />}
-              </span>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>任务</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          {/* Task Reports - only for admins */}
-          {isAdmin && (
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={activeTab === "tasks_report"}
-                onClick={() => setActiveTab("tasks_report")}
-                tooltip="Task Reports"
-              >
-                <BarChart2 className="mr-2" />
-                <span>📊 任务报告</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "team"}
+              onClick={() => setActiveTab("team")}
+              tooltip="Team"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              <span>团队</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           
-          {enabledModules.includes("host_schedule") && (
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={activeTab === "host_schedule"}
-                onClick={() => setActiveTab("host_schedule")}
-                tooltip="Host Calendar"
-              >
-                <Calendar className="mr-2" />
-                <span>📅 Host 排班</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "calendar"}
+              onClick={() => setActiveTab("calendar")}
+              tooltip="Calendar"
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              <span>日历</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           
-          {enabledModules.includes("finance") && (
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                isActive={activeTab === "finance"}
-                onClick={() => setActiveTab("finance")}
-                tooltip="Finance Management"
-              >
-                <DollarSign className="mr-2" />
-                <span>💰 财务管理</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "settings"}
+              onClick={() => setActiveTab("settings")}
+              tooltip="Settings"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>设置</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       
       <SidebarFooter className="p-4">
         <div className="text-sm text-muted-foreground mb-2">
-          <div className="font-semibold">当前用户: {user?.full_name}</div>
+          <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
           <div>部门: {user?.department_id ? "已分配" : "未分配"}</div>
         </div>
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("logout")}
-        </Button>
+        <div className="space-y-2">
+          <Button variant="outline" className="w-full" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            {t("logout")}
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="w-full" 
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            返回首页
+          </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

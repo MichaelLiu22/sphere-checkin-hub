@@ -22,6 +22,7 @@ interface TaskItemProps {
   onDelete?: () => void;                // 删除任务回调
   showAssigner?: boolean;               // 是否显示任务发布者
   showAssignee?: boolean;               // 是否显示任务接收者
+  showCompletionTime?: boolean;         // 是否显示完成时间
 }
 
 /**
@@ -31,7 +32,14 @@ interface TaskItemProps {
  * @param {TaskItemProps} props - 组件属性
  * @returns {React.ReactElement} 渲染的任务项卡片
  */
-const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showAssigner, showAssignee }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ 
+  task, 
+  onTaskUpdate, 
+  onDelete, 
+  showAssigner, 
+  showAssignee,
+  showCompletionTime
+}) => {
   const { user } = useAuth(); // 获取当前用户信息
 
   /**
@@ -84,12 +92,33 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
       if (task.assignee_id) {
         // 单人任务
         updateData.completed = completed;
+        // 如果标记为完成，记录完成时间
+        if (completed) {
+          updateData.completed_at = new Date().toISOString();
+        } else {
+          updateData.completed_at = null;
+        }
       } else if (task.assignee_ids && task.assignee_ids.includes(userId)) {
         // 多人任务
         updateData.completed_by = {
           ...task.completed_by,
-          [userId]: completed
+          [userId]: completed ? new Date().toISOString() : null
         };
+        
+        // 检查是否所有人都完成了，如果是，则更新completed和completed_at
+        const completedBy = {
+          ...task.completed_by,
+          [userId]: completed ? new Date().toISOString() : null
+        };
+        
+        const allCompleted = task.assignee_ids.every(id => completedBy[id]);
+        if (allCompleted) {
+          updateData.completed = true;
+          updateData.completed_at = new Date().toISOString();
+        } else {
+          updateData.completed = false;
+          updateData.completed_at = null;
+        }
       }
       
       const { data, error } = await supabase
@@ -170,9 +199,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
                 <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
                   {getPriorityText(task.priority)}
                 </span>
-                {task.due_date && (
+                {task.deadline && (
                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
-                    截止: {format(new Date(task.due_date), "yyyy-MM-dd")}
+                    截止: {format(new Date(task.deadline), "yyyy-MM-dd")}
                   </span>
                 )}
                 {showAssigner && task.assigner_name && (
@@ -183,6 +212,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
                 {showAssignee && task.assignee_name && (
                   <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-300">
                     接收者: {task.assignee_name}
+                  </span>
+                )}
+                {showCompletionTime && task.completed_at && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-300">
+                    完成时间: {format(new Date(task.completed_at), "yyyy-MM-dd HH:mm")}
                   </span>
                 )}
               </div>

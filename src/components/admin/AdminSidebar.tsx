@@ -2,9 +2,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -35,13 +35,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
   const { t } = useLanguage();
   // 路由导航
   const navigate = useNavigate();
+  // 获取用户信息
+  const { user, logout } = useAuth();
 
   /**
    * 登出操作
    * 清除用户会话并重定向到首页
    */
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
     navigate('/');
   };
 
@@ -137,20 +139,26 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
         </SidebarMenu>
       </SidebarContent>
       
-      <div className="mt-auto p-4">
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("logout")}
-        </Button>
-        <Button 
-          variant="ghost" 
-          className="w-full mt-2" 
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("backToHome")}
-        </Button>
-      </div>
+      <SidebarFooter className="p-4">
+        <div className="text-sm text-muted-foreground mb-2">
+          <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
+          <div>身份: 管理员</div>
+        </div>
+        <div className="space-y-2">
+          <Button variant="outline" className="w-full" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            {t("logout")}
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="w-full" 
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t("backToHome")}
+          </Button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };

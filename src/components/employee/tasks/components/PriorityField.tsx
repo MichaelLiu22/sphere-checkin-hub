@@ -30,8 +30,8 @@ export function PriorityField({ form }: PriorityFieldProps) {
           <FormLabel>优先级</FormLabel>
           <Select
             onValueChange={field.onChange}
-            value={field.value || ""}
-            defaultValue="medium"
+            value={field.value}
+            defaultValue={field.value || "medium"}
           >
             <FormControl>
               <SelectTrigger>

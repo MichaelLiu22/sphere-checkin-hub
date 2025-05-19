@@ -16,10 +16,8 @@ import TaskCreationForm from "./tasks/TaskCreationForm";
 import TaskItem from "./tasks/TaskItem";
 import TaskFilters, { FilterType, SortType } from "./tasks/TaskFilters";
 import TaskNotifications from "./tasks/TaskNotifications";
-import TaskAssignmentForm from "./tasks/TaskAssignmentForm"; // 导入任务分配表单组件
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface TaskBoardProps {
@@ -49,14 +47,19 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
 
       try {
         // 获取所有与当前用户相关的任务
-        const { data, error } = await supabase
+        let query = supabase
           .from("tasks")
           .select(`
             *,
             users!tasks_assigner_id_fkey(id, full_name)
-          `)
-          .or(`assignee_id.eq.${user.id},assigner_id.eq.${user.id},assignee_ids.cs.{${user.id}}`)
-          .order('created_at', { ascending: false });
+          `);
+        
+        // 管理员可以看到所有任务，非管理员只能看到与自己相关的任务
+        if (!isAdmin) {
+          query = query.or(`assignee_id.eq.${user.id},assigner_id.eq.${user.id},assignee_ids.cs.{${user.id}}`);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         
@@ -65,7 +68,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
           ...task,
           assigner_name: task.users?.full_name || "未知",
           priority: task.priority as "high" | "medium" | "low",
-          due_date: task.due_date || null, // 确保due_date属性存在
+          deadline: task.deadline || null, // 确保deadline属性存在
         }));
         
         // 添加assignee_name属性（如果有assignee_id）
@@ -104,39 +107,59 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
     fetchTasks();
 
     // 实时任务更新
-    const taskChannel = supabase
-      .channel('task-updates')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tasks',
-        filter: `assignee_id=eq.${user?.id}`
-      }, () => {
-        fetchTasks();
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tasks',
-        filter: `assigner_id=eq.${user?.id}`
-      }, () => {
-        fetchTasks();
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tasks',
-        filter: `assignee_ids=cs.{${user?.id}}`
-      }, () => {
-        fetchTasks();
-      })
-      .subscribe();
+    let channel;
+    if (user) {
+      if (isAdmin) {
+        // 管理员订阅所有任务更新
+        channel = supabase
+          .channel('all-tasks-updates')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'tasks',
+          }, () => {
+            fetchTasks();
+          })
+          .subscribe();
+      } else {
+        // 非管理员只订阅与自己相关的任务更新
+        channel = supabase
+          .channel('task-updates')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'tasks',
+            filter: `assignee_id=eq.${user.id}`
+          }, () => {
+            fetchTasks();
+          })
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'tasks',
+            filter: `assigner_id=eq.${user.id}`
+          }, () => {
+            fetchTasks();
+          })
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'tasks',
+            filter: `assignee_ids=cs.{${user.id}}`
+          }, () => {
+            fetchTasks();
+          })
+          .subscribe();
+      }
+    }
       
     // 组件卸载时清理订阅
     return () => {
-      supabase.removeChannel(taskChannel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [user]);
+  }, [user, isAdmin]);
 
   /**
    * 处理任务状态更新
@@ -259,14 +282,11 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
       case "deadline":
         // 按截止日期排序，无截止日期的排在后面
         filtered.sort((a, b) => {
-          const dateA = a.due_date || a.deadline;
-          const dateB = b.due_date || b.deadline;
+          if (!a.deadline && !b.deadline) return 0;
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
           
-          if (!dateA && !dateB) return 0;
-          if (!dateA) return 1;
-          if (!dateB) return -1;
-          
-          return new Date(dateA).getTime() - new Date(dateB).getTime();
+          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
         });
         break;
       case "created":
@@ -302,6 +322,10 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
            (task.assignee_id === user?.id || 
             (task.assignee_ids && task.assignee_ids.includes(user?.id)))
   );
+
+  // 如果是管理员，则显示所有用户的任务
+  const allUserTasks = isAdmin ? 
+    filteredTasks.filter(task => task.assigner_id !== user?.id && task.assignee_id !== user?.id) : [];
 
   return (
     <div className="space-y-6">
@@ -437,6 +461,39 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
             </CardContent>
           </Card>
         )}
+        
+        {/* 管理员查看所有用户的任务 */}
+        {isAdmin && (
+          <Card className="h-full lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">所有用户任务状态</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : filteredTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredTasks.map((task) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onTaskUpdate={handleTaskUpdate}
+                      showAssigner={true}
+                      showAssignee={true}
+                      showCompletionTime={true}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-40">
+                  <p className="text-muted-foreground">当前没有任何任务</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
       
       {/* 个人任务创建对话框 */}
@@ -450,19 +507,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
           defaultAssigneeIds={[user.id]}
         />
       )}
-      
-      {/* 添加任务发布区域 */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">发布新任务</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TaskAssignmentForm 
-            isAdmin={isAdmin} 
-            onTaskCreated={handleTaskCreated}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 };

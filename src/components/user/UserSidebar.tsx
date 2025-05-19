@@ -90,7 +90,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
       
       <SidebarFooter className="p-4">
         <div className="text-sm text-muted-foreground mb-2">
-          <div className="font-semibold">当前用户: {user?.full_name}</div>
+          <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
           <div>部门: {user?.department_id ? "已分配" : "未分配"}</div>
         </div>
         <Button variant="outline" className="w-full" onClick={handleLogout}>
