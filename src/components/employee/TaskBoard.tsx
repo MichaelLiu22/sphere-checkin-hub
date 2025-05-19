@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ import TaskCreationForm from "./tasks/TaskCreationForm";
 import TaskItem from "./tasks/TaskItem";
 import TaskFilters, { FilterType, SortType } from "./tasks/TaskFilters";
 import TaskNotifications from "./tasks/TaskNotifications";
+import TaskAssignmentForm from "./tasks/TaskAssignmentForm"; // Add import for TaskAssignmentForm
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -422,6 +422,21 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
           isPersonalTask={true}
           defaultAssigneeIds={[user.id]}
         />
+      )}
+      
+      {/* 添加任务发布区域 - 只对有任务权限的用户显示 */}
+      {canAssignTasks && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg">发布新任务</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TaskAssignmentForm 
+              isAdmin={isAdmin} 
+              onTaskCreated={handleTaskCreated}
+            />
+          </CardContent>
+        </Card>
       )}
     </div>
   );
