@@ -41,7 +41,7 @@ export function AssigneeField({
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no_employees" disabled>
                     没有可选择的员工
                   </SelectItem>
                 )
@@ -53,7 +53,7 @@ export function AssigneeField({
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no_dept_employees" disabled>
                     没有可选择的同部门员工
                   </SelectItem>
                 )

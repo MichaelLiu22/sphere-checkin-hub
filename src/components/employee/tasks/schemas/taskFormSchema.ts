@@ -8,8 +8,9 @@ export const taskFormSchema = z.object({
     required_error: "请选择优先级",
   }),
   deadline: z.date().optional().nullable(),
-  assignee_id: z.string().min(1, { message: "请选择分配对象" }),
-  // You can add additional fields here if needed
+  assignee_id: z.string().refine(value => value !== "no_employees" && value !== "no_dept_employees", {
+    message: "请选择有效的分配对象",
+  }),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
