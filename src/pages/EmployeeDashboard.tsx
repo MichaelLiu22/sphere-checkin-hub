@@ -28,7 +28,7 @@ const EmployeeDashboard: React.FC = () => {
   // 活动标签管理
   const [activeTab, setActiveTab] = useState<string>("overview");
   // 新建任务状态
-  const [newTask, setNewTask] = useState(null);
+  const [newTask, setNewTask] = useState<any>(null);
 
   /**
    * 组件加载时检查用户登录状态

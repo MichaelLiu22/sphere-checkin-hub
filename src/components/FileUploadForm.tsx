@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ExternalLink, Download } from "lucide-react";
 import { Link } from "react-router-dom";
-import {supabase} from "@/integrations/supabase/client.ts";
+import { supabase } from "@/integrations/supabase/client.ts";
 
 type FileType = "nda" | "w9" | "employment";
 
@@ -20,12 +20,14 @@ const FileUploadForm: React.FC = () => {
   const [files, setFiles] = useState<{ [key in FileType]?: File }>({});
   const [isUploading, setIsUploading] = useState<{ [key in FileType]?: boolean }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedUrls, setUploadedUrls] = useState<{ [key in FileType]?: string }>({});
 
+  // 文件变更处理函数
   const handleFileChange = (type: FileType, event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       
-      // Check if file is PDF
+      // 检查文件是否是PDF
       if (file.type !== "application/pdf") {
         toast({
           title: t("uploadError"),
@@ -39,16 +41,28 @@ const FileUploadForm: React.FC = () => {
     }
   };
 
+  // 上传单个文件的处理函数
   const handleUpload = async (type: FileType) => {
     const file = files[type];
-    if (!file) return;
+    if (!file || !fullLegalName) {
+      toast({
+        title: t("uploadError"),
+        description: t("nameRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsUploading(prev => ({ ...prev, [type]: true }));
 
     try {
+      // 生成唯一文件名
+      const fileName = `${fullLegalName}_${type}.pdf`;
+      
+      // 上传到Supabase存储
       const { data, error } = await supabase.storage
           .from("pdffileupload")
-          .upload(`uploads/${fullLegalName}_${type}.pdf`, file, {
+          .upload(`uploads/${fileName}`, file, {
             contentType: "application/pdf",
             upsert: true,
           });
@@ -64,20 +78,20 @@ const FileUploadForm: React.FC = () => {
         return;
       }
 
-      // 正确获取 Public URL
+      // 获取公共URL
       const publicUrlResponse = supabase
           .storage
           .from("pdffileupload")
-          .getPublicUrl(`uploads/${fullLegalName}_${type}.pdf`);
+          .getPublicUrl(`uploads/${fileName}`);
 
       const publicUrl = publicUrlResponse.data.publicUrl;
+      
+      // 存储上传的URL
+      setUploadedUrls(prev => ({ ...prev, [type]: publicUrl }));
 
-      console.log(`Public URL for ${type}:`, publicUrl);
-
-      // 你可以用 state 把这个 publicUrl 存起来，显示在页面上
       toast({
         title: t("uploadSuccess"),
-        description: `${t("fileUploaded")}: ${publicUrl}`,
+        description: `${t("fileUploaded")}`,
       });
 
     } catch (error: any) {
@@ -91,11 +105,12 @@ const FileUploadForm: React.FC = () => {
     }
   };
 
-
+  // 姓名变更处理函数
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFullLegalName(e.target.value);
   };
 
+  // 表单提交处理函数
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,27 +123,54 @@ const FileUploadForm: React.FC = () => {
       return;
     }
 
+    if (!files.w9) {
+      toast({
+        title: t("formError"),
+        description: t("w9Required"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate form submission and email notification
-    setTimeout(() => {
-      console.log("Submission data:", {
-        full_legal_name: fullLegalName,
-        w9_file: files.w9,
-        nda_file: files.nda,
-        employment_file: files.employment
-      });
+    try {
+      // 如果文件还未上传，则先上传
+      if (!uploadedUrls.w9 && files.w9) await handleUpload("w9");
+      if (!uploadedUrls.nda && files.nda) await handleUpload("nda");
+      if (!uploadedUrls.employment && files.employment) await handleUpload("employment");
+      
+      // 提交表单数据到Supabase
+      const { data, error } = await supabase
+        .from("SphereCheckIN")
+        .insert([{
+          full_legal_name: fullLegalName,
+          w9_file: uploadedUrls.w9,
+          nda_file: uploadedUrls.nda
+        }]);
+        
+      if (error) throw error;
 
       toast({
         title: t("submissionSuccess"),
         description: t("submissionEmailSent"),
       });
 
-      // Reset form
+      // 重置表单
       setFullLegalName("");
       setFiles({});
+      setUploadedUrls({});
+      
+    } catch (error: any) {
+      console.error("Submission error:", error);
+      toast({
+        title: t("submissionError"),
+        description: error?.message || "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -191,11 +233,12 @@ const FileUploadForm: React.FC = () => {
               <Button 
                 type="button"
                 onClick={() => handleUpload("w9")} 
-                disabled={!files.w9 || isUploading.w9}
+                disabled={!files.w9 || isUploading.w9 || !fullLegalName}
               >
                 {isUploading.w9 ? t("uploading") : t("uploadButton")}
               </Button>
             </div>
+            {uploadedUrls.w9 && <p className="text-sm text-green-600">✓ 文件已上传</p>}
           </div>
 
           {/* NDA Upload Field */}
@@ -237,11 +280,12 @@ const FileUploadForm: React.FC = () => {
               <Button 
                 type="button"
                 onClick={() => handleUpload("nda")} 
-                disabled={!files.nda || isUploading.nda}
+                disabled={!files.nda || isUploading.nda || !fullLegalName}
               >
                 {isUploading.nda ? t("uploading") : t("uploadButton")}
               </Button>
             </div>
+            {uploadedUrls.nda && <p className="text-sm text-green-600">✓ 文件已上传</p>}
           </div>
 
           {/* Employment Agreement Upload Field */}
@@ -283,11 +327,12 @@ const FileUploadForm: React.FC = () => {
               <Button 
                 type="button"
                 onClick={() => handleUpload("employment")} 
-                disabled={!files.employment || isUploading.employment}
+                disabled={!files.employment || isUploading.employment || !fullLegalName}
               >
                 {isUploading.employment ? t("uploading") : t("uploadButton")}
               </Button>
             </div>
+            {uploadedUrls.employment && <p className="text-sm text-green-600">✓ 文件已上传</p>}
           </div>
 
           <Button 

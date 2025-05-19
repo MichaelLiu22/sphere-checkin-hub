@@ -21,7 +21,7 @@ export const taskFormSchema = z.object({
     required_error: "请选择优先级",
   }),
   
-  // 截止日期，可选
+  // 截止日期，可选，允许为null
   deadline: z.date().optional().nullable(),
   
   // 接收者ID，必须是有效值
