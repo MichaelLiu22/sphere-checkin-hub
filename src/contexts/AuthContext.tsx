@@ -61,12 +61,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 初始化 - 检查用户是否已登录
   useEffect(() => {
     // 检查本地存储中的用户数据
-    const checkUserSession = () => {
+    const checkUserSession = async () => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
           // 解析并设置用户数据
-          setUser(JSON.parse(storedUser));
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          
+          // Set up Supabase authentication session for RLS policies
+          if (userData.id) {
+            // Create a custom session token for Supabase
+            await supabase.auth.setSession({
+              access_token: userData.id, // Use user ID as a simple token
+              refresh_token: '',
+            });
+          }
         } catch (error) {
           console.error("Failed to parse user data:", error);
           // 清除无效的用户数据
@@ -132,6 +142,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
 
+      // Set up Supabase authentication session for RLS policies
+      await supabase.auth.setSession({
+        access_token: data.id, // Use user ID as a simple token
+        refresh_token: '',
+      });
+
       // 根据部门和用户类型重定向
       if (departmentName === 'None') {
         // 如果部门为None，跳转到等待审批页面
@@ -167,6 +183,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * 清除用户会话并重定向到首页
    */
   const logout = async () => {
+    // Sign out from Supabase
+    await supabase.auth.signOut();
+    
+    // Clear local storage and state
     localStorage.removeItem('user');
     setUser(null);
     navigate('/');

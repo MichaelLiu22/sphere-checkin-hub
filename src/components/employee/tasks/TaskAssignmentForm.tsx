@@ -66,8 +66,8 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
     setIsSubmitting(true);
 
     try {
-      // Include the department_id in the task data to satisfy RLS policies
-      const { data, error } = await supabase.from("tasks").insert({
+      // Create the task data object with all necessary fields
+      const taskData = {
         title: values.title,
         description: values.description || null,
         priority: values.priority,
@@ -77,12 +77,20 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
         completed: false,
         completed_at: null,
         department_id: user.department_id // Add department_id from the current user
-      }).select(`
+      };
+      
+      console.log("Submitting task data:", taskData);
+      
+      // Insert the task data
+      const { data, error } = await supabase.from("tasks").insert(taskData).select(`
         *,
         assignee:users!tasks_assignee_id_fkey(id, full_name)
       `).single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error assigning task:", error);
+        throw error;
+      }
 
       form.reset();
       toast.success("任务已成功分配");
