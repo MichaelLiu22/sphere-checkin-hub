@@ -306,6 +306,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_task: {
+        Args: {
+          title: string
+          description: string
+          priority: string
+          deadline: string
+          assigner_id: string
+          assignee_id: string
+          completed: boolean
+          completed_at: string
+          department_id: string
+        }
+        Returns: Json
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
