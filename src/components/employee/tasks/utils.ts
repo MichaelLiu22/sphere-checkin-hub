@@ -38,7 +38,7 @@ export interface Task {
   repeat_interval?: number;
   attachments?: string[];
   comments: Comment[];
-  completed_by: Record<string, boolean>;
+  completed_by: Record<string, boolean | string>;
 }
 
 // Format date to YYYY-MM-DD
@@ -111,6 +111,23 @@ export const getRepeatTypeText = (type: string): string => {
     default:
       return '不重复';
   }
+};
+
+// Helper function to convert database task to Task interface
+export const convertDatabaseTaskToTask = (dbTask: any): Task => {
+  return {
+    ...dbTask,
+    comments: Array.isArray(dbTask.comments) 
+      ? dbTask.comments.map((c: any) => ({
+          id: c.id || crypto.randomUUID(),
+          user_id: c.user_id || '',
+          user_name: c.user_name || '',
+          content: c.content || '',
+          created_at: c.created_at || new Date().toISOString()
+        }))
+      : [],
+    completed_by: typeof dbTask.completed_by === 'object' ? dbTask.completed_by : {}
+  };
 };
 
 // Add comment to task

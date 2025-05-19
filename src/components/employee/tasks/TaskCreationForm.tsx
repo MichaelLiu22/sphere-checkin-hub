@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,7 @@ import { CalendarIcon, Check, Loader2 } from "lucide-react";
 import { PriorityField } from "./components/PriorityField";
 import { DeadlineField } from "./components/DeadlineField";
 import useEmployeeData from "./hooks/useEmployeeData";
-import type { Task, User } from "./utils";
+import { Task, convertDatabaseTaskToTask } from "./utils";
 import { AssigneeField } from "./components/AssigneeField";
 
 interface TaskCreationFormProps {
@@ -45,7 +46,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
     defaultValues: {
       title: "",
       description: "",
-      priority: "medium",
+      priority: "medium" as "high" | "medium" | "low",
       deadline: undefined,
       completed: false,
       assignee_id: "",
@@ -81,6 +82,8 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
             assigner_id: user?.id,
             assignee_id: isPersonalTask ? user?.id : assignee_id,
             assignee_ids: isPersonalTask ? [user?.id] : assigneeIdsArray,
+            comments: [],
+            completed_by: {},
           },
         ])
         .select()
@@ -93,7 +96,9 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       }
 
       if (task) {
-        onTaskCreated(task as Task);
+        // Convert database task to our Task interface
+        const newTask = convertDatabaseTaskToTask(task);
+        onTaskCreated(newTask);
         toast.success("任务已成功创建");
         form.reset();
         onOpenChange?.(false);

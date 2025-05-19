@@ -1,9 +1,10 @@
+
 /**
  * 任务项组件
  * 显示单个任务的详情、状态和操作选项
  */
 import React, { useState } from "react";
-import { Task } from "./utils";
+import { Task, convertDatabaseTaskToTask } from "./utils";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,11 +48,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const { user } = useAuth();
   
   // Convert task data to match our Task type
-  const task: Task = {
-    ...taskData,
-    comments: Array.isArray(taskData.comments) ? taskData.comments : [],
-    completed_by: typeof taskData.completed_by === 'object' ? taskData.completed_by : {},
-  };
+  const task: Task = convertDatabaseTaskToTask(taskData);
 
   /**
    * 获取任务优先级对应的颜色样式类
@@ -143,7 +140,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
         throw error;
       }
       
-      return data as Task;
+      return convertDatabaseTaskToTask(data);
     } catch (error) {
       console.error("Error updating task:", error);
       toast.error("更新任务状态失败");
@@ -248,7 +245,6 @@ const TaskItem: React.FC<TaskItemProps> = ({
         </CardContent>
       </Card>
       
-      {/* Make sure you handle the Task type correctly in the TaskDetail component */}
       {showDetail && (
         <TaskDetail 
           task={task}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -14,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   formatDate, 
   formatDateTime, 
@@ -24,7 +26,7 @@ import {
   type Task,
   type Comment
 } from "./utils";
-import { AlertCircle, Calendar, Clock, FileText, Send, User } from "lucide-react";
+import { AlertCircle, Calendar, Clock, FileText, Send, User, Users } from "lucide-react";
 
 interface TaskDetailProps {
   task: Task;
@@ -56,12 +58,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
         };
       } else if (task.assignee_ids && task.assignee_ids.includes(user.id)) {
         // 多人任务
-        const completedBy = {
+        const updatedCompletedBy = {
           ...task.completed_by,
           [user.id]: completed,
         };
         updatedTaskData = {
-          completed_by,
+          completed_by: updatedCompletedBy,
         };
       }
 
@@ -79,7 +81,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
         ...data,
         completed: data.completed,
         completed_at: data.completed_at,
-        completed_by: data.completed_by,
+        completed_by: data.completed_by as Record<string, boolean>,
+        comments: task.comments // preserve existing comments
       };
 
       setTask(updatedTask);
@@ -96,7 +99,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
 
     try {
       // Create a new comment
-      const comment = {
+      const comment: Comment = {
         id: crypto.randomUUID(),
         user_id: user.id,
         user_name: user.full_name,
@@ -104,29 +107,29 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task: initialTask, open, onOpen
         created_at: new Date().toISOString()
       };
     
-    // Update the task with the new comment
-    const updatedComments = [...(task.comments || []), comment];
-    
-    const { error } = await supabase
-      .from('tasks')
-      .update({ comments: updatedComments })
-      .eq('id', task.id);
+      // Update the task with the new comment
+      const updatedComments = [...(task.comments || []), comment];
       
-    if (error) throw error;
-    
-    // Update local state
-    setTask({
-      ...task,
-      comments: updatedComments
-    });
-    
-    setNewComment('');
-    toast.success('评论已添加');
-  } catch (err) {
-    console.error('Error adding comment:', err);
-    toast.error('添加评论失败');
-  }
-};
+      const { error } = await supabase
+        .from('tasks')
+        .update({ comments: updatedComments })
+        .eq('id', task.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setTask({
+        ...task,
+        comments: updatedComments
+      });
+      
+      setNewComment('');
+      toast.success('评论已添加');
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      toast.error('添加评论失败');
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

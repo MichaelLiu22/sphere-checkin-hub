@@ -27,7 +27,7 @@ import useEmployeeData from "./hooks/useEmployeeData";
 import { AssigneeField } from "./components/AssigneeField";
 import { PriorityField } from "./components/PriorityField";
 import { DeadlineField } from "./components/DeadlineField";
-import { Task } from "./utils";
+import { Task, convertDatabaseTaskToTask } from "./utils";
 
 /**
  * 任务分配表单组件接口
@@ -48,7 +48,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 使用自定义钩子获取员工数据
-  const { departmentUsers, allUsers } = useEmployeeData();
+  const { allEmployees, departmentEmployees, loading } = useEmployeeData(isAdmin, user?.department_id);
 
   // 初始化表单，使用zod进行验证
   const form = useForm<TaskFormValues>({
@@ -128,7 +128,8 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
           assigner_id: taskResponse.assigner_id,
           assignee_id: taskResponse.assignee_id,
           assignee_name: taskResponse.assignee_name,
-          comments: []
+          comments: [],
+          completed_by: {}
         };
         
         onTaskCreated(newTask);
@@ -163,8 +164,8 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
           <AssigneeField 
             form={form}
             isAdmin={isAdmin}
-            allEmployees={allUsers}
-            departmentEmployees={departmentUsers}
+            allEmployees={allEmployees}
+            departmentEmployees={departmentEmployees}
           />
         </div>
         
