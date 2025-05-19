@@ -13,6 +13,7 @@ import {
 } from "./utils";
 import TaskDetail from "./TaskDetail";
 import { MessageSquare, Paperclip, ChevronRight } from "lucide-react";
+import { CheckedState } from "@radix-ui/react-checkbox";
 
 interface TaskItemProps {
   task: Task;
@@ -37,15 +38,18 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const isCompleted = task.completed || 
     (task.completed_by && task.completed_by[user.id]);
   
-  const handleCompletedChange = async (checked: boolean) => {
+  const handleCompletedChange = async (checked: CheckedState) => {
     if (!user) return;
     
-    const result = await markTaskCompleted(task, user.id, checked);
+    // Convert the CheckedState to boolean
+    const isChecked = checked === true;
+    
+    const result = await markTaskCompleted(task, user.id, isChecked);
     
     if (result.success) {
       onTaskUpdate({
         ...task,
-        completed: task.assignee_id === user.id ? checked : task.completed,
+        completed: task.assignee_id === user.id ? isChecked : task.completed,
         completed_at: result.completedAt,
         completed_by: result.completedBy
       });
