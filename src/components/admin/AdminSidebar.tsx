@@ -8,6 +8,7 @@ import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarS
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,

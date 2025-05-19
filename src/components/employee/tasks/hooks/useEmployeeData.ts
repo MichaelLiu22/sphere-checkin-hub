@@ -1,87 +1,146 @@
 
-/**
- * 员工数据获取钩子
- * 根据用户权限获取可分配任务的员工列表
- */
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { User } from "../utils";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
-interface UseEmployeeDataProps {
-  isAdmin: boolean; // 是否为管理员，决定获取所有员工还是仅同部门员工
+// 用户数据接口
+export interface User {
+  id: string;
+  full_name: string;
+  department_id?: string;
+  user_type?: string;
 }
 
-/**
- * 员工数据获取钩子
- * 管理员可查看所有员工，普通用户只能查看同部门员工
- * 
- * @param {UseEmployeeDataProps} options - 钩子配置选项
- * @returns {Object} 员工列表和加载状态
- */
-export const useEmployeeData = ({ isAdmin }: UseEmployeeDataProps) => {
-  const { user } = useAuth();
-  const [departmentEmployees, setDepartmentEmployees] = useState<User[]>([]);
-  const [allEmployees, setAllEmployees] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+// 部门数据接口
+export interface Department {
+  id: string;
+  name: string;
+}
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      if (!user) return;
-      setLoading(true);
+// 员工数据钩子
+const useEmployeeData = (excludeSelf = false) => {
+  // 当前用户、部门用户和所有用户的状态
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [departmentUsers, setDepartmentUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  
+  // 部门数据状态
+  const [departments, setDepartments] = useState<Department[]>([]);
+  
+  // 加载状态
+  const [isLoading, setIsLoading] = useState(true);
 
-      try {
-        // 管理员获取所有员工
-        if (isAdmin) {
-          const { data: employeesData, error: employeesError } = await supabase
-            .from("users")
-            .select("id, full_name, department_id")
-            .neq("id", user.id) // 排除当前用户
-            .order("full_name");
-
-          if (employeesError) throw employeesError;
-          setAllEmployees(employeesData || []);
-        } else {
-          // 普通有任务权限的员工只能获取同部门员工
-          const { data: userData, error: userError } = await supabase
-            .from("users")
-            .select("department_id")
-            .eq("id", user.id)
-            .single();
-
-          if (userError) throw userError;
-
-          if (!userData.department_id) {
-            console.log("User has no department assigned");
-            return;
-          }
-
-          // 获取同部门的所有员工
-          const { data: departmentData, error: deptError } = await supabase
-            .from("users")
-            .select("id, full_name, department_id")
-            .eq("department_id", userData.department_id)
-            .neq("id", user.id) // 排除当前用户
-            .order("full_name");
-
-          if (deptError) throw deptError;
-          setDepartmentEmployees(departmentData || []);
-        }
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-        toast.error("获取员工列表失败");
-      } finally {
-        setLoading(false);
+  // 获取当前用户信息
+  const fetchCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
+        setCurrentUser(data);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
 
-    fetchEmployees();
-  }, [user, isAdmin]);
+  // 获取部门用户
+  const fetchDepartmentUsers = async (departmentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, full_name, department_id, user_type')
+        .eq('department_id', departmentId);
+
+      if (error) throw error;
+      
+      setDepartmentUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching department users:', error);
+      toast({
+        title: '获取部门用户失败',
+        description: '无法加载您部门的用户。',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // 获取所有用户
+  const fetchAllUsers = async () => {
+    try {
+      let query = supabase
+        .from('users')
+        .select('id, full_name, department_id, user_type');
+        
+      // 如果需要排除当前用户
+      if (excludeSelf && currentUser) {
+        query = query.neq('id', currentUser.id);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      setAllUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      toast({
+        title: '获取用户列表失败',
+        description: '无法加载用户列表。',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // 获取所有部门
+  const fetchDepartments = async () => {
+    try {
+      const { data, error } = await supabase.from('departments').select('*');
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      toast({
+        title: '获取部门失败',
+        description: '无法加载部门列表。',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // 获取初始数据
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      await fetchCurrentUser();
+      await fetchAllUsers();
+      await fetchDepartments();
+      setIsLoading(false);
+    };
+    
+    loadInitialData();
+  }, []);
+
+  // 当当前用户或其部门ID发生变化时，获取部门用户
+  useEffect(() => {
+    if (currentUser && currentUser.department_id) {
+      fetchDepartmentUsers(currentUser.department_id);
+    }
+  }, [currentUser]);
 
   return {
-    departmentEmployees,
-    allEmployees,
-    loading,
+    currentUser,
+    departmentUsers,
+    allUsers,
+    departments,
+    isLoading,
+    refetch: async () => {
+      await fetchCurrentUser();
+      await fetchAllUsers();
+      if (currentUser?.department_id) {
+        await fetchDepartmentUsers(currentUser.department_id);
+      }
+      await fetchDepartments();
+    }
   };
 };
+
+export default useEmployeeData;
