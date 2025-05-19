@@ -51,6 +51,10 @@ import AttachmentUploader from "./AttachmentUploader";
 interface TaskCreationFormProps {
   onTaskCreated: (newTask: any) => void;
   isAdmin: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  isPersonalTask?: boolean;
+  defaultAssigneeIds?: string[];
 }
 
 const taskSchema = z.object({
@@ -70,26 +74,43 @@ const taskSchema = z.object({
 const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   onTaskCreated,
   isAdmin,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  isPersonalTask = false,
+  defaultAssigneeIds = []
 }) => {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [departmentEmployees, setDepartmentEmployees] = useState<User[]>([]);
   const [allEmployees, setAllEmployees] = useState<User[]>([]);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Support both controlled and uncontrolled mode
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? setControlledOpen : setInternalOpen;
+
+  // Setup form with default values
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: "",
       description: "",
-      assignee_ids: [],
+      assignee_ids: defaultAssigneeIds,
       priority: "medium",
       due_date: null,
       repeat_type: "none",
       repeat_interval: null,
     },
   });
+
+  // 每当defaultAssigneeIds改变时更新表单的assignee_ids值
+  useEffect(() => {
+    if (defaultAssigneeIds.length > 0) {
+      form.setValue("assignee_ids", defaultAssigneeIds);
+    }
+  }, [defaultAssigneeIds, form]);
 
   // 加载员工列表
   useEffect(() => {
@@ -137,10 +158,10 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       }
     };
 
-    if (open) {
+    if (open && !isPersonalTask) {
       fetchEmployees();
     }
-  }, [user, isAdmin, open]);
+  }, [user, isAdmin, open, isPersonalTask]);
 
   // 处理表单提交
   const onSubmit = async (values: z.infer<typeof taskSchema>) => {
@@ -234,14 +255,19 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   const selectedAssignees = form.watch("assignee_ids");
   const repeatingType = form.watch("repeat_type");
 
+  // 如果是个人任务，则不显示选择接收者的输入项
+  const isPersonalTaskWithDefaultUser = isPersonalTask && defaultAssigneeIds.length > 0;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>创建任务</Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button>创建任务</Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>创建新任务</DialogTitle>
+          <DialogTitle>{isPersonalTask ? "创建个人待办" : "创建新任务"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -277,68 +303,70 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
               )}
             />
 
-            {/* 选择接收者 */}
-            <FormField
-              control={form.control}
-              name="assignee_ids"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>选择接收者</FormLabel>
-                  <FormControl>
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {selectedAssignees.map(id => (
-                          <Badge key={id} variant="secondary" className="px-2 py-1">
-                            {getEmployeeName(id)}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-4 w-4 p-0 ml-1"
-                              onClick={() => handleSelectEmployee(id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                        {selectedAssignees.length === 0 && (
-                          <div className="text-sm text-muted-foreground">
-                            请选择至少一名接收者
-                          </div>
-                        )}
-                      </div>
-                      <div className="border rounded-md p-3 max-h-[150px] overflow-y-auto">
-                        <div className="space-y-2">
-                          {(isAdmin ? allEmployees : departmentEmployees).map(employee => (
-                            <div 
-                              key={employee.id}
-                              className={cn(
-                                "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
-                                selectedAssignees.includes(employee.id) && "bg-muted"
-                              )}
-                              onClick={() => handleSelectEmployee(employee.id)}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedAssignees.includes(employee.id)}
-                                onChange={() => {}}
-                                className="mr-2"
-                              />
-                              <span>{employee.full_name}</span>
-                            </div>
+            {/* 选择接收者 - 只在非个人任务时显示 */}
+            {!isPersonalTaskWithDefaultUser && (
+              <FormField
+                control={form.control}
+                name="assignee_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>选择接收者</FormLabel>
+                    <FormControl>
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          {selectedAssignees.map(id => (
+                            <Badge key={id} variant="secondary" className="px-2 py-1">
+                              {getEmployeeName(id)}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                className="h-4 w-4 p-0 ml-1"
+                                onClick={() => handleSelectEmployee(id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </Badge>
                           ))}
-                          {(isAdmin ? allEmployees : departmentEmployees).length === 0 && (
-                            <div className="p-2 text-sm text-muted-foreground">
-                              没有可选择的员工
+                          {selectedAssignees.length === 0 && (
+                            <div className="text-sm text-muted-foreground">
+                              请选择至少一名接收者
                             </div>
                           )}
                         </div>
+                        <div className="border rounded-md p-3 max-h-[150px] overflow-y-auto">
+                          <div className="space-y-2">
+                            {(isAdmin ? allEmployees : departmentEmployees).map(employee => (
+                              <div 
+                                key={employee.id}
+                                className={cn(
+                                  "flex items-center p-2 rounded-md cursor-pointer hover:bg-muted",
+                                  selectedAssignees.includes(employee.id) && "bg-muted"
+                                )}
+                                onClick={() => handleSelectEmployee(employee.id)}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedAssignees.includes(employee.id)}
+                                  onChange={() => {}}
+                                  className="mr-2"
+                                />
+                                <span>{employee.full_name}</span>
+                              </div>
+                            ))}
+                            {(isAdmin ? allEmployees : departmentEmployees).length === 0 && (
+                              <div className="p-2 text-sm text-muted-foreground">
+                                没有可选择的员工
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
@@ -472,7 +500,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
                 type="submit" 
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "创建中..." : "创建任务"}
+                {isSubmitting ? "创建中..." : isPersonalTask ? "添加待办" : "创建任务"}
               </Button>
             </DialogFooter>
           </form>

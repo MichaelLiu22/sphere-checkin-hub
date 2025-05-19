@@ -1,8 +1,8 @@
-
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { type CheckedState } from "@radix-ui/react-checkbox";
 
 export interface Task {
   id: string;

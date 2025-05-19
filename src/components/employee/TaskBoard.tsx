@@ -13,8 +13,9 @@ import TaskItem from "./tasks/TaskItem";
 import TaskFilters, { FilterType, SortType } from "./tasks/TaskFilters";
 import TaskNotifications from "./tasks/TaskNotifications";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface TaskBoardProps {
   canAssignTasks: boolean;
@@ -27,6 +28,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("priority");
+  const [showPersonalTaskDialog, setShowPersonalTaskDialog] = useState(false);
 
   // 获取任务数据
   useEffect(() => {
@@ -154,6 +156,12 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
   // 处理新任务创建
   const handleTaskCreated = (newTask: Task) => {
     setTasks([newTask, ...tasks]);
+  };
+  
+  // 创建个人任务
+  const handlePersonalTaskCreated = (newTask: Task) => {
+    setTasks([newTask, ...tasks]);
+    setShowPersonalTaskDialog(false);
   };
 
   // 过滤任务
@@ -331,6 +339,14 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-lg">个人待办</CardTitle>
+              <Button 
+                size="sm" 
+                className="h-8"
+                onClick={() => setShowPersonalTaskDialog(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                添加待办
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -357,7 +373,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
             <Alert className="mt-4 bg-blue-50">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                提示：你可以从任务创建表单中选择自己作为接收者来创建个人待办
+                提示：你可以点击"添加待办"按钮来创建个人任务
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -395,6 +411,18 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
           </Card>
         )}
       </div>
+      
+      {/* 个人任务创建对话框 */}
+      {user && (
+        <TaskCreationForm
+          isAdmin={isAdmin}
+          onTaskCreated={handlePersonalTaskCreated}
+          open={showPersonalTaskDialog}
+          onOpenChange={setShowPersonalTaskDialog}
+          isPersonalTask={true}
+          defaultAssigneeIds={[user.id]}
+        />
+      )}
     </div>
   );
 };

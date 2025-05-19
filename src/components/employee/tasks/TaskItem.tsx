@@ -1,43 +1,87 @@
-
-import React, { useState } from "react";
+import React from "react";
+import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
-  Task, 
-  getPriorityColor, 
-  getPriorityText, 
-  formatDate,
-  markTaskCompleted
-} from "./utils";
-import TaskDetail from "./TaskDetail";
-import { MessageSquare, Paperclip, ChevronRight } from "lucide-react";
+import { Task } from "./utils";
 import { CheckedState } from "@radix-ui/react-checkbox";
 
 interface TaskItemProps {
   task: Task;
-  onTaskUpdate: (updatedTask: Task) => void;
+  onTaskUpdate?: (task: Task) => void;
+  onDelete?: () => void;
   showAssigner?: boolean;
   showAssignee?: boolean;
-  onDelete?: () => void;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ 
-  task, 
-  onTaskUpdate, 
-  showAssigner = false, 
-  showAssignee = false,
-  onDelete
-}) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showAssigner, showAssignee }) => {
   const { user } = useAuth();
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  
-  if (!user) return null;
 
-  const isCompleted = task.completed || 
-    (task.completed_by && task.completed_by[user.id]);
-  
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800 border-red-300";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "low":
+        return "bg-green-100 text-green-800 border-green-300";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "紧急";
+      case "medium":
+        return "一般";
+      case "low":
+        return "宽松";
+      default:
+        return "未设置";
+    }
+  };
+
+  const markTaskCompleted = async (task: Task, userId: string, completed: boolean): Promise<Task | null> => {
+    try {
+      let updateData: any = {};
+      
+      if (task.assignee_id) {
+        // 单人任务
+        updateData.completed = completed;
+      } else if (task.assignee_ids && task.assignee_ids.includes(userId)) {
+        // 多人任务
+        updateData.completed_by = {
+          ...task.completed_by,
+          [userId]: completed
+        };
+      }
+      
+      const { data, error } = await supabase
+        .from("tasks")
+        .update(updateData)
+        .eq("id", task.id)
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
+      
+      return data as Task;
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("更新任务状态失败");
+      return null;
+    }
+  };
+
   const handleCompletedChange = async (checked: CheckedState) => {
     if (!user) return;
     
@@ -45,143 +89,65 @@ const TaskItem: React.FC<TaskItemProps> = ({
     const isChecked = checked === true;
     
     const result = await markTaskCompleted(task, user.id, isChecked);
-    
-    if (result.success) {
-      onTaskUpdate({
-        ...task,
-        completed: task.assignee_id === user.id ? isChecked : task.completed,
-        completed_at: result.completedAt,
-        completed_by: result.completedBy
-      });
+    if (result && onTaskUpdate) {
+      onTaskUpdate(result);
     }
   };
-  
-  const hasComments = task.comments && task.comments.length > 0;
-  const hasAttachments = task.attachments && task.attachments.length > 0;
-  
-  // Determine deadline from either 'deadline' or 'due_date' field
-  const deadline = task.deadline || task.due_date;
-  const isPastDue = deadline && new Date(deadline) < new Date() && !isCompleted;
-  
+
   return (
-    <>
-      <div className={cn(
-        "border rounded-md p-3 transition-colors",
-        isCompleted ? "bg-muted/50" : isPastDue ? "bg-red-50" : ""
-      )}>
-        <div className="flex items-start gap-3">
-          <div className="pt-0.5">
+    <Card className={cn("border rounded-md p-3", task.completed ? "bg-muted/50" : "")}>
+      <CardContent className="p-0">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
             <Checkbox
-              checked={isCompleted}
+              id={`task-${task.id}`}
+              checked={task.completed || (task.completed_by && task.completed_by[user?.id]) || false}
               onCheckedChange={handleCompletedChange}
             />
-          </div>
-          
-          <div className="flex-1">
-            <button 
-              onClick={() => setIsDetailOpen(true)}
-              className="text-left w-full"
-            >
-              <div className="flex justify-between items-start">
-                <h4 className={cn(
-                  "font-medium group flex items-center gap-1",
-                  isCompleted && "line-through text-muted-foreground"
-                )}>
-                  {task.title}
-                  <ChevronRight className="h-4 w-4 opacity-50 group-hover:opacity-100" />
-                </h4>
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 -mr-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      onDelete();
-                    }}
-                  >
-                    <span className="sr-only">删除</span>
-                    &times;
-                  </Button>
-                )}
-              </div>
-              
+            <div>
+              <h4 className={cn("font-medium", task.completed ? "line-through text-muted-foreground" : "")}>
+                {task.title}
+              </h4>
               {task.description && (
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                <p className="text-sm text-muted-foreground mt-1">
                   {task.description}
                 </p>
               )}
-              
               <div className="flex flex-wrap gap-2 mt-2">
-                <span className={cn(
-                  "text-xs px-2 py-0.5 rounded border", 
-                  getPriorityColor(task.priority)
-                )}>
+                <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
                   {getPriorityText(task.priority)}
                 </span>
-                
-                {deadline && (
-                  <span className={cn(
-                    "text-xs px-2 py-0.5 rounded border",
-                    isPastDue 
-                      ? "bg-red-100 text-red-800 border-red-300" 
-                      : "bg-blue-100 text-blue-800 border-blue-300"
-                  )}>
-                    截止: {formatDate(deadline)}
+                {task.due_date && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                    截止: {format(new Date(task.due_date), "yyyy-MM-dd")}
                   </span>
                 )}
-                
                 {showAssigner && task.assigner_name && (
                   <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
-                    来自: {task.assigner_name}
+                    发布者: {task.assigner_name}
                   </span>
                 )}
-                
                 {showAssignee && task.assignee_name && (
-                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-300">
-                    分配给: {task.assignee_name}
+                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-300">
+                    接收者: {task.assignee_name}
                   </span>
                 )}
-                
-                {/* Multi-assignee indicator */}
-                {task.assignee_ids && task.assignee_ids.length > 1 && (
-                  <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded border border-indigo-300">
-                    多人任务 ({task.assignee_ids.length})
-                  </span>
-                )}
-                
-                {/* Meta indicators */}
-                <div className="flex items-center gap-1 ml-auto">
-                  {hasAttachments && (
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Paperclip className="h-3 w-3 mr-0.5" />
-                      {task.attachments!.length}
-                    </div>
-                  )}
-                  
-                  {hasComments && (
-                    <div className="flex items-center text-xs text-gray-500 ml-2">
-                      <MessageSquare className="h-3 w-3 mr-0.5" />
-                      {task.comments!.length}
-                    </div>
-                  )}
-                </div>
               </div>
-            </button>
+            </div>
           </div>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-      </div>
-      
-      {isDetailOpen && (
-        <TaskDetail
-          task={task}
-          isOpen={isDetailOpen}
-          onClose={() => setIsDetailOpen(false)}
-          onTaskUpdate={onTaskUpdate}
-        />
-      )}
-    </>
+      </CardContent>
+    </Card>
   );
 };
 
