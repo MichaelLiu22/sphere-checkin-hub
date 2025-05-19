@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,7 +76,7 @@ const EmployeeDashboard: React.FC = () => {
    * 条件：是管理员或拥有task模块权限
    */
   const canAssignTasks = (): boolean => {
-    return user.user_type === 'admin' || user.task_permission || hasModulePermission('task');
+    return user?.user_type === 'admin' || user?.task_permission === true || hasModulePermission('task');
   };
 
   // 处理任务创建

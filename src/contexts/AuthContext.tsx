@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +13,8 @@ interface User {
   user_type: 'admin' | 'staff' | 'visitor' | 'employee' | 'unassigned';
   department_id?: string | null;
   enabled_modules?: string[] | null;
+  task_permission?: boolean | null;  // Added task_permission property
+  upload_permission?: boolean | null; // Added for completeness
 }
 
 /**
@@ -133,6 +134,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user_type: userType,
         department_id: data.department_id || null,
         enabled_modules: data.enabled_modules || [],
+        task_permission: data.task_permission || null,  // Include task_permission
+        upload_permission: data.upload_permission || null, // Include upload_permission
       };
 
       // 检查部门名称是否为"None"
