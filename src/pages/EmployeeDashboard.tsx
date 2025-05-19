@@ -11,6 +11,8 @@ import TaskArea from "@/components/TaskArea";
 import FinanceArea from "@/components/FinanceArea";
 import TaskReportPanel from "@/components/admin/TaskReportPanel";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import TaskAssignmentForm from "@/components/employee/tasks/TaskAssignmentForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
  * 员工仪表板组件
@@ -25,6 +27,8 @@ const EmployeeDashboard: React.FC = () => {
   const { user, loading } = useAuth();
   // 活动标签管理
   const [activeTab, setActiveTab] = useState<string>("overview");
+  // 新建任务状态
+  const [newTask, setNewTask] = useState(null);
 
   /**
    * 组件加载时检查用户登录状态
@@ -72,6 +76,12 @@ const EmployeeDashboard: React.FC = () => {
     return user.user_type === 'admin' || hasModulePermission('task');
   };
 
+  // 处理任务创建
+  const handleTaskCreated = (task: any) => {
+    setNewTask(task);
+    toast.success("任务已成功发布");
+  };
+
   // 根据活动标签渲染对应的内容区域
   const renderContent = () => {
     switch (activeTab) {
@@ -100,6 +110,21 @@ const EmployeeDashboard: React.FC = () => {
                 )}
               </div>
             </div>
+            
+            {/* 任务发布区域 - 只对有task权限的用户显示 */}
+            {hasModulePermission('task') && (
+              <Card className="mt-8">
+                <CardHeader>
+                  <CardTitle className="text-lg">发布新任务</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TaskAssignmentForm 
+                    isAdmin={user.user_type === 'admin'} 
+                    onTaskCreated={handleTaskCreated}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
       case "tasks":
