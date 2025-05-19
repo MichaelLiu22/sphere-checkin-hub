@@ -424,20 +424,18 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
         />
       )}
       
-      {/* 添加任务发布区域 - 只对有任务权限的用户显示 */}
-      {canAssignTasks && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg">发布新任务</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TaskAssignmentForm 
-              isAdmin={isAdmin} 
-              onTaskCreated={handleTaskCreated}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* 添加任务发布区域 */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">发布新任务</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TaskAssignmentForm 
+            isAdmin={isAdmin} 
+            onTaskCreated={handleTaskCreated}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -9,6 +9,7 @@ export const taskFormSchema = z.object({
   }),
   deadline: z.date().optional().nullable(),
   assignee_id: z.string().min(1, { message: "请选择分配对象" }),
+  // You can add additional fields here if needed
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
