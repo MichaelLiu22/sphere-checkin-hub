@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task, User } from "./tasks/utils";
+import { Json } from "@/integrations/supabase/types";
 
 // 导入任务相关组件
 import TaskCreationForm from "./tasks/TaskCreationForm";
@@ -47,16 +48,17 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
         if (error) throw error;
         
         // 处理任务数据，添加assigner_name属性
-        const formattedTasks = (data || []).map((task) => ({
+        const formattedTasks = (data || []).map((task: any) => ({
           ...task,
           assigner_name: task.users?.full_name || "未知",
-          priority: task.priority as "high" | "medium" | "low"
+          priority: task.priority as "high" | "medium" | "low",
+          due_date: task.due_date || null, // Ensure due_date property exists
         }));
         
         // 添加assignee_name属性（如果有assignee_id）
         const assigneeIds = formattedTasks
-          .filter(t => t.assignee_id)
-          .map(t => t.assignee_id as string);
+          .filter((t: any) => t.assignee_id)
+          .map((t: any) => t.assignee_id as string);
           
         if (assigneeIds.length > 0) {
           const { data: assignees } = await supabase
@@ -69,7 +71,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
               assignees.map(a => [a.id, a.full_name])
             );
             
-            formattedTasks.forEach(task => {
+            formattedTasks.forEach((task: any) => {
               if (task.assignee_id && assigneeMap[task.assignee_id]) {
                 task.assignee_name = assigneeMap[task.assignee_id];
               }

@@ -150,7 +150,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
 
     try {
       // 确保任务数据格式正确
-      const taskData = {
+      const taskData: any = {
         title: values.title,
         description: values.description || null,
         assigner_id: user.id,
@@ -168,6 +168,8 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       // 如果只选择了一个接收者，同时设置 assignee_id 字段以兼容旧代码
       if (values.assignee_ids.length === 1) {
         taskData.assignee_id = values.assignee_ids[0];
+      } else {
+        taskData.assignee_id = null; // Explicitly set to null for multiple assignees
       }
 
       // 创建任务

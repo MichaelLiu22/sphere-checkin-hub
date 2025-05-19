@@ -2,6 +2,7 @@
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface Task {
   id: string;
@@ -33,6 +34,7 @@ export interface Comment {
   user_name?: string;
   text: string;
   created_at: string;
+  [key: string]: string | undefined; // Add index signature for Json compatibility
 }
 
 export interface User {
@@ -125,18 +127,19 @@ export const addTaskComment = async (
   existingComments: Comment[] | null
 ) => {
   try {
-    const newComment = {
+    const newComment: Comment = {
       user_id: userId,
       user_name: userName,
       text,
       created_at: new Date().toISOString()
     };
     
-    const updatedComments = existingComments ? [...existingComments, newComment] : [newComment];
+    const updatedComments = existingComments ? [...existingComments] : [];
+    updatedComments.push(newComment);
     
     const { error } = await supabase
       .from("tasks")
-      .update({ comments: updatedComments })
+      .update({ comments: updatedComments as unknown as Json })
       .eq("id", taskId);
       
     if (error) throw error;
@@ -160,7 +163,7 @@ export const markTaskCompleted = async (
     let updatedCompletedBy = { ...(task.completed_by || {}) };
     
     if (completed) {
-      updatedCompletedBy[userId] = completedTime;
+      updatedCompletedBy[userId] = completedTime as string;
     } else {
       delete updatedCompletedBy[userId];
     }
@@ -173,7 +176,7 @@ export const markTaskCompleted = async (
       .update({ 
         completed: completed,
         completed_at: completedAt,
-        completed_by: updatedCompletedBy
+        completed_by: updatedCompletedBy as unknown as Json
       })
       .eq("id", task.id);
     
