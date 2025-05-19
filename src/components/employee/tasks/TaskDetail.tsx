@@ -1,4 +1,8 @@
 
+/**
+ * 任务详情组件
+ * 显示单个任务的完整详情，包括描述、状态、附件和评论
+ */
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -32,12 +36,19 @@ import { cn } from "@/lib/utils";
 import { Paperclip, MessageSquare } from "lucide-react";
 
 interface TaskDetailProps {
-  task: Task;
-  isOpen: boolean;
-  onClose: () => void;
-  onTaskUpdate: (task: Task) => void;
+  task: Task;                       // 任务数据
+  isOpen: boolean;                  // 对话框是否打开
+  onClose: () => void;              // 关闭对话框回调
+  onTaskUpdate: (task: Task) => void; // 任务更新回调
 }
 
+/**
+ * 任务详情对话框组件
+ * 显示任务完整信息，并允许添加评论
+ * 
+ * @param {TaskDetailProps} props - 组件属性
+ * @returns {React.ReactElement | null} 渲染的任务详情对话框或null
+ */
 const TaskDetail: React.FC<TaskDetailProps> = ({ 
   task, 
   isOpen, 
@@ -50,6 +61,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
 
   if (!user) return null;
 
+  /**
+   * 处理评论提交
+   * 添加新评论到任务
+   */
   const handleCommentSubmit = async () => {
     if (!comment.trim()) return;
     
@@ -66,7 +81,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
       
       if (result.success) {
         setComment("");
-        // Update the task with new comments
+        // 更新带有新评论的任务
         onTaskUpdate({
           ...task,
           comments: result.comments
@@ -77,16 +92,20 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
     }
   };
   
+  /**
+   * 检查当前用户是否为任务的接收者或发布者
+   * @returns {boolean} 是否有权限评论
+   */
   const isAssigneeOrAssigner = () => {
     if (!user) return false;
     
-    // Check if current user is the assigner
+    // 检查当前用户是否是任务发布者
     if (task.assigner_id === user.id) return true;
     
-    // Check if current user is the assignee (single assignee)
+    // 检查当前用户是否是单一接收者
     if (task.assignee_id === user.id) return true;
     
-    // Check if current user is in the assignee_ids array (multi-assignee)
+    // 检查当前用户是否在多接收者数组中
     if (task.assignee_ids && task.assignee_ids.includes(user.id)) return true;
     
     return false;
@@ -100,7 +119,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
         </DialogHeader>
         
         <div className="space-y-4 my-4">
-          {/* Task info */}
+          {/* 任务基本信息 */}
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2 mb-2">
               <span className={cn("text-xs px-2 py-0.5 rounded border", getPriorityColor(task.priority))}>
@@ -137,7 +156,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
             </div>
           </div>
           
-          {/* Attachments */}
+          {/* 附件区域 */}
           {task.attachments && task.attachments.length > 0 && (
             <Accordion type="single" collapsible className="border rounded-md">
               <AccordionItem value="attachments">
@@ -171,7 +190,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
             </Accordion>
           )}
           
-          {/* Comments */}
+          {/* 评论区域 */}
           <div className="mt-6">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="h-4 w-4" />
@@ -200,7 +219,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({
               )}
             </div>
             
-            {/* Only allow comments if user is involved in the task */}
+            {/* 仅当用户与任务相关联时才允许评论 */}
             {isAssigneeOrAssigner() && (
               <div className="mt-4 space-y-3">
                 <Textarea 

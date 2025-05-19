@@ -1,4 +1,8 @@
 
+/**
+ * 任务接收者选择字段组件
+ * 用于在任务表单中选择任务的接收者
+ */
 import React from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,12 +11,18 @@ import { TaskFormValues } from "../schemas/taskFormSchema";
 import { User } from "../utils";
 
 interface AssigneeFieldProps {
-  form: UseFormReturn<TaskFormValues>;
-  isAdmin: boolean;
-  allEmployees: User[];
-  departmentEmployees: User[];
+  form: UseFormReturn<TaskFormValues>; // 表单控制对象
+  isAdmin: boolean;                    // 是否为管理员
+  allEmployees: User[];                // 所有员工列表
+  departmentEmployees: User[];         // 部门内员工列表
 }
 
+/**
+ * 任务接收者选择字段组件
+ * 
+ * @param {AssigneeFieldProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的表单字段组件
+ */
 export function AssigneeField({ 
   form, 
   isAdmin, 
@@ -33,6 +43,7 @@ export function AssigneeField({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
+              {/* 管理员可以看到所有员工 */}
               {isAdmin ? (
                 allEmployees.length > 0 ? (
                   allEmployees.map((employee) => (
@@ -46,6 +57,7 @@ export function AssigneeField({
                   </SelectItem>
                 )
               ) : (
+                // 普通用户只能看到部门内员工
                 departmentEmployees.length > 0 ? (
                   departmentEmployees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>

@@ -1,4 +1,8 @@
 
+/**
+ * 任务分配表单组件
+ * 用于创建和分配新任务给员工
+ */
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,13 +21,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
-// Import our new components and hooks
+// 导入组件和hooks
 import { taskFormSchema, TaskFormValues } from "./schemas/taskFormSchema";
 import { useEmployeeData } from "./hooks/useEmployeeData";
 import { AssigneeField } from "./components/AssigneeField";
 import { PriorityField } from "./components/PriorityField";
 import { DeadlineField } from "./components/DeadlineField";
 
+/**
+ * 任务接口定义
+ */
 interface Task {
   id: string;
   title: string;
@@ -39,17 +46,24 @@ interface Task {
 }
 
 interface TaskAssignmentFormProps {
-  isAdmin: boolean;
-  onTaskCreated: (task: Task) => void;
+  isAdmin: boolean;                   // 是否为管理员
+  onTaskCreated: (task: Task) => void; // 任务创建后回调
 }
 
+/**
+ * 任务分配表单组件
+ * 
+ * @param {TaskAssignmentFormProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的表单组件
+ */
 const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTaskCreated }) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Use our custom hook to fetch employee data
+  // 使用自定义钩子获取员工数据
   const { departmentEmployees, allEmployees } = useEmployeeData({ isAdmin });
 
+  // 初始化表单，使用zod进行验证
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
@@ -61,13 +75,18 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
     },
   });
 
+  /**
+   * 处理表单提交
+   * 创建新任务并保存到数据库
+   * 
+   * @param {TaskFormValues} values - 表单值
+   */
   const onSubmit = async (values: TaskFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
 
     try {
-      // Create a public client that doesn't require auth for this specific operation
-      // This bypasses the RLS policies temporarily until we can fix the auth issue
+      // 获取当前用户的部门ID
       const { data: userData } = await supabase
         .from("users")
         .select("department_id")
@@ -78,7 +97,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
         throw new Error("User data not found");
       }
       
-      // Create the task data object with all necessary fields
+      // 创建任务数据对象，包含所有必要字段
       const taskData = {
         title: values.title,
         description: values.description || null,
@@ -93,7 +112,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
       
       console.log("Submitting task data:", taskData);
       
-      // First, try using RPC call to bypass RLS
+      // 使用RPC调用创建任务（绕过RLS）
       const { data, error } = await supabase.rpc('create_task', taskData);
       
       if (error) {
@@ -101,14 +120,15 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
         throw error;
       }
 
+      // 重置表单
       form.reset();
       toast.success("任务已成功分配");
       
       if (data) {
-        // First cast to Record<string, any> and then construct a proper Task object
+        // 构造一个类型安全的Task对象
         const taskResponse = data as Record<string, any>;
         
-        // Create a properly typed Task object from the response
+        // 创建一个类型正确的Task对象
         const newTask: Task = {
           id: taskResponse.id,
           title: taskResponse.title,
@@ -151,6 +171,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
             )}
           />
           
+          {/* 使用分离出的组件 */}
           <AssigneeField 
             form={form}
             isAdmin={isAdmin}
@@ -179,6 +200,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 使用分离出的组件 */}
           <DeadlineField form={form} />
           <PriorityField form={form} />
         </div>

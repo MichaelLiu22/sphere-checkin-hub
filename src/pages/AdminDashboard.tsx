@@ -1,4 +1,8 @@
 
+/**
+ * 管理员仪表板页面
+ * 提供管理员功能，包括任务管理、W9文件管理、用户管理、权限配置等
+ */
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -30,6 +34,10 @@ interface User {
 /**
  * 模块内容占位符组件
  * 为未开发的功能提供占位符显示
+ * 
+ * @param {Object} props - 组件属性
+ * @param {string} props.title - 模块标题
+ * @returns {React.ReactElement} 渲染的占位符UI
  */
 const ModuleContentPlaceholder: React.FC<{ title: string }> = ({ title }) => {
   return (
@@ -44,6 +52,7 @@ const ModuleContentPlaceholder: React.FC<{ title: string }> = ({ title }) => {
  * 管理员仪表板页面组件
  * 
  * 提供管理员功能，包括W9文件管理、文件上传、用户管理和权限配置
+ * @returns {React.ReactElement} 渲染的管理员仪表板页面
  */
 const AdminDashboard: React.FC = () => {
   // 用户管理面板状态
@@ -117,7 +126,7 @@ const AdminDashboard: React.FC = () => {
               )}
               {activeTab === "permissions" && <PermissionConfigPanel />}
               
-              {/* 将任务管理占位符替换为完整的任务管理组件 */}
+              {/* 任务管理组件，与员工视图相同的功能 */}
               {activeTab === "tasks" && (
                 <TaskBoard canAssignTasks={true} isAdmin={true} />
               )}

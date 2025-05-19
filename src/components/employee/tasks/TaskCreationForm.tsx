@@ -1,4 +1,8 @@
 
+/**
+ * 任务创建表单组件
+ * 提供创建新任务的表单界面，支持设置多接收者、优先级、截止日期等
+ */
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,18 +49,22 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-// Import attachment uploader
+// 导入附件上传组件
 import AttachmentUploader from "./AttachmentUploader";
 
 interface TaskCreationFormProps {
-  onTaskCreated: (newTask: any) => void;
-  isAdmin: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  isPersonalTask?: boolean;
-  defaultAssigneeIds?: string[];
+  onTaskCreated: (newTask: any) => void; // 任务创建后的回调
+  isAdmin: boolean;                      // 是否为管理员
+  open?: boolean;                        // 控制对话框是否打开（受控模式）
+  onOpenChange?: (open: boolean) => void; // 对话框状态变化回调（受控模式）
+  isPersonalTask?: boolean;              // 是否为个人任务
+  defaultAssigneeIds?: string[];         // 默认接收者ID列表
 }
 
+/**
+ * 任务表单验证模式
+ * 定义任务表单字段及其验证规则
+ */
 const taskSchema = z.object({
   title: z.string().min(1, { message: "标题不能为空" }),
   description: z.string().optional(),
@@ -71,6 +79,12 @@ const taskSchema = z.object({
   repeat_interval: z.number().optional().nullable(),
 });
 
+/**
+ * 任务创建表单组件
+ * 
+ * @param {TaskCreationFormProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的表单对话框组件
+ */
 const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   onTaskCreated,
   isAdmin,
@@ -86,12 +100,12 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   const [attachments, setAttachments] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Support both controlled and uncontrolled mode
+  // 支持受控和非受控模式
   const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? setControlledOpen : setInternalOpen;
 
-  // Setup form with default values
+  // 设置表单默认值
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -105,7 +119,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
     },
   });
 
-  // 每当defaultAssigneeIds改变时更新表单的assignee_ids值
+  // 当defaultAssigneeIds改变时更新表单的assignee_ids值
   useEffect(() => {
     if (defaultAssigneeIds.length > 0) {
       form.setValue("assignee_ids", defaultAssigneeIds);
@@ -190,7 +204,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       if (values.assignee_ids.length === 1) {
         taskData.assignee_id = values.assignee_ids[0];
       } else {
-        taskData.assignee_id = null; // Explicitly set to null for multiple assignees
+        taskData.assignee_id = null; // 对于多接收者明确设置为null
       }
 
       // 创建任务
@@ -255,7 +269,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
   const selectedAssignees = form.watch("assignee_ids");
   const repeatingType = form.watch("repeat_type");
 
-  // 如果是个人任务，则不显示选择接收者的输入项
+  // 如果是个人任务，则使用默认用户
   const isPersonalTaskWithDefaultUser = isPersonalTask && defaultAssigneeIds.length > 0;
 
   return (

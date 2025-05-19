@@ -1,4 +1,8 @@
 
+/**
+ * 任务项组件
+ * 显示单个任务的详情、状态和操作选项
+ */
 import React from "react";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,16 +17,28 @@ import { Task } from "./utils";
 import { CheckedState } from "@radix-ui/react-checkbox";
 
 interface TaskItemProps {
-  task: Task;
-  onTaskUpdate?: (task: Task) => void;
-  onDelete?: () => void;
-  showAssigner?: boolean;
-  showAssignee?: boolean;
+  task: Task;                           // 任务数据
+  onTaskUpdate?: (task: Task) => void;  // 任务更新后回调
+  onDelete?: () => void;                // 删除任务回调
+  showAssigner?: boolean;               // 是否显示任务发布者
+  showAssignee?: boolean;               // 是否显示任务接收者
 }
 
+/**
+ * 任务项组件
+ * 显示单个任务的卡片，包含完成状态、优先级、截止日期等信息
+ * 
+ * @param {TaskItemProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的任务项卡片
+ */
 const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showAssigner, showAssignee }) => {
-  const { user } = useAuth();
+  const { user } = useAuth(); // 获取当前用户信息
 
+  /**
+   * 获取任务优先级对应的颜色样式类
+   * @param {string} priority - 任务优先级
+   * @returns {string} 样式类名
+   */
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
@@ -36,6 +52,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
     }
   };
 
+  /**
+   * 获取任务优先级对应的显示文本
+   * @param {string} priority - 任务优先级
+   * @returns {string} 显示文本
+   */
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case "high":
@@ -49,6 +70,13 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
     }
   };
 
+  /**
+   * 标记任务完成状态
+   * @param {Task} task - 要更新的任务
+   * @param {string} userId - 当前用户ID
+   * @param {boolean} completed - 完成状态
+   * @returns {Promise<Task|null>} 更新后的任务或null
+   */
   const markTaskCompleted = async (task: Task, userId: string, completed: boolean): Promise<Task | null> => {
     try {
       let updateData: any = {};
@@ -83,6 +111,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
     }
   };
 
+  /**
+   * 处理任务完成状态复选框变化
+   * @param {CheckedState} checked - 复选框状态
+   */
   const handleCompletedChange = async (checked: CheckedState) => {
     if (!user) return;
     
@@ -95,17 +127,20 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
     }
   };
 
-  // Determine the checked state for the checkbox
+  /**
+   * 获取复选框的选中状态
+   * @returns {boolean} 是否选中
+   */
   const getCheckedState = (): boolean => {
     if (!user) return false;
     
     if (task.completed) {
-      // For a task that's completely marked as completed
+      // 对于已完全标记为完成的任务
       return true;
     }
     
     if (task.completed_by && task.completed_by[user.id]) {
-      // For a group task where this user has completed their part
+      // 对于当前用户已完成其部分的群组任务
       return true;
     }
     

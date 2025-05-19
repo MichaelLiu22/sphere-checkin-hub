@@ -1,3 +1,8 @@
+
+/**
+ * 任务看板组件
+ * 管理和显示所有任务，包括任务筛选、创建、完成等功能
+ */
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,17 +16,23 @@ import TaskCreationForm from "./tasks/TaskCreationForm";
 import TaskItem from "./tasks/TaskItem";
 import TaskFilters, { FilterType, SortType } from "./tasks/TaskFilters";
 import TaskNotifications from "./tasks/TaskNotifications";
-import TaskAssignmentForm from "./tasks/TaskAssignmentForm"; // Add import for TaskAssignmentForm
+import TaskAssignmentForm from "./tasks/TaskAssignmentForm"; // 导入任务分配表单组件
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface TaskBoardProps {
-  canAssignTasks: boolean;
-  isAdmin: boolean;
+  canAssignTasks: boolean; // 用户是否可以分配任务给他人
+  isAdmin: boolean;        // 用户是否是管理员
 }
 
+/**
+ * 任务看板组件
+ * 
+ * @param {TaskBoardProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的任务看板
+ */
 const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -54,7 +65,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
           ...task,
           assigner_name: task.users?.full_name || "未知",
           priority: task.priority as "high" | "medium" | "low",
-          due_date: task.due_date || null, // Ensure due_date property exists
+          due_date: task.due_date || null, // 确保due_date属性存在
         }));
         
         // 添加assignee_name属性（如果有assignee_id）
@@ -121,19 +132,26 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
       })
       .subscribe();
       
+    // 组件卸载时清理订阅
     return () => {
       supabase.removeChannel(taskChannel);
     };
   }, [user]);
 
-  // 处理任务状态更新
+  /**
+   * 处理任务状态更新
+   * @param {Task} updatedTask - 更新后的任务
+   */
   const handleTaskUpdate = (updatedTask: Task) => {
     setTasks(
       tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t))
     );
   };
 
-  // 处理任务删除
+  /**
+   * 处理任务删除
+   * @param {string} taskId - 要删除的任务ID
+   */
   const handleDeleteTask = async (taskId: string) => {
     if (!confirm("确定要删除此任务吗？")) return;
 
@@ -153,24 +171,33 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
     }
   };
 
-  // 处理新任务创建
+  /**
+   * 处理新任务创建
+   * @param {Task} newTask - 新创建的任务
+   */
   const handleTaskCreated = (newTask: Task) => {
     setTasks([newTask, ...tasks]);
   };
   
-  // 创建个人任务
+  /**
+   * 处理个人任务创建
+   * @param {Task} newTask - 新创建的个人任务
+   */
   const handlePersonalTaskCreated = (newTask: Task) => {
     setTasks([newTask, ...tasks]);
     setShowPersonalTaskDialog(false);
   };
 
-  // 过滤任务
+  /**
+   * 根据筛选和排序获取任务列表
+   * @returns {Task[]} 筛选和排序后的任务列表
+   */
   const getFilteredTasks = () => {
     if (!user) return [];
     
     let filtered = [...tasks];
     
-    // 应用过滤器
+    // 应用筛选器
     switch (filter) {
       case "assigned":
         filtered = filtered.filter(
@@ -254,7 +281,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
     return filtered;
   };
 
-  // 获取不同类型的任务
+  // 获取筛选和排序后的任务
   const filteredTasks = getFilteredTasks();
   
   // 分类任务

@@ -1,9 +1,16 @@
 
+/**
+ * 已接收任务列表组件
+ * 显示分配给当前用户的任务列表
+ */
 import React from "react";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
+/**
+ * 任务接口定义
+ */
 interface Task {
   id: string;
   title: string;
@@ -19,16 +26,27 @@ interface Task {
 }
 
 interface ReceivedTasksListProps {
-  tasks: Task[];
-  isLoading: boolean;
-  onTaskComplete: (task: Task, completed: boolean) => void;
+  tasks: Task[];                                      // 任务列表
+  isLoading: boolean;                                 // 加载状态
+  onTaskComplete: (task: Task, completed: boolean) => void; // 任务完成状态改变回调
 }
 
+/**
+ * 收到的任务列表组件
+ * 
+ * @param {ReceivedTasksListProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的任务列表
+ */
 const ReceivedTasksList: React.FC<ReceivedTasksListProps> = ({
   tasks,
   isLoading,
   onTaskComplete
 }) => {
+  /**
+   * 获取任务优先级对应的颜色样式类
+   * @param {string} priority - 任务优先级
+   * @returns {string} 样式类名
+   */
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
@@ -42,6 +60,11 @@ const ReceivedTasksList: React.FC<ReceivedTasksListProps> = ({
     }
   };
 
+  /**
+   * 获取任务优先级对应的显示文本
+   * @param {string} priority - 任务优先级
+   * @returns {string} 显示文本
+   */
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case "high":

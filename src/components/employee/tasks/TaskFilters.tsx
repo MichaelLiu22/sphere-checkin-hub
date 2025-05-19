@@ -1,4 +1,8 @@
 
+/**
+ * 任务筛选和排序组件
+ * 提供任务列表的筛选和排序选项
+ */
 import React from "react";
 import {
   Select,
@@ -10,17 +14,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// 定义筛选和排序类型
 export type FilterType = "all" | "assigned" | "created" | "incomplete" | "completed";
 export type SortType = "priority" | "deadline" | "created";
 
 interface TaskFiltersProps {
-  filter: FilterType;
-  sort: SortType;
-  onFilterChange: (value: FilterType) => void;
-  onSortChange: (value: SortType) => void;
-  canAssignTasks: boolean;
+  filter: FilterType;                       // 当前选中的筛选条件
+  sort: SortType;                           // 当前选中的排序方式
+  onFilterChange: (value: FilterType) => void; // 筛选条件改变时的回调
+  onSortChange: (value: SortType) => void;  // 排序方式改变时的回调
+  canAssignTasks: boolean;                  // 用户是否有权限分配任务
 }
 
+/**
+ * 任务筛选和排序组件
+ * 
+ * @param {TaskFiltersProps} props - 组件属性
+ * @returns {React.ReactElement} 渲染的筛选和排序UI组件
+ */
 const TaskFilters: React.FC<TaskFiltersProps> = ({
   filter,
   sort,
@@ -30,6 +41,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3">
+      {/* 筛选条件下拉菜单 */}
       <div className="w-full sm:w-48">
         <Select
           value={filter}
@@ -51,6 +63,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         </Select>
       </div>
       
+      {/* 排序方式下拉菜单 */}
       <div className="w-full sm:w-48">
         <Select
           value={sort}
