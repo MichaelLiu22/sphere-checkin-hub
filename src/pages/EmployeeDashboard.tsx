@@ -9,6 +9,7 @@ import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
 import TaskBoard from "@/components/employee/TaskBoard";
 import TaskArea from "@/components/TaskArea";
 import FinanceArea from "@/components/FinanceArea";
+import TaskReportPanel from "@/components/admin/TaskReportPanel";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 /**
@@ -104,8 +105,13 @@ const EmployeeDashboard: React.FC = () => {
       case "tasks":
         return (
           <div className="p-6">
-            <h2 className="text-2xl font-bold mb-6">任务管理</h2>
             <TaskBoard canAssignTasks={canAssignTasks()} isAdmin={user.user_type === 'admin'} />
+          </div>
+        );
+      case "tasks_report":
+        return (
+          <div className="p-6">
+            <TaskReportPanel />
           </div>
         );
       case "host_schedule":

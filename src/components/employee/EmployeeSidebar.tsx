@@ -10,8 +10,10 @@ import {
   Calendar, 
   Home,
   ClipboardList,
-  DollarSign
+  DollarSign,
+  BarChart2
 } from "lucide-react";
+import { TaskNotifications } from "./tasks/TaskNotifications";
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +35,7 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
   const { user, logout } = useAuth();
   
   const enabledModules = user?.enabled_modules || [];
+  const isAdmin = user?.user_type === 'admin';
 
   const handleLogout = async () => {
     try {
@@ -69,9 +72,26 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ activeTab, setActiveT
               tooltip="Task Board"
             >
               <ClipboardList className="mr-2" />
-              <span>📋 当前任务</span>
+              <span className="flex items-center">
+                📋 当前任务
+                {activeTab !== "tasks" && <TaskNotifications className="ml-2" />}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          
+          {/* Task Reports - only for admins */}
+          {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                isActive={activeTab === "tasks_report"}
+                onClick={() => setActiveTab("tasks_report")}
+                tooltip="Task Reports"
+              >
+                <BarChart2 className="mr-2" />
+                <span>📊 任务报告</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           
           {enabledModules.includes("host_schedule") && (
             <SidebarMenuItem>

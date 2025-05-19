@@ -1,37 +1,19 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Task, User } from "./tasks/utils";
 
-// Import refactored components
-import TaskAssignmentForm from "./tasks/TaskAssignmentForm";
-import AssignedTasksList from "./tasks/AssignedTasksList";
-import ReceivedTasksList from "./tasks/ReceivedTasksList";
-import PersonalTasksList from "./tasks/PersonalTasksList";
-
-interface User {
-  id: string;
-  full_name: string;
-  department_id?: string | null;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  priority: "high" | "medium" | "low";
-  deadline: string | null;
-  completed: boolean;
-  completed_at: string | null;
-  created_at: string;
-  assigner_id: string;
-  assignee_id: string;
-  assigner_name?: string;
-  assignee_name?: string;
-}
+// 导入任务相关组件
+import TaskCreationForm from "./tasks/TaskCreationForm";
+import TaskItem from "./tasks/TaskItem";
+import TaskFilters, { FilterType, SortType } from "./tasks/TaskFilters";
+import TaskNotifications from "./tasks/TaskNotifications";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TaskBoardProps {
   canAssignTasks: boolean;
@@ -40,72 +22,62 @@ interface TaskBoardProps {
 
 const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
   const { user } = useAuth();
-  const { t } = useLanguage();
-  const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
-  const [personalTasks, setPersonalTasks] = useState<Task[]>([]);
-  const [tasksAssignedByMe, setTasksAssignedByMe] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sort, setSort] = useState<SortType>("priority");
 
-  // Fetch tasks assigned to current user and by current user
+  // 获取任务数据
   useEffect(() => {
     const fetchTasks = async () => {
       if (!user) return;
       setIsLoading(true);
 
       try {
-        // Get tasks assigned to me
-        const { data: assignedData, error: assignedError } = await supabase
+        // 获取所有与当前用户相关的任务
+        const { data, error } = await supabase
           .from("tasks")
           .select(`
             *,
             users!tasks_assigner_id_fkey(id, full_name)
           `)
-          .eq("assignee_id", user.id)
-          .neq("assigner_id", user.id); // Exclude tasks I assigned to myself
+          .or(`assignee_id.eq.${user.id},assigner_id.eq.${user.id},assignee_ids.cs.{${user.id}}`)
+          .order('created_at', { ascending: false });
 
-        if (assignedError) throw assignedError;
-
-        // Get personal tasks (where I'm both assigner and assignee)
-        const { data: personalData, error: personalError } = await supabase
-          .from("tasks")
-          .select("*")
-          .eq("assigner_id", user.id)
-          .eq("assignee_id", user.id);
-
-        if (personalError) throw personalError;
+        if (error) throw error;
         
-        // Get tasks assigned by me to others
-        const { data: assignedByMeData, error: assignedByMeError } = await supabase
-          .from("tasks")
-          .select(`
-            *,
-            assignee:users!tasks_assignee_id_fkey(id, full_name)
-          `)
-          .eq("assigner_id", user.id)
-          .neq("assignee_id", user.id); // Exclude tasks I assigned to myself
-
-        if (assignedByMeError) throw assignedByMeError;
-
-        // Format the assigned tasks
-        const formattedAssignedTasks = (assignedData || []).map((task) => ({
+        // 处理任务数据，添加assigner_name属性
+        const formattedTasks = (data || []).map((task) => ({
           ...task,
           assigner_name: task.users?.full_name || "未知",
           priority: task.priority as "high" | "medium" | "low"
         }));
+        
+        // 添加assignee_name属性（如果有assignee_id）
+        const assigneeIds = formattedTasks
+          .filter(t => t.assignee_id)
+          .map(t => t.assignee_id as string);
+          
+        if (assigneeIds.length > 0) {
+          const { data: assignees } = await supabase
+            .from("users")
+            .select("id, full_name")
+            .in("id", assigneeIds);
+            
+          if (assignees) {
+            const assigneeMap = Object.fromEntries(
+              assignees.map(a => [a.id, a.full_name])
+            );
+            
+            formattedTasks.forEach(task => {
+              if (task.assignee_id && assigneeMap[task.assignee_id]) {
+                task.assignee_name = assigneeMap[task.assignee_id];
+              }
+            });
+          }
+        }
 
-        // Format tasks assigned by me
-        const formattedAssignedByMeTasks = (assignedByMeData || []).map((task) => ({
-          ...task,
-          assignee_name: task.assignee?.full_name || "未知",
-          priority: task.priority as "high" | "medium" | "low"
-        }));
-
-        setAssignedTasks(formattedAssignedTasks as Task[]);
-        setTasksAssignedByMe(formattedAssignedByMeTasks as Task[]);
-        setPersonalTasks((personalData || []).map(task => ({
-          ...task,
-          priority: task.priority as "high" | "medium" | "low"
-        })) as Task[]);
+        setTasks(formattedTasks as Task[]);
       } catch (error) {
         console.error("Error fetching tasks:", error);
         toast.error("获取任务数据失败");
@@ -115,52 +87,50 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
     };
 
     fetchTasks();
+
+    // 实时任务更新
+    const taskChannel = supabase
+      .channel('task-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `assignee_id=eq.${user?.id}`
+      }, () => {
+        fetchTasks();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `assigner_id=eq.${user?.id}`
+      }, () => {
+        fetchTasks();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `assignee_ids=cs.{${user?.id}}`
+      }, () => {
+        fetchTasks();
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(taskChannel);
+    };
   }, [user]);
 
-  const handleTaskComplete = async (task: Task, completed: boolean) => {
-    try {
-      const { error } = await supabase
-        .from("tasks")
-        .update({
-          completed,
-          completed_at: completed ? new Date().toISOString() : null,
-        })
-        .eq("id", task.id);
-
-      if (error) throw error;
-
-      toast.success(completed ? "任务已完成" : "任务已重新打开");
-      
-      // Update local state
-      if (task.assigner_id === user?.id && task.assignee_id === user?.id) {
-        // Personal task
-        setPersonalTasks(
-          personalTasks.map((t) =>
-            t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
-          )
-        );
-      } else if (task.assignee_id === user?.id) {
-        // Assigned task
-        setAssignedTasks(
-          assignedTasks.map((t) =>
-            t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
-          )
-        );
-      } else if (task.assigner_id === user?.id) {
-        // Task assigned by me
-        setTasksAssignedByMe(
-          tasksAssignedByMe.map((t) =>
-            t.id === task.id ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error updating task:", error);
-      toast.error("更新任务状态失败");
-    }
+  // 处理任务状态更新
+  const handleTaskUpdate = (updatedTask: Task) => {
+    setTasks(
+      tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+    );
   };
 
-  const handleDeleteTask = async (taskId: string, taskType: 'personal' | 'assigned' | 'assignedByMe') => {
+  // 处理任务删除
+  const handleDeleteTask = async (taskId: string) => {
     if (!confirm("确定要删除此任务吗？")) return;
 
     try {
@@ -172,96 +142,256 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ canAssignTasks, isAdmin }) => {
       if (error) throw error;
 
       toast.success("任务已删除");
-
-      // Update local state based on task type
-      switch (taskType) {
-        case 'personal':
-          setPersonalTasks(personalTasks.filter((t) => t.id !== taskId));
-          break;
-        case 'assigned':
-          setAssignedTasks(assignedTasks.filter((t) => t.id !== taskId));
-          break;
-        case 'assignedByMe':
-          setTasksAssignedByMe(tasksAssignedByMe.filter((t) => t.id !== taskId));
-          break;
-      }
+      setTasks(tasks.filter((t) => t.id !== taskId));
     } catch (error) {
       console.error("Error deleting task:", error);
       toast.error("删除任务失败");
     }
   };
 
-  const handleTaskAssigned = (newTask: Task) => {
-    setTasksAssignedByMe([newTask, ...tasksAssignedByMe]);
+  // 处理新任务创建
+  const handleTaskCreated = (newTask: Task) => {
+    setTasks([newTask, ...tasks]);
   };
 
-  const handlePersonalTaskAdded = (newTask: Task) => {
-    setPersonalTasks([newTask, ...personalTasks]);
+  // 过滤任务
+  const getFilteredTasks = () => {
+    if (!user) return [];
+    
+    let filtered = [...tasks];
+    
+    // 应用过滤器
+    switch (filter) {
+      case "assigned":
+        filtered = filtered.filter(
+          task => task.assignee_id === user.id || 
+                 (task.assignee_ids && task.assignee_ids.includes(user.id))
+        );
+        break;
+      case "created":
+        filtered = filtered.filter(task => task.assigner_id === user.id);
+        break;
+      case "incomplete":
+        filtered = filtered.filter(task => {
+          // 单人任务
+          if (task.assignee_id === user.id) {
+            return !task.completed;
+          }
+          // 多人任务且当前用户是接收者之一
+          if (task.assignee_ids && task.assignee_ids.includes(user.id)) {
+            const completedBy = task.completed_by || {};
+            return !completedBy[user.id];
+          }
+          // 多人任务且当前用户是发布者
+          if (task.assigner_id === user.id) {
+            return !task.completed;
+          }
+          return false;
+        });
+        break;
+      case "completed":
+        filtered = filtered.filter(task => {
+          // 单人任务
+          if (task.assignee_id === user.id) {
+            return task.completed;
+          }
+          // 多人任务且当前用户是接收者之一
+          if (task.assignee_ids && task.assignee_ids.includes(user.id)) {
+            const completedBy = task.completed_by || {};
+            return !!completedBy[user.id];
+          }
+          // 多人任务且当前用户是发布者
+          if (task.assigner_id === user.id) {
+            return task.completed;
+          }
+          return false;
+        });
+        break;
+      // "all" case不需要额外过滤
+    }
+    
+    // 应用排序
+    switch (sort) {
+      case "priority":
+        // 按优先级排序 high > medium > low
+        filtered.sort((a, b) => {
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+        break;
+      case "deadline":
+        // 按截止日期排序，无截止日期的排在后面
+        filtered.sort((a, b) => {
+          const dateA = a.due_date || a.deadline;
+          const dateB = b.due_date || b.deadline;
+          
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          
+          return new Date(dateA).getTime() - new Date(dateB).getTime();
+        });
+        break;
+      case "created":
+        // 按创建时间排序，最新的排在前面
+        filtered.sort((a, b) => {
+          if (!a.created_at || !b.created_at) return 0;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        break;
+    }
+    
+    return filtered;
   };
+
+  // 获取不同类型的任务
+  const filteredTasks = getFilteredTasks();
+  
+  // 分类任务
+  const receivedTasks = filteredTasks.filter(
+    task => (task.assignee_id === user?.id || 
+           (task.assignee_ids && task.assignee_ids.includes(user?.id))) && 
+           task.assigner_id !== user?.id
+  );
+  
+  const assignedByMeTasks = filteredTasks.filter(
+    task => task.assigner_id === user?.id && 
+           (task.assignee_id !== user?.id || 
+            (task.assignee_ids && !task.assignee_ids.includes(user?.id)))
+  );
+  
+  const personalTasks = filteredTasks.filter(
+    task => task.assigner_id === user?.id && 
+           (task.assignee_id === user?.id || 
+            (task.assignee_ids && task.assignee_ids.includes(user?.id)))
+  );
 
   return (
     <div className="space-y-6">
-      {/* Task Assignment Form - Only show if user has task permission */}
-      {canAssignTasks && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">发布任务</CardTitle>
+      {/* 任务过滤和创建按钮区域 */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold">任务管理</h2>
+          <TaskNotifications />
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <TaskFilters
+            filter={filter}
+            sort={sort}
+            onFilterChange={setFilter}
+            onSortChange={setSort}
+            canAssignTasks={canAssignTasks}
+          />
+          
+          {canAssignTasks && (
+            <TaskCreationForm
+              isAdmin={isAdmin}
+              onTaskCreated={handleTaskCreated}
+            />
+          )}
+        </div>
+      </div>
+      
+      {/* 主任务区域 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 接收到的任务 */}
+        <Card className="h-full">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">我收到的任务</CardTitle>
           </CardHeader>
           <CardContent>
-            <TaskAssignmentForm 
-              isAdmin={isAdmin} 
-              onTaskCreated={handleTaskAssigned} 
-            />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : receivedTasks.length > 0 ? (
+              <div className="space-y-3">
+                {receivedTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onTaskUpdate={handleTaskUpdate}
+                    showAssigner={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40">
+                <p className="text-muted-foreground">没有分配给你的任务</p>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Tasks Assigned By Me - Only show if user has task permission */}
+        {/* 个人待办区域 */}
+        <Card className="h-full">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">个人待办</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : personalTasks.length > 0 ? (
+              <div className="space-y-3">
+                {personalTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    onTaskUpdate={handleTaskUpdate}
+                    onDelete={() => handleDeleteTask(task.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-40">
+                <p className="text-muted-foreground">没有个人待办事项</p>
+              </div>
+            )}
+            <Alert className="mt-4 bg-blue-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                提示：你可以从任务创建表单中选择自己作为接收者来创建个人待办
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+        
+        {/* 我发布的任务区域 - 只对有任务权限的用户显示 */}
         {canAssignTasks && (
-          <Card className="h-full">
-            <CardHeader className="pb-2 space-y-0">
-              <CardTitle>我发布的任务</CardTitle>
+          <Card className="h-full lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">我发布的任务</CardTitle>
             </CardHeader>
-            <CardContent className="pb-0">
-              <AssignedTasksList 
-                tasks={tasksAssignedByMe}
-                isLoading={isLoading}
-                onDeleteTask={(taskId) => handleDeleteTask(taskId, 'assignedByMe')}
-              />
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-40">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : assignedByMeTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {assignedByMeTasks.map((task) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onTaskUpdate={handleTaskUpdate}
+                      showAssignee={true}
+                      onDelete={() => handleDeleteTask(task.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-40">
+                  <p className="text-muted-foreground">你还没有发布任何任务</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
-
-        {/* Assigned Tasks - All users can see this */}
-        <Card className="h-full">
-          <CardHeader className="pb-2 space-y-0">
-            <CardTitle>我收到的任务</CardTitle>
-          </CardHeader>
-          <CardContent className="pb-0">
-            <ReceivedTasksList 
-              tasks={assignedTasks}
-              isLoading={isLoading}
-              onTaskComplete={handleTaskComplete}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Personal Tasks - All users can see this */}
-        <Card className="h-full md:col-span-2">
-          <CardHeader className="pb-2 space-y-0">
-            <CardTitle>个人待办</CardTitle>
-          </CardHeader>
-          <CardContent className="pb-0">
-            <PersonalTasksList
-              tasks={personalTasks}
-              isLoading={isLoading}
-              onTaskComplete={handleTaskComplete}
-              onDeleteTask={(taskId) => handleDeleteTask(taskId, 'personal')}
-              onTaskAdded={handlePersonalTaskAdded}
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
