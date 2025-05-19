@@ -5,20 +5,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { taskFormSchema, TaskFormValues } from "./schemas/taskFormSchema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { PriorityField } from "./components/PriorityField";
 import { DeadlineField } from "./components/DeadlineField";
 import useEmployeeData from "./hooks/useEmployeeData";
 import { Task, convertDatabaseTaskToTask } from "./utils";
 import { AssigneeField } from "./components/AssigneeField";
+import { Json } from "@/integrations/supabase/types";
 
 interface TaskCreationFormProps {
   isAdmin?: boolean;
@@ -70,22 +69,23 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
       // 确保assignee_ids是一个数组
       const assigneeIdsArray = assignee_ids ? (Array.isArray(assignee_ids) ? assignee_ids : [assignee_ids]) : [];
 
+      // Create a single task object (not an array of tasks)
+      const taskData = {
+        title,
+        description,
+        priority,
+        deadline: deadline ? deadline.toISOString() : null, // Convert Date to ISO string for Supabase
+        completed: false,
+        assigner_id: user?.id,
+        assignee_id: isPersonalTask ? user?.id : assignee_id,
+        assignee_ids: isPersonalTask ? [user?.id] : assigneeIdsArray,
+        comments: [] as Json,
+        completed_by: {} as Json,
+      };
+
       const { data: task, error } = await supabase
         .from("tasks")
-        .insert([
-          {
-            title,
-            description,
-            priority,
-            deadline,
-            completed: false,
-            assigner_id: user?.id,
-            assignee_id: isPersonalTask ? user?.id : assignee_id,
-            assignee_ids: isPersonalTask ? [user?.id] : assigneeIdsArray,
-            comments: [],
-            completed_by: {},
-          },
-        ])
+        .insert(taskData) // Insert a single object, not an array
         .select()
         .single();
 

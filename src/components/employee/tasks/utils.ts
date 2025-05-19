@@ -118,19 +118,41 @@ export const convertDatabaseTaskToTask = (dbTask: any): Task => {
   // Make sure to properly convert the priority type
   const priority = dbTask.priority as 'high' | 'medium' | 'low';
   
+  // Parse comments from JSON if needed
+  const comments: Comment[] = Array.isArray(dbTask.comments) 
+    ? dbTask.comments.map((c: any) => ({
+        id: c.id || crypto.randomUUID(),
+        user_id: c.user_id || '',
+        user_name: c.user_name || '',
+        content: c.content || '',
+        created_at: c.created_at || new Date().toISOString()
+      }))
+    : [];
+  
+  // Parse completed_by from JSON if needed
+  const completed_by: Record<string, boolean | string> = 
+    typeof dbTask.completed_by === 'object' ? dbTask.completed_by : {};
+  
   return {
-    ...dbTask,
-    priority: priority || 'medium', // Ensure it's one of the allowed values
-    comments: Array.isArray(dbTask.comments) 
-      ? dbTask.comments.map((c: any) => ({
-          id: c.id || crypto.randomUUID(),
-          user_id: c.user_id || '',
-          user_name: c.user_name || '',
-          content: c.content || '',
-          created_at: c.created_at || new Date().toISOString()
-        }))
-      : [],
-    completed_by: typeof dbTask.completed_by === 'object' ? dbTask.completed_by : {}
+    id: dbTask.id,
+    title: dbTask.title,
+    description: dbTask.description,
+    priority: priority || 'medium',
+    deadline: dbTask.deadline,
+    completed: Boolean(dbTask.completed),
+    completed_at: dbTask.completed_at,
+    created_at: dbTask.created_at || new Date().toISOString(),
+    assigner_id: dbTask.assigner_id,
+    assigner_name: dbTask.assigner_name,
+    assignee_id: dbTask.assignee_id,
+    assignee_name: dbTask.assignee_name,
+    assignee_ids: Array.isArray(dbTask.assignee_ids) ? dbTask.assignee_ids : [],
+    department_id: dbTask.department_id,
+    repeat_type: dbTask.repeat_type || 'never',
+    repeat_interval: dbTask.repeat_interval || 1,
+    attachments: Array.isArray(dbTask.attachments) ? dbTask.attachments : [],
+    comments: comments,
+    completed_by: completed_by
   };
 };
 
