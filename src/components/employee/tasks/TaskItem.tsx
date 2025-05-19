@@ -95,6 +95,23 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
     }
   };
 
+  // Determine the checked state for the checkbox
+  const getCheckedState = (): boolean => {
+    if (!user) return false;
+    
+    if (task.completed) {
+      // For a task that's completely marked as completed
+      return true;
+    }
+    
+    if (task.completed_by && task.completed_by[user.id]) {
+      // For a group task where this user has completed their part
+      return true;
+    }
+    
+    return false;
+  };
+
   return (
     <Card className={cn("border rounded-md p-3", task.completed ? "bg-muted/50" : "")}>
       <CardContent className="p-0">
@@ -102,7 +119,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onTaskUpdate, onDelete, showA
           <div className="flex items-start space-x-3">
             <Checkbox
               id={`task-${task.id}`}
-              checked={task.completed || (task.completed_by && task.completed_by[user?.id]) || false}
+              checked={getCheckedState()}
               onCheckedChange={handleCompletedChange}
             />
             <div>
