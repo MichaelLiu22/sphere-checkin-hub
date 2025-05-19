@@ -13,7 +13,7 @@ import {
   DollarSign,
   BarChart2
 } from "lucide-react";
-import { TaskNotifications } from "./tasks/TaskNotifications";
+import TaskNotifications from "./tasks/TaskNotifications";
 import {
   Sidebar,
   SidebarContent,
