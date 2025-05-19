@@ -69,9 +69,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
           <div className="pt-0.5">
             <Checkbox
               checked={isCompleted}
-              onCheckedChange={(checked) => 
-                handleCompletedChange(checked as boolean)
-              }
+              onCheckedChange={handleCompletedChange}
             />
           </div>
           
