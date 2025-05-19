@@ -66,6 +66,7 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
     setIsSubmitting(true);
 
     try {
+      // Include the department_id in the task data to satisfy RLS policies
       const { data, error } = await supabase.from("tasks").insert({
         title: values.title,
         description: values.description || null,
@@ -74,7 +75,8 @@ const TaskAssignmentForm: React.FC<TaskAssignmentFormProps> = ({ isAdmin, onTask
         assigner_id: user.id,
         assignee_id: values.assignee_id,
         completed: false,
-        completed_at: null
+        completed_at: null,
+        department_id: user.department_id // Add department_id from the current user
       }).select(`
         *,
         assignee:users!tasks_assignee_id_fkey(id, full_name)
