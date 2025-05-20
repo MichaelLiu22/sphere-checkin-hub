@@ -1,4 +1,3 @@
-
 /**
  * 任务通知组件
  * 显示未读任务数量的通知图标，实时更新未读任务计数
@@ -33,9 +32,8 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
     
     // 从本地存储获取上次检查时间
     const storedLastCheckTime = localStorage.getItem(`task_last_check_${user.id}`);
-    if (storedLastCheckTime) {
-      setLastCheckTime(new Date(storedLastCheckTime));
-    }
+    const initialLastCheckTime = storedLastCheckTime ? new Date(storedLastCheckTime) : new Date();
+    setLastCheckTime(initialLastCheckTime);
     
     // 初始加载新任务数量
     const fetchNewTasks = async () => {
@@ -45,7 +43,7 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
           .from('tasks')
           .select('*')
           .eq('assignee_id', user.id)
-          .gt('created_at', lastCheckTime.toISOString());
+          .gt('created_at', initialLastCheckTime.toISOString());
           
         if (directError) throw directError;
         
@@ -54,7 +52,7 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
           .from('tasks')
           .select('*')
           .contains('assignee_ids', [user.id])
-          .gt('created_at', lastCheckTime.toISOString());
+          .gt('created_at', initialLastCheckTime.toISOString());
           
         if (groupError) throw groupError;
         
@@ -98,7 +96,7 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
       const now = new Date();
       localStorage.setItem(`task_last_check_${user.id}`, now.toISOString());
     };
-  }, [user, lastCheckTime]);
+  }, [user]); // 只依赖 user
   
   // 重置未读计数并更新最后检查时间
   const resetNotificationCount = () => {
