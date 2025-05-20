@@ -14,8 +14,11 @@ import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { Plus } from "lucide-react";
 import TaskBoard from "@/components/employee/TaskBoard";
+import TaskAssignmentForm from "@/components/employee/tasks/TaskAssignmentForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 /**
  * 用户接口定义
@@ -66,6 +69,12 @@ const AdminDashboard: React.FC = () => {
   // 活动选项卡/面板状态
   const [activeTab, setActiveTab] = useState<string>("w9");
   
+  // 任务表单显示状态
+  const [showTaskAssignmentForm, setShowTaskAssignmentForm] = useState(false);
+  
+  // 新建任务状态
+  const [newTask, setNewTask] = useState<any>(null);
+  
   // 组件加载时获取用户数据
   useEffect(() => {
     fetchUsers();
@@ -97,6 +106,15 @@ const AdminDashboard: React.FC = () => {
     }
   };
   
+  /**
+   * 处理新任务创建
+   */
+  const handleTaskCreated = (task: any) => {
+    setNewTask(task);
+    toast.success("任务已成功发布");
+    setShowTaskAssignmentForm(false);
+  };
+  
   return (
     <Layout>
       <SidebarProvider>
@@ -109,9 +127,9 @@ const AdminDashboard: React.FC = () => {
             {/* 顶部标题栏 */}
             <div className="border-b p-4 flex justify-between items-center">
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-              <Button variant="outline" onClick={logout} className="flex items-center gap-2">
-                <LogOut className="h-4 w-4" />
-                Logout
+              <Button variant="outline" onClick={() => setShowTaskAssignmentForm(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                发布新任务
               </Button>
             </div>
             
@@ -128,7 +146,16 @@ const AdminDashboard: React.FC = () => {
               
               {/* 任务管理组件，与员工视图相同的功能 */}
               {activeTab === "tasks" && (
-                <TaskBoard canAssignTasks={true} isAdmin={true} />
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold">任务管理</h2>
+                    <Button onClick={() => setShowTaskAssignmentForm(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      发布新任务
+                    </Button>
+                  </div>
+                  <TaskBoard canAssignTasks={true} isAdmin={true} />
+                </>
               )}
               
               {activeTab === "finance" && (
@@ -138,6 +165,28 @@ const AdminDashboard: React.FC = () => {
                 <ModuleContentPlaceholder title="日程安排" />
               )}
             </div>
+            
+            {/* 任务发布表单弹窗 */}
+            {showTaskAssignmentForm && (
+              <Card className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] z-50 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">发布新任务</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowTaskAssignmentForm(false)}
+                  >
+                    关闭
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <TaskAssignmentForm 
+                    isAdmin={true} 
+                    onTaskCreated={handleTaskCreated}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </SidebarProvider>
