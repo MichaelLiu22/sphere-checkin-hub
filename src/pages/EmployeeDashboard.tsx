@@ -77,7 +77,7 @@ const EmployeeDashboard: React.FC = () => {
    * 条件：是管理员或拥有task模块权限
    */
   const canAssignTasks = (): boolean => {
-    return user?.user_type === 'admin' || user?.task_permission === true || hasModulePermission('task');
+    return user?.user_type === 'admin' || user?.task_permission === true || hasModulePermission('tasks');
   };
 
   // 处理任务创建
@@ -114,7 +114,7 @@ const EmployeeDashboard: React.FC = () => {
                     {user.enabled_modules.includes("finance") && (
                       <li>财务管理</li>
                     )}
-                    {(user.enabled_modules.includes("task") || user.task_permission) && (
+                    {(user.enabled_modules.includes("tasks") || user.task_permission) && (
                       <li>分配任务 (可分配任务给其他员工)</li>
                     )}
                     <li>当前任务 (所有员工默认权限)</li>
@@ -125,11 +125,18 @@ const EmployeeDashboard: React.FC = () => {
               </div>
             </div>
             
-            {/* 任务发布区域 - 只对有task权限的用户显示 */}
+            {/* 任务发布表单弹窗 */}
             {canAssignTasks() && showTaskAssignmentForm && (
-              <Card className="mt-8">
-                <CardHeader>
+              <Card className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] z-50 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">发布新任务</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowTaskAssignmentForm(false)}
+                  >
+                    关闭
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <TaskAssignmentForm 
@@ -157,7 +164,7 @@ const EmployeeDashboard: React.FC = () => {
             
             {/* 任务发布表单弹窗 */}
             {canAssignTasks() && showTaskAssignmentForm && (
-              <Card className="mt-8">
+              <Card className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] z-50 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">发布新任务</CardTitle>
                   <Button 
