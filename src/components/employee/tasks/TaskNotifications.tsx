@@ -25,15 +25,13 @@ interface TaskNotificationsProps {
 const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
   const { user } = useAuth(); // 获取当前用户信息
   const [unreadCount, setUnreadCount] = useState(0); // 未读任务数量状态
-  const [lastCheckTime, setLastCheckTime] = useState<Date>(new Date());
   
   useEffect(() => {
     if (!user) return; // 如果用户未登录，则不执行
     
     // 从本地存储获取上次检查时间
     const storedLastCheckTime = localStorage.getItem(`task_last_check_${user.id}`);
-    const initialLastCheckTime = storedLastCheckTime ? new Date(storedLastCheckTime) : new Date();
-    setLastCheckTime(initialLastCheckTime);
+    const checkTime = storedLastCheckTime ? new Date(storedLastCheckTime) : new Date();
     
     // 初始加载新任务数量
     const fetchNewTasks = async () => {
@@ -43,7 +41,7 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
           .from('tasks')
           .select('*')
           .eq('assignee_id', user.id)
-          .gt('created_at', initialLastCheckTime.toISOString());
+          .gt('created_at', checkTime.toISOString());
           
         if (directError) throw directError;
         
@@ -52,7 +50,7 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
           .from('tasks')
           .select('*')
           .contains('assignee_ids', [user.id])
-          .gt('created_at', initialLastCheckTime.toISOString());
+          .gt('created_at', checkTime.toISOString());
           
         if (groupError) throw groupError;
         
@@ -101,9 +99,8 @@ const TaskNotifications: React.FC<TaskNotificationsProps> = ({ className }) => {
   // 重置未读计数并更新最后检查时间
   const resetNotificationCount = () => {
     setUnreadCount(0);
-    const now = new Date();
-    setLastCheckTime(now);
     if (user) {
+      const now = new Date();
       localStorage.setItem(`task_last_check_${user.id}`, now.toISOString());
     }
   };
