@@ -1,4 +1,3 @@
-
 /**
  * 管理员仪表板页面
  * 提供管理员功能，包括任务管理、W9文件管理、用户管理、权限配置等
@@ -19,6 +18,7 @@ import TaskBoard from "@/components/employee/TaskBoard";
 import TaskAssignmentForm from "@/components/employee/tasks/TaskAssignmentForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import * as Dialog from "@radix-ui/react-dialog";
 
 /**
  * 用户接口定义
@@ -163,26 +163,29 @@ const AdminDashboard: React.FC = () => {
             </div>
             
             {/* 任务发布表单弹窗 */}
-            {showTaskAssignmentForm && (
-              <Card className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] z-50 shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">发布新任务</CardTitle>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setShowTaskAssignmentForm(false)}
-                  >
-                    关闭
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <TaskAssignmentForm 
-                    isAdmin={true} 
-                    onTaskCreated={handleTaskCreated}
-                  />
-                </CardContent>
-              </Card>
-            )}
+            <Dialog.Root open={showTaskAssignmentForm} onOpenChange={setShowTaskAssignmentForm}>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/30 z-40" />
+                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] z-50 bg-white rounded-lg shadow-lg">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-lg">发布新任务</CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowTaskAssignmentForm(false)}
+                    >
+                      关闭
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <TaskAssignmentForm 
+                      isAdmin={true} 
+                      onTaskCreated={handleTaskCreated}
+                    />
+                  </CardContent>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
           </div>
         </div>
       </SidebarProvider>
