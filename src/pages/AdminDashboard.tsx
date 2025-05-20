@@ -1,4 +1,3 @@
-
 /**
  * 管理员仪表板页面
  * 提供管理员功能，包括任务管理、W9文件管理、用户管理、权限配置等
@@ -125,12 +124,8 @@ const AdminDashboard: React.FC = () => {
           {/* 主要内容区域 */}
           <div className="flex-1 flex flex-col">
             {/* 顶部标题栏 */}
-            <div className="border-b p-4 flex justify-between items-center">
+            <div className="border-b p-4">
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-              <Button variant="outline" onClick={() => setShowTaskAssignmentForm(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                发布新任务
-              </Button>
             </div>
             
             {/* 内容面板，根据活动选项卡显示不同面板 */}
@@ -149,7 +144,7 @@ const AdminDashboard: React.FC = () => {
                 <>
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">任务管理</h2>
-                    <Button onClick={() => setShowTaskAssignmentForm(true)}>
+                    <Button onClick={() => setShowTaskAssignmentForm(true)} className="flex items-center gap-2">
                       <Plus className="mr-2 h-4 w-4" />
                       发布新任务
                     </Button>
