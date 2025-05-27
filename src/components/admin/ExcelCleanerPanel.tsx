@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -166,35 +165,105 @@ const ExcelCleanerPanel: React.FC = () => {
     return isNaN(num) ? 0 : num;
   }, []);
 
-  // 应用筛选和清洗
+  // 应用筛选和清洗 - 添加详细调试日志
   const applyFilterAndClean = useCallback(() => {
     if (!excelData.length) return;
+
+    console.log('🚀 Excel 数据清洗调试开始');
+    console.log('='.repeat(50));
+    
+    // 1. 输出表头字段
+    console.log('📊 表头字段：', originalHeaders);
+    
+    // 2. 显示第一行的所有字段名
+    if (excelData.length > 0) {
+      console.log('📋 第1行所有字段名：', Object.keys(excelData[0]));
+    }
 
     const dateColumn = findDateColumn();
     const settlementColumn = findSettlementColumn();
 
+    console.log('🎯 自动识别的日期字段：', dateColumn || '❌ 未找到');
+    console.log('🎯 自动识别的金额字段：', settlementColumn || '❌ 未找到');
+
     if (!dateColumn) {
+      console.error('❌ 未找到订单创建日期字段');
+      console.log('💡 建议检查字段名是否为："Order created date" 或包含 "order" 和 "create" 的字段');
       toast.error('未找到订单创建日期字段');
       return;
     }
 
     if (!settlementColumn) {
+      console.error('❌ 未找到结算金额字段');
+      console.log('💡 建议检查字段名是否为："Total settlement amount" 或包含 "settlement" 的字段');
       toast.error('未找到结算金额字段');
       return;
     }
 
+    // 3. 输出用户选择的日期范围
+    console.log('📅 用户选择的筛选范围：');
+    console.log('  起始日期：', startDate ? format(startDate, 'yyyy-MM-dd') : '未设置');
+    console.log('  结束日期：', endDate ? format(endDate, 'yyyy-MM-dd') : '未设置');
+
     let filtered = [...excelData];
+
+    // 4. 逐行分析日期解析
+    console.log('📅 日期字段解析分析：');
+    excelData.slice(0, Math.min(10, excelData.length)).forEach((row, index) => {
+      const rawDateValue = row[dateColumn];
+      const parsedDate = parseDate(rawDateValue);
+      
+      if (parsedDate) {
+        console.log(`✅ 第${index + 1}行日期字段值：'${rawDateValue}' → 解析成功：${parsedDate.toISOString()}`);
+      } else {
+        console.log(`❌ 第${index + 1}行日期字段值：'${rawDateValue}' → 解析失败`);
+      }
+    });
+
+    // 5. 逐行分析金额解析
+    console.log('💰 金额字段解析分析：');
+    excelData.slice(0, Math.min(10, excelData.length)).forEach((row, index) => {
+      const rawAmountValue = row[settlementColumn];
+      const parsedAmount = parseNumber(rawAmountValue);
+      
+      if (isNaN(parsedAmount)) {
+        console.log(`⚠️ 第${index + 1}行金额字段值：'${rawAmountValue}' → 转换失败（NaN）`);
+      } else {
+        console.log(`✅ 第${index + 1}行金额字段值：'${rawAmountValue}' → 转换后数值：${parsedAmount}`);
+      }
+    });
 
     // 时间筛选
     if (startDate || endDate) {
+      const beforeFilterCount = filtered.length;
+      
       filtered = filtered.filter(row => {
         const rowDate = parseDate(row[dateColumn]);
-        if (!rowDate) return false;
+        if (!rowDate) {
+          console.log(`⚠️ 跳过无效日期的行：'${row[dateColumn]}'`);
+          return false;
+        }
 
-        if (startDate && rowDate < startDate) return false;
-        if (endDate && rowDate > endDate) return false;
+        if (startDate && rowDate < startDate) {
+          console.log(`📅 行被过滤（早于起始日期）：${rowDate.toISOString()} < ${startDate.toISOString()}`);
+          return false;
+        }
+        if (endDate && rowDate > endDate) {
+          console.log(`📅 行被过滤（晚于结束日期）：${rowDate.toISOString()} > ${endDate.toISOString()}`);
+          return false;
+        }
         return true;
       });
+      
+      console.log(`📊 筛选前行数：${beforeFilterCount}，筛选后行数：${filtered.length}`);
+      
+      if (filtered.length === 0) {
+        console.warn('⚠️ 无数据满足当前日期筛选条件，可能为字段名或日期格式问题');
+        console.log('💡 检查要点：');
+        console.log('  1. 日期字段名是否正确（建议："Order created date"）');
+        console.log('  2. 日期格式是否为 YYYY/MM/DD 或其他支持的格式');
+        console.log('  3. 选择的日期范围是否包含数据');
+      }
     }
 
     // 按日期排序
@@ -217,6 +286,8 @@ const ExcelCleanerPanel: React.FC = () => {
       return sum + value;
     }, 0);
 
+    console.log(`💰 计算得出的总金额：${total}`);
+
     const totalRow: ExcelRow = {};
     originalHeaders.forEach(header => {
       if (header === dateColumn) {
@@ -230,6 +301,13 @@ const ExcelCleanerPanel: React.FC = () => {
 
     filtered.push(totalRow);
     setFilteredData(filtered);
+    
+    console.log('✅ 筛选完成，最终结果：');
+    console.log(`  数据行数：${filtered.length - 1}`);
+    console.log(`  合计行数：1`);
+    console.log('='.repeat(50));
+    console.log('🏁 Excel 数据清洗调试结束');
+    
     toast.success(`筛选完成，共 ${filtered.length - 1} 条数据记录 + 1 条合计`);
   }, [excelData, startDate, endDate, originalHeaders, findDateColumn, findSettlementColumn, parseDate, parseNumber]);
 
@@ -294,6 +372,15 @@ const ExcelCleanerPanel: React.FC = () => {
           {excelData.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium">时间范围筛选</h3>
+              <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+                <p className="text-sm text-blue-800 mb-2">
+                  <strong>📊 调试模式已启用</strong> - 点击"应用筛选和清洗"后请查看浏览器控制台(F12)获取详细调试信息
+                </p>
+                <p className="text-xs text-blue-600">
+                  预期字段名：<code>"Order created date"</code> 和 <code>"Total settlement amount"</code>
+                </p>
+              </div>
+              
               <div className="flex items-center gap-4">
                 <div className="space-y-2">
                   <label className="text-xs text-muted-foreground">开始日期</label>
