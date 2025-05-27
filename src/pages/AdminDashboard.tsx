@@ -10,6 +10,7 @@ import W9FilesPanel from "@/components/admin/W9FilesPanel";
 import FileUploadPanel from "@/components/admin/FileUploadPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
+import ExcelCleanerPanel from "@/components/admin/ExcelCleanerPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -155,7 +156,7 @@ const AdminDashboard: React.FC = () => {
               )}
               
               {activeTab === "finance" && (
-                <ModuleContentPlaceholder title="财务管理" />
+                <ExcelCleanerPanel />
               )}
               {activeTab === "calendar" && (
                 <ModuleContentPlaceholder title="日程安排" />
