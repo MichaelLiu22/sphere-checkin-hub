@@ -94,32 +94,62 @@ const ExcelCleanerPanel: React.FC = () => {
     return settlementColumns[0] || '';
   }, [originalHeaders]);
 
-  // 解析日期
+  // 解析日期 - 修复日期解析逻辑，支持YYYY/MM/DD格式
   const parseDate = useCallback((dateStr: string): Date | null => {
     if (!dateStr) return null;
     
-    // 尝试多种日期格式
-    const formats = [
-      /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
-      /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
-      /^\d{4}\/\d{2}\/\d{2}$/, // YYYY/MM/DD
-    ];
+    // 转换为字符串处理
+    const dateString = String(dateStr).trim();
+    
+    // 检查YYYY/MM/DD格式
+    const yyyymmddPattern = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/;
+    const yyyymmddMatch = dateString.match(yyyymmddPattern);
+    if (yyyymmddMatch) {
+      const [, year, month, day] = yyyymmddMatch;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
 
-    for (const format of formats) {
-      if (format.test(dateStr)) {
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime())) {
-          return date;
-        }
+    // 检查YYYY-MM-DD格式
+    const yyyymmddDashPattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+    const yyyymmddDashMatch = dateString.match(yyyymmddDashPattern);
+    if (yyyymmddDashMatch) {
+      const [, year, month, day] = yyyymmddDashMatch;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+
+    // 检查MM/DD/YYYY格式
+    const mmddyyyyPattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    const mmddyyyyMatch = dateString.match(mmddyyyyPattern);
+    if (mmddyyyyMatch) {
+      const [, month, day, year] = mmddyyyyMatch;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime())) {
+        return date;
       }
     }
 
     // 如果是Excel日期序列号
-    if (/^\d+$/.test(dateStr)) {
-      const excelDate = XLSX.SSF.parse_date_code(parseInt(dateStr));
-      if (excelDate) {
-        return new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+    if (/^\d+$/.test(dateString) && parseInt(dateString) > 1000) {
+      try {
+        const excelDate = XLSX.SSF.parse_date_code(parseInt(dateString));
+        if (excelDate) {
+          return new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+        }
+      } catch (error) {
+        console.log('Excel日期解析失败:', error);
       }
+    }
+
+    // 尝试直接解析
+    const directParse = new Date(dateString);
+    if (!isNaN(directParse.getTime())) {
+      return directParse;
     }
 
     return null;
@@ -286,6 +316,7 @@ const ExcelCleanerPanel: React.FC = () => {
                         selected={startDate}
                         onSelect={setStartDate}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
@@ -312,6 +343,7 @@ const ExcelCleanerPanel: React.FC = () => {
                         selected={endDate}
                         onSelect={setEndDate}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
@@ -323,18 +355,25 @@ const ExcelCleanerPanel: React.FC = () => {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          {/* 导出按钮 */}
-          {filteredData.length > 0 && (
-            <div className="flex justify-end">
+      {/* 导出按钮 - 当有筛选数据时显示 */}
+      {filteredData.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
+                共 {filteredData.length - 1} 条数据记录 + 1 条合计行
+              </div>
               <Button onClick={exportToExcel} className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 导出清洗后的 Excel
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 数据预览表格 */}
       {filteredData.length > 0 && (
