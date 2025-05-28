@@ -1,5 +1,4 @@
 
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,17 +43,18 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
   };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="flex justify-between items-center p-4">
-        <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">{t("userDashboard")}</h2>
+    <Sidebar collapsible="icon" className="border-r border-border bg-background">
+      <SidebarHeader className="flex justify-between items-center p-4 bg-background border-b border-border">
+        <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden text-foreground">{t("userDashboard")}</h2>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="bg-background">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "overview"}
               onClick={() => setActiveTab("overview")}
               tooltip="Overview"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Home className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">📊 概览</span>
@@ -67,6 +67,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
                 isActive={activeTab === "host_schedule"}
                 onClick={() => setActiveTab("host_schedule")}
                 tooltip="Host Calendar"
+                className="text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <Calendar className="h-4 w-4" />
                 <span className="group-data-[collapsible=icon]:hidden">📅 Host 日历</span>
@@ -80,6 +81,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
                 isActive={activeTab === "finance"}
                 onClick={() => setActiveTab("finance")}
                 tooltip="Finance Management"
+                className="text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <FileText className="h-4 w-4" />
                 <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
@@ -89,9 +91,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
         </SidebarMenu>
       </SidebarContent>
       
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 bg-background border-t border-border">
         <div className="text-sm text-muted-foreground mb-2 group-data-[collapsible=icon]:hidden">
-          <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
+          <div className="font-semibold text-foreground">当前用户: {user?.full_name || "未登录"}</div>
           <div>部门: {user?.department_id ? "已分配" : "未分配"}</div>
         </div>
         <Button variant="outline" className="w-full group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0" onClick={handleLogout}>
@@ -104,4 +106,3 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
 };
 
 export default UserSidebar;
-

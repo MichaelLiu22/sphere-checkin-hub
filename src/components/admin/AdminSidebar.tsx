@@ -1,5 +1,4 @@
 
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -50,17 +49,18 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
   };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="flex justify-between items-center p-4">
-        <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">{t("adminDashboard")}</h2>
+    <Sidebar collapsible="icon" className="border-r border-border bg-background">
+      <SidebarHeader className="flex justify-between items-center p-4 bg-background border-b border-border">
+        <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden text-foreground">{t("adminDashboard")}</h2>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="bg-background">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "w9"}
               onClick={() => setActiveTab("w9")}
               tooltip="W9 Files"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <FileText className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">📄 W9</span>
@@ -71,6 +71,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               isActive={activeTab === "upload"}
               onClick={() => setActiveTab("upload")}
               tooltip="Upload Files"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Upload className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">📤 上传文件</span>
@@ -81,6 +82,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               isActive={activeTab === "users"}
               onClick={() => setActiveTab("users")}
               tooltip="User Management"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Users className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">👥 用户管理</span>
@@ -92,6 +94,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               isActive={activeTab === "permissions"}
               onClick={() => setActiveTab("permissions")}
               tooltip="Permission Configuration"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Settings className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">🔑 权限配置</span>
@@ -109,6 +112,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               isActive={activeTab === "tasks"}
               onClick={() => setActiveTab("tasks")}
               tooltip="Task Management"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <CheckSquare className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">📋 任务管理</span>
@@ -121,6 +125,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               isActive={activeTab === "finance"}
               onClick={() => setActiveTab("finance")}
               tooltip="Finance"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <DollarSign className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
@@ -133,6 +138,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               isActive={activeTab === "calendar"}
               onClick={() => setActiveTab("calendar")}
               tooltip="Calendar"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Calendar className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">📅 日程安排</span>
@@ -141,9 +147,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
         </SidebarMenu>
       </SidebarContent>
       
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 bg-background border-t border-border">
         <div className="text-sm text-muted-foreground mb-2 group-data-[collapsible=icon]:hidden">
-          <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
+          <div className="font-semibold text-foreground">当前用户: {user?.full_name || "未登录"}</div>
           <div>身份: 管理员</div>
         </div>
         <div className="space-y-2">
@@ -166,4 +172,3 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
 };
 
 export default AdminSidebar;
-
