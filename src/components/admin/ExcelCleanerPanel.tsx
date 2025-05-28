@@ -1,10 +1,12 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Upload, Download, Calendar as CalendarIcon, FileX } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -15,6 +17,8 @@ interface ExcelRow {
   [key: string]: any;
 }
 
+type AccountingMode = 'order_created' | 'statement_date';
+
 const ExcelCleanerPanel: React.FC = () => {
   const [excelData, setExcelData] = useState<ExcelRow[]>([]);
   const [filteredData, setFilteredData] = useState<ExcelRow[]>([]);
@@ -23,8 +27,27 @@ const ExcelCleanerPanel: React.FC = () => {
   const [endDate, setEndDate] = useState<Date>();
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState<string>('');
+  const [accountingMode, setAccountingMode] = useState<AccountingMode>('order_created');
 
-  // 处理文件上传
+  // Load user preference on component mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem('tiktok-fs-accounting-mode') as AccountingMode;
+    if (savedMode && ['order_created', 'statement_date'].includes(savedMode)) {
+      setAccountingMode(savedMode);
+    }
+  }, []);
+
+  // Save user preference when mode changes
+  useEffect(() => {
+    localStorage.setItem('tiktok-fs-accounting-mode', accountingMode);
+  }, [accountingMode]);
+
+  // Get current accounting mode display text
+  const getAccountingModeText = () => {
+    return accountingMode === 'order_created' ? 'Order Created Date' : 'Statement Date';
+  };
+
+  // Handle file upload
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -72,35 +95,44 @@ const ExcelCleanerPanel: React.FC = () => {
     reader.readAsArrayBuffer(file);
   }, []);
 
-  // 查找日期字段
+  // Find date column based on accounting mode
   const findDateColumn = useCallback(() => {
-    const dateColumns = originalHeaders.filter(header => 
-      header.toLowerCase().includes('order') && 
-      (header.toLowerCase().includes('create') || header.toLowerCase().includes('date')) ||
-      header.includes('订单') && header.includes('创建') ||
-      header.includes('创建日期')
-    );
-    return dateColumns[0] || '';
-  }, [originalHeaders]);
+    if (accountingMode === 'order_created') {
+      const dateColumns = originalHeaders.filter(header => 
+        header.toLowerCase().includes('order') && 
+        (header.toLowerCase().includes('create') || header.toLowerCase().includes('date')) ||
+        header.includes('订单') && header.includes('创建') ||
+        header.includes('创建日期')
+      );
+      return dateColumns[0] || '';
+    } else {
+      const dateColumns = originalHeaders.filter(header =>
+        header.toLowerCase().includes('statement') && header.toLowerCase().includes('date') ||
+        header.includes('结算') && header.includes('日期') ||
+        header.includes('Statement date')
+      );
+      return dateColumns[0] || '';
+    }
+  }, [originalHeaders, accountingMode]);
 
-  // 查找结算字段
+  // Find settlement column
   const findSettlementColumn = useCallback(() => {
     const settlementColumns = originalHeaders.filter(header =>
       header.toLowerCase().includes('settlement') ||
       header.includes('结算') ||
-      header.includes('金额')
+      header.includes('金额') ||
+      header.includes('Total settlement amount')
     );
     return settlementColumns[0] || '';
   }, [originalHeaders]);
 
-  // 解析日期 - 修复日期解析逻辑，支持YYYY/MM/DD格式
+  // Parse date - enhanced date parsing logic
   const parseDate = useCallback((dateStr: string): Date | null => {
     if (!dateStr) return null;
     
-    // 转换为字符串处理
     const dateString = String(dateStr).trim();
     
-    // 检查YYYY/MM/DD格式
+    // YYYY/MM/DD format
     const yyyymmddPattern = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/;
     const yyyymmddMatch = dateString.match(yyyymmddPattern);
     if (yyyymmddMatch) {
@@ -111,7 +143,7 @@ const ExcelCleanerPanel: React.FC = () => {
       }
     }
 
-    // 检查YYYY-MM-DD格式
+    // YYYY-MM-DD format
     const yyyymmddDashPattern = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
     const yyyymmddDashMatch = dateString.match(yyyymmddDashPattern);
     if (yyyymmddDashMatch) {
@@ -122,7 +154,7 @@ const ExcelCleanerPanel: React.FC = () => {
       }
     }
 
-    // 检查MM/DD/YYYY格式
+    // MM/DD/YYYY format
     const mmddyyyyPattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
     const mmddyyyyMatch = dateString.match(mmddyyyyPattern);
     if (mmddyyyyMatch) {
@@ -133,7 +165,7 @@ const ExcelCleanerPanel: React.FC = () => {
       }
     }
 
-    // 如果是Excel日期序列号
+    // Excel date serial number
     if (/^\d+$/.test(dateString) && parseInt(dateString) > 1000) {
       try {
         const excelDate = XLSX.SSF.parse_date_code(parseInt(dateString));
@@ -145,7 +177,7 @@ const ExcelCleanerPanel: React.FC = () => {
       }
     }
 
-    // 尝试直接解析
+    // Direct parse
     const directParse = new Date(dateString);
     if (!isNaN(directParse.getTime())) {
       return directParse;
@@ -154,7 +186,7 @@ const ExcelCleanerPanel: React.FC = () => {
     return null;
   }, []);
 
-  // 转换数字
+  // Parse number
   const parseNumber = useCallback((value: string | number): number => {
     if (typeof value === 'number') return value;
     if (typeof value !== 'string') return 0;
@@ -165,17 +197,17 @@ const ExcelCleanerPanel: React.FC = () => {
     return isNaN(num) ? 0 : num;
   }, []);
 
-  // 应用筛选和清洗 - 添加详细调试日志
+  // Apply filter and clean with enhanced debugging
   const applyFilterAndClean = useCallback(() => {
     if (!excelData.length) return;
 
-    console.log('🚀 Excel 数据清洗调试开始');
+    console.log('🚀 Tiktok FS - Beast 数据清洗调试开始');
     console.log('='.repeat(50));
     
-    // 1. 输出表头字段
+    // 1. Output header fields
     console.log('📊 表头字段：', originalHeaders);
     
-    // 2. 显示第一行的所有字段名
+    // 2. Show first row field names
     if (excelData.length > 0) {
       console.log('📋 第1行所有字段名：', Object.keys(excelData[0]));
     }
@@ -183,31 +215,33 @@ const ExcelCleanerPanel: React.FC = () => {
     const dateColumn = findDateColumn();
     const settlementColumn = findSettlementColumn();
 
+    console.log(`🎯 当前会计模式：${getAccountingModeText()}`);
     console.log('🎯 自动识别的日期字段：', dateColumn || '❌ 未找到');
     console.log('🎯 自动识别的金额字段：', settlementColumn || '❌ 未找到');
 
     if (!dateColumn) {
-      console.error('❌ 未找到订单创建日期字段');
-      console.log('💡 建议检查字段名是否为："Order created date" 或包含 "order" 和 "create" 的字段');
-      toast.error('未找到订单创建日期字段');
+      const expectedField = accountingMode === 'order_created' ? 'Order created date' : 'Statement date';
+      console.error(`❌ 未找到${getAccountingModeText()}字段`);
+      console.log(`💡 建议检查字段名是否为："${expectedField}"`);
+      toast.error(`未找到${getAccountingModeText()}字段`);
       return;
     }
 
     if (!settlementColumn) {
       console.error('❌ 未找到结算金额字段');
-      console.log('💡 建议检查字段名是否为："Total settlement amount" 或包含 "settlement" 的字段');
+      console.log('💡 建议检查字段名是否为："Total settlement amount"');
       toast.error('未找到结算金额字段');
       return;
     }
 
-    // 3. 输出用户选择的日期范围
+    // 3. Output user selected date range
     console.log('📅 用户选择的筛选范围：');
     console.log('  起始日期：', startDate ? format(startDate, 'yyyy-MM-dd') : '未设置');
     console.log('  结束日期：', endDate ? format(endDate, 'yyyy-MM-dd') : '未设置');
 
     let filtered = [...excelData];
 
-    // 4. 逐行分析日期解析
+    // 4. Analyze date parsing row by row
     console.log('📅 日期字段解析分析：');
     excelData.slice(0, Math.min(10, excelData.length)).forEach((row, index) => {
       const rawDateValue = row[dateColumn];
@@ -220,7 +254,7 @@ const ExcelCleanerPanel: React.FC = () => {
       }
     });
 
-    // 5. 逐行分析金额解析
+    // 5. Analyze amount parsing row by row
     console.log('💰 金额字段解析分析：');
     excelData.slice(0, Math.min(10, excelData.length)).forEach((row, index) => {
       const rawAmountValue = row[settlementColumn];
@@ -233,7 +267,7 @@ const ExcelCleanerPanel: React.FC = () => {
       }
     });
 
-    // 时间筛选
+    // Time filtering
     if (startDate || endDate) {
       const beforeFilterCount = filtered.length;
       
@@ -260,13 +294,13 @@ const ExcelCleanerPanel: React.FC = () => {
       if (filtered.length === 0) {
         console.warn('⚠️ 无数据满足当前日期筛选条件，可能为字段名或日期格式问题');
         console.log('💡 检查要点：');
-        console.log('  1. 日期字段名是否正确（建议："Order created date"）');
+        console.log(`  1. 日期字段名是否正确（当前模式期望："${accountingMode === 'order_created' ? 'Order created date' : 'Statement date'}"）`);
         console.log('  2. 日期格式是否为 YYYY/MM/DD 或其他支持的格式');
         console.log('  3. 选择的日期范围是否包含数据');
       }
     }
 
-    // 按日期排序
+    // Sort by date in ascending order
     filtered.sort((a, b) => {
       const dateA = parseDate(a[dateColumn]);
       const dateB = parseDate(b[dateColumn]);
@@ -274,13 +308,13 @@ const ExcelCleanerPanel: React.FC = () => {
       return dateA.getTime() - dateB.getTime();
     });
 
-    // 处理结算字段
+    // Process settlement field
     filtered = filtered.map(row => ({
       ...row,
       [settlementColumn]: parseNumber(row[settlementColumn])
     }));
 
-    // 计算总和并添加合计行
+    // Calculate total and add summary row
     const total = filtered.reduce((sum, row) => {
       const value = parseNumber(row[settlementColumn]);
       return sum + value;
@@ -306,12 +340,12 @@ const ExcelCleanerPanel: React.FC = () => {
     console.log(`  数据行数：${filtered.length - 1}`);
     console.log(`  合计行数：1`);
     console.log('='.repeat(50));
-    console.log('🏁 Excel 数据清洗调试结束');
+    console.log('🏁 Tiktok FS - Beast 数据清洗调试结束');
     
     toast.success(`筛选完成，共 ${filtered.length - 1} 条数据记录 + 1 条合计`);
-  }, [excelData, startDate, endDate, originalHeaders, findDateColumn, findSettlementColumn, parseDate, parseNumber]);
+  }, [excelData, startDate, endDate, originalHeaders, accountingMode, findDateColumn, findSettlementColumn, parseDate, parseNumber, getAccountingModeText]);
 
-  // 导出Excel
+  // Export Excel
   const exportToExcel = useCallback(() => {
     if (!filteredData.length) {
       toast.error('没有数据可导出');
@@ -322,7 +356,7 @@ const ExcelCleanerPanel: React.FC = () => {
       const worksheet = XLSX.utils.json_to_sheet(filteredData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Cleaned Data');
-      XLSX.writeFile(workbook, 'cleaned_april_orders.xlsx');
+      XLSX.writeFile(workbook, 'cleaned_financial_report.xlsx');
       toast.success('Excel文件导出成功');
     } catch (error) {
       console.error('导出错误:', error);
@@ -330,7 +364,7 @@ const ExcelCleanerPanel: React.FC = () => {
     }
   }, [filteredData]);
 
-  // 检查是否为负数行
+  // Check if row has negative amount
   const isNegativeRow = useCallback((row: ExcelRow): boolean => {
     const settlementColumn = findSettlementColumn();
     if (!settlementColumn) return false;
@@ -343,11 +377,39 @@ const ExcelCleanerPanel: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileX className="h-5 w-5" />
-            Excel 数据清洗工具
+            Tiktok FS - Beast
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* 文件上传 */}
+          {/* Accounting Mode Selector */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Choose Accounting Mode</label>
+              <RadioGroup 
+                value={accountingMode} 
+                onValueChange={(value: AccountingMode) => setAccountingMode(value)}
+                className="flex flex-col space-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="order_created" id="order_created" />
+                  <label htmlFor="order_created" className="text-sm">By Order Created Date</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="statement_date" id="statement_date" />
+                  <label htmlFor="statement_date" className="text-sm">By Statement Date</label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {/* Current mode indicator */}
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>📊 当前计算模式:</strong> You're currently calculating profit based on: <strong>{getAccountingModeText()}</strong>
+              </p>
+            </div>
+          </div>
+
+          {/* File upload */}
           <div className="space-y-2">
             <label className="text-sm font-medium">上传 Excel 文件</label>
             <div className="flex items-center gap-4">
@@ -368,7 +430,7 @@ const ExcelCleanerPanel: React.FC = () => {
             )}
           </div>
 
-          {/* 时间筛选 */}
+          {/* Time filtering */}
           {excelData.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-medium">时间范围筛选</h3>
@@ -377,7 +439,7 @@ const ExcelCleanerPanel: React.FC = () => {
                   <strong>📊 调试模式已启用</strong> - 点击"应用筛选和清洗"后请查看浏览器控制台(F12)获取详细调试信息
                 </p>
                 <p className="text-xs text-blue-600">
-                  预期字段名：<code>"Order created date"</code> 和 <code>"Total settlement amount"</code>
+                  当前期望字段名：<code>"{accountingMode === 'order_created' ? 'Order created date' : 'Statement date'}"</code> 和 <code>"Total settlement amount"</code>
                 </p>
               </div>
               
@@ -445,7 +507,7 @@ const ExcelCleanerPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 导出按钮 - 当有筛选数据时显示 */}
+      {/* Export button - when filtered data exists */}
       {filteredData.length > 0 && (
         <Card>
           <CardContent className="p-4">
@@ -455,14 +517,14 @@ const ExcelCleanerPanel: React.FC = () => {
               </div>
               <Button onClick={exportToExcel} className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
-                导出清洗后的 Excel
+                导出清洗后的财务报告
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* 数据预览表格 */}
+      {/* Data preview table */}
       {filteredData.length > 0 && (
         <Card>
           <CardHeader>
