@@ -511,28 +511,17 @@ const ExcelCleanerPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Export button - when filtered data exists */}
+      {/* Data preview table - FIXED: Proper contained scrolling */}
       {filteredData.length > 0 && (
         <Card>
-          <CardContent className="p-4">
+          <CardHeader>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                共 {filteredData.length - 1} 条数据记录 + 1 条合计行
-              </div>
+              <CardTitle>数据预览</CardTitle>
               <Button onClick={exportToExcel} className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 导出清洗后的财务报告
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Data preview table - FIXED: Proper contained scrolling */}
-      {filteredData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>数据预览</CardTitle>
           </CardHeader>
           <CardContent>
             {/* FIXED: Use ScrollArea with fixed height and contained scrolling */}
