@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,9 +44,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="flex justify-between items-center p-4">
-        <h2 className="text-lg font-semibold">{t("userDashboard")}</h2>
+        <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">{t("userDashboard")}</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -55,8 +56,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
               onClick={() => setActiveTab("overview")}
               tooltip="Overview"
             >
-              <Home className="mr-2" />
-              <span>📊 概览</span>
+              <Home className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📊 概览</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
@@ -67,8 +68,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
                 onClick={() => setActiveTab("host_schedule")}
                 tooltip="Host Calendar"
               >
-                <Calendar className="mr-2" />
-                <span>📅 Host 日历</span>
+                <Calendar className="h-4 w-4" />
+                <span className="group-data-[collapsible=icon]:hidden">📅 Host 日历</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
@@ -80,8 +81,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
                 onClick={() => setActiveTab("finance")}
                 tooltip="Finance Management"
               >
-                <FileText className="mr-2" />
-                <span>💰 财务管理</span>
+                <FileText className="h-4 w-4" />
+                <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
@@ -89,13 +90,13 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
       </SidebarContent>
       
       <SidebarFooter className="p-4">
-        <div className="text-sm text-muted-foreground mb-2">
+        <div className="text-sm text-muted-foreground mb-2 group-data-[collapsible=icon]:hidden">
           <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
           <div>部门: {user?.department_id ? "已分配" : "未分配"}</div>
         </div>
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("logout")}
+        <Button variant="outline" className="w-full group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0" onClick={handleLogout}>
+          <LogOut className="h-4 w-4" />
+          <span className="ml-2 group-data-[collapsible=icon]:hidden">{t("logout")}</span>
         </Button>
       </SidebarFooter>
     </Sidebar>
@@ -103,3 +104,4 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ activeTab, setActiveTab }) =>
 };
 
 export default UserSidebar;
+

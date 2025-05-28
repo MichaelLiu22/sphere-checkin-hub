@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Layout from "@/components/Layout";
 import W9FilesPanel from "@/components/admin/W9FilesPanel";
 import FileUploadPanel from "@/components/admin/FileUploadPanel";
@@ -125,8 +125,9 @@ const AdminDashboard: React.FC = () => {
           
           {/* 主要内容区域 */}
           <div className="flex-1 flex flex-col">
-            {/* 顶部标题栏 */}
-            <div className="border-b p-4">
+            {/* 顶部标题栏 - 添加移动端触发器 */}
+            <div className="border-b p-4 flex items-center gap-4">
+              <SidebarTrigger className="md:hidden" />
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
             

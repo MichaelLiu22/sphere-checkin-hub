@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -49,9 +50,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="flex justify-between items-center p-4">
-        <h2 className="text-lg font-semibold">{t("adminDashboard")}</h2>
+        <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">{t("adminDashboard")}</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -61,8 +62,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("w9")}
               tooltip="W9 Files"
             >
-              <FileText className="mr-2" />
-              <span>📄 W9</span>
+              <FileText className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📄 W9</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -71,8 +72,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("upload")}
               tooltip="Upload Files"
             >
-              <Upload className="mr-2" />
-              <span>📤 上传文件</span>
+              <Upload className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📤 上传文件</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -81,8 +82,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("users")}
               tooltip="User Management"
             >
-              <Users className="mr-2" />
-              <span>👥 用户管理</span>
+              <Users className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">👥 用户管理</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           {/* 权限配置选项卡 */}
@@ -92,14 +93,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("permissions")}
               tooltip="Permission Configuration"
             >
-              <Settings className="mr-2" />
-              <span>🔑 权限配置</span>
+              <Settings className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">🔑 权限配置</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           {/* 管理员可访问的所有模块 */}
           <SidebarMenuItem>
-            <h3 className="px-4 py-2 text-xs font-medium text-muted-foreground">模块功能</h3>
+            <div className="px-4 py-2 text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">模块功能</div>
           </SidebarMenuItem>
           
           {/* 任务模块 */}
@@ -109,8 +110,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("tasks")}
               tooltip="Task Management"
             >
-              <CheckSquare className="mr-2" />
-              <span>📋 任务管理</span>
+              <CheckSquare className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📋 任务管理</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
@@ -121,8 +122,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("finance")}
               tooltip="Finance"
             >
-              <DollarSign className="mr-2" />
-              <span>💰 财务管理</span>
+              <DollarSign className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
@@ -133,30 +134,30 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
               onClick={() => setActiveTab("calendar")}
               tooltip="Calendar"
             >
-              <Calendar className="mr-2" />
-              <span>📅 日程安排</span>
+              <Calendar className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📅 日程安排</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       
       <SidebarFooter className="p-4">
-        <div className="text-sm text-muted-foreground mb-2">
+        <div className="text-sm text-muted-foreground mb-2 group-data-[collapsible=icon]:hidden">
           <div className="font-semibold">当前用户: {user?.full_name || "未登录"}</div>
           <div>身份: 管理员</div>
         </div>
         <div className="space-y-2">
-          <Button variant="outline" className="w-full" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("logout")}
+          <Button variant="outline" className="w-full group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+            <span className="ml-2 group-data-[collapsible=icon]:hidden">{t("logout")}</span>
           </Button>
           <Button 
             variant="ghost" 
-            className="w-full" 
+            className="w-full group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:p-0" 
             onClick={() => navigate('/')}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("backToHome")}
+            <ArrowLeft className="h-4 w-4" />
+            <span className="ml-2 group-data-[collapsible=icon]:hidden">{t("backToHome")}</span>
           </Button>
         </div>
       </SidebarFooter>
@@ -165,3 +166,4 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
 };
 
 export default AdminSidebar;
+

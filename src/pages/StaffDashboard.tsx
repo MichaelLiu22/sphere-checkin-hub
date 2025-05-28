@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +7,7 @@ import WorkHours from "@/components/WorkHours";
 import DocumentUpload from "@/components/DocumentUpload";
 import DailyTasks from "@/components/DailyTasks";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import UserSidebar from "@/components/user/UserSidebar";
 
 /**
@@ -174,17 +173,23 @@ const StaffDashboard: React.FC = () => {
         <div className="flex min-h-screen w-full">
           <UserSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="mb-6">
+          <main className="flex-1 overflow-y-auto">
+            {/* 顶部标题栏 - 添加移动端触发器 */}
+            <div className="border-b p-4 flex items-center gap-4 lg:p-6">
+              <SidebarTrigger className="md:hidden" />
+              <div>
                 <h1 className="text-2xl font-bold">员工仪表板</h1>
               </div>
-              
-              {loading ? (
-                <div className="text-center p-8">加载中...</div>
-              ) : (
-                renderActiveTabContent()
-              )}
+            </div>
+            
+            <div className="p-4 lg:p-6">
+              <div className="max-w-6xl mx-auto">
+                {loading ? (
+                  <div className="text-center p-8">加载中...</div>
+                ) : (
+                  renderActiveTabContent()
+                )}
+              </div>
             </div>
           </main>
         </div>
