@@ -65,6 +65,47 @@ export type Database = {
           },
         ]
       }
+      product_costs: {
+        Row: {
+          cost: number
+          created_at: string
+          id: string
+          notes: string | null
+          sku: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          cost: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sku: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sku?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_costs_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

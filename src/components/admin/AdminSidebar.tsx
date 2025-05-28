@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, FileSpreadsheet } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -129,6 +129,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             >
               <DollarSign className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 成本表上传模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "costsheet"}
+              onClick={() => setActiveTab("costsheet")}
+              tooltip="Cost Sheet Upload"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">💹 成本表上传</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           

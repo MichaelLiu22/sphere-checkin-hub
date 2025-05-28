@@ -1,3 +1,4 @@
+
 /**
  * 管理员仪表板页面
  * 提供管理员功能，包括任务管理、W9文件管理、用户管理、权限配置等
@@ -11,6 +12,7 @@ import FileUploadPanel from "@/components/admin/FileUploadPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
 import ExcelCleanerPanel from "@/components/admin/ExcelCleanerPanel";
+import CostSheetUploadPanel from "@/components/admin/CostSheetUploadPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -159,6 +161,11 @@ const AdminDashboard: React.FC = () => {
               {activeTab === "finance" && (
                 <ExcelCleanerPanel />
               )}
+              
+              {activeTab === "costsheet" && (
+                <CostSheetUploadPanel />
+              )}
+              
               {activeTab === "calendar" && (
                 <ModuleContentPlaceholder title="日程安排" />
               )}
