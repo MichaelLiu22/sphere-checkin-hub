@@ -47,7 +47,7 @@ const ExcelCleanerPanel: React.FC = () => {
     return accountingMode === 'order_created' ? 'Order Created Date' : 'Statement Date';
   };
 
-  // Handle file upload - FIXED: Read ALL rows from Excel file
+  // Handle file upload - FIXED: Read specifically from "order details" sheet
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -65,12 +65,37 @@ const ExcelCleanerPanel: React.FC = () => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        
+        console.log('📋 Excel工作簿包含的所有sheet名称:', workbook.SheetNames);
+        
+        // 查找"order details"这个sheet
+        const targetSheetName = 'order details';
+        let worksheet;
+        
+        if (workbook.SheetNames.includes(targetSheetName)) {
+          worksheet = workbook.Sheets[targetSheetName];
+          console.log(`✅ 找到目标sheet: "${targetSheetName}"`);
+        } else {
+          // 如果找不到精确匹配，尝试模糊匹配
+          const fuzzyMatch = workbook.SheetNames.find(name => 
+            name.toLowerCase().includes('order') && name.toLowerCase().includes('detail')
+          );
+          
+          if (fuzzyMatch) {
+            worksheet = workbook.Sheets[fuzzyMatch];
+            console.log(`✅ 通过模糊匹配找到sheet: "${fuzzyMatch}"`);
+          } else {
+            console.error(`❌ 未找到"${targetSheetName}"sheet`);
+            console.log('💡 可用的sheet名称:', workbook.SheetNames);
+            toast.error(`未找到"${targetSheetName}"工作表。可用工作表: ${workbook.SheetNames.join(', ')}`);
+            setIsProcessing(false);
+            return;
+          }
+        }
         
         // 使用 range 获取实际数据范围
         const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
-        console.log(`📋 Excel工作表范围: ${worksheet['!ref']}`);
+        console.log(`📋 "${targetSheetName}" sheet数据范围: ${worksheet['!ref']}`);
         console.log(`📋 实际行数范围: ${range.s.r} 到 ${range.e.r} (共${range.e.r - range.s.r + 1}行)`);
         
         // 读取所有数据，不设置任何限制
@@ -80,7 +105,7 @@ const ExcelCleanerPanel: React.FC = () => {
           raw: false // 确保日期等格式正确转换
         }) as any[][];
 
-        console.log(`📊 原始数据总行数: ${jsonData.length}`);
+        console.log(`📊 "${targetSheetName}" sheet原始数据总行数: ${jsonData.length}`);
 
         if (jsonData.length > 0) {
           const headers = jsonData[0] as string[];
@@ -109,9 +134,9 @@ const ExcelCleanerPanel: React.FC = () => {
           setExcelData(rows);
           setFilteredData(rows.slice(0, 5)); // 预览显示前5行
           
-          toast.success(`成功读取 ${rows.length} 行数据`);
+          toast.success(`成功从"${targetSheetName}" sheet读取 ${rows.length} 行数据`);
         } else {
-          toast.error('Excel文件中没有找到有效数据');
+          toast.error(`"${targetSheetName}" sheet中没有找到有效数据`);
         }
       } catch (error) {
         console.error('Excel读取错误:', error);
@@ -400,7 +425,7 @@ const ExcelCleanerPanel: React.FC = () => {
 
           {/* File upload */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">上传 Excel 文件</label>
+            <label className="text-sm font-medium">上传 Excel 文件 (将自动读取"order details"工作表)</label>
             <div className="flex items-center gap-4">
               <Input
                 type="file"
@@ -417,6 +442,9 @@ const ExcelCleanerPanel: React.FC = () => {
             {fileName && (
               <p className="text-sm text-muted-foreground">已选择: {fileName}</p>
             )}
+            <p className="text-xs text-orange-600">
+              💡 提示：系统将自动从Excel文件中的"order details"工作表读取数据
+            </p>
           </div>
 
           {/* Time filtering */}
