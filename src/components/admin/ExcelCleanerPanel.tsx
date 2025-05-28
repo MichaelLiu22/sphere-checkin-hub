@@ -7,6 +7,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, Download, Calendar as CalendarIcon, FileX } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -47,7 +48,7 @@ const ExcelCleanerPanel: React.FC = () => {
     return accountingMode === 'order_created' ? 'Order Created Date' : 'Statement Date';
   };
 
-  // Handle file upload
+  // Handle file upload - FIXED: Read all rows, not just first 5
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -71,6 +72,7 @@ const ExcelCleanerPanel: React.FC = () => {
 
         if (jsonData.length > 0) {
           const headers = jsonData[0] as string[];
+          // FIXED: Read ALL rows, not just slice(1, 6)
           const rows = jsonData.slice(1).map(row => {
             const obj: ExcelRow = {};
             headers.forEach((header, index) => {
@@ -79,6 +81,7 @@ const ExcelCleanerPanel: React.FC = () => {
             return obj;
           });
 
+          console.log(`📊 Excel文件读取完成 - 总行数: ${rows.length}`);
           setOriginalHeaders(headers);
           setExcelData(rows);
           setFilteredData(rows);
@@ -206,6 +209,7 @@ const ExcelCleanerPanel: React.FC = () => {
     
     // 1. Output header fields
     console.log('📊 表头字段：', originalHeaders);
+    console.log(`📊 数据总行数: ${excelData.length}`);
     
     // 2. Show first row field names
     if (excelData.length > 0) {
@@ -524,19 +528,20 @@ const ExcelCleanerPanel: React.FC = () => {
         </Card>
       )}
 
-      {/* Data preview table */}
+      {/* Data preview table - FIXED: Proper contained scrolling */}
       {filteredData.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>数据预览</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="max-h-96 overflow-auto border rounded-md">
+            {/* FIXED: Use ScrollArea with fixed height and contained scrolling */}
+            <ScrollArea className="h-96 w-full border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
                     {originalHeaders.map((header, index) => (
-                      <TableHead key={index} className="whitespace-nowrap">
+                      <TableHead key={index} className="whitespace-nowrap min-w-[120px]">
                         {header}
                       </TableHead>
                     ))}
@@ -552,7 +557,7 @@ const ExcelCleanerPanel: React.FC = () => {
                       )}
                     >
                       {originalHeaders.map((header, colIndex) => (
-                        <TableCell key={colIndex} className="whitespace-nowrap">
+                        <TableCell key={colIndex} className="whitespace-nowrap min-w-[120px]">
                           {typeof row[header] === 'number' ? 
                             row[header].toLocaleString() : 
                             String(row[header] || '')
@@ -563,7 +568,7 @@ const ExcelCleanerPanel: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
-            </div>
+            </ScrollArea>
             <div className="mt-2 text-sm text-muted-foreground">
               共 {filteredData.length - 1} 条数据记录 + 1 条合计行
               {filteredData.some(isNegativeRow) && (
