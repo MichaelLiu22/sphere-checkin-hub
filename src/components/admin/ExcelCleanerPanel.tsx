@@ -47,7 +47,7 @@ const ExcelCleanerPanel: React.FC = () => {
     return accountingMode === 'order_created' ? 'Order Created Date' : 'Statement Date';
   };
 
-  // Handle file upload - FIXED: Read all rows, not just first 5
+  // Handle file upload - FIXED: Read ALL rows from Excel file
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -67,24 +67,51 @@ const ExcelCleanerPanel: React.FC = () => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+        
+        // 使用 range 获取实际数据范围
+        const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+        console.log(`📋 Excel工作表范围: ${worksheet['!ref']}`);
+        console.log(`📋 实际行数范围: ${range.s.r} 到 ${range.e.r} (共${range.e.r - range.s.r + 1}行)`);
+        
+        // 读取所有数据，不设置任何限制
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+          header: 1,
+          defval: '', // 为空单元格设置默认值
+          raw: false // 确保日期等格式正确转换
+        }) as any[][];
+
+        console.log(`📊 原始数据总行数: ${jsonData.length}`);
 
         if (jsonData.length > 0) {
           const headers = jsonData[0] as string[];
-          // FIXED: Read ALL rows, not just slice(1, 6)
-          const rows = jsonData.slice(1).map(row => {
+          console.log(`📋 表头: ${headers.join(', ')}`);
+          
+          // 处理所有数据行，过滤掉空行
+          const allRows = jsonData.slice(1).filter(row => {
+            // 检查行是否不全为空
+            return row.some(cell => cell !== null && cell !== undefined && cell !== '');
+          });
+
+          console.log(`📊 过滤空行后的数据行数: ${allRows.length}`);
+
+          const rows = allRows.map((row, index) => {
             const obj: ExcelRow = {};
-            headers.forEach((header, index) => {
-              obj[header] = row[index] || '';
+            headers.forEach((header, headerIndex) => {
+              obj[header] = row[headerIndex] || '';
             });
             return obj;
           });
 
-          console.log(`📊 Excel文件读取完成 - 总行数: ${rows.length}`);
+          console.log(`📊 最终处理的数据行数: ${rows.length}`);
+          console.log(`📋 前3行数据示例:`, rows.slice(0, 3));
+
           setOriginalHeaders(headers);
           setExcelData(rows);
-          setFilteredData(rows);
+          setFilteredData(rows.slice(0, 5)); // 预览显示前5行
+          
           toast.success(`成功读取 ${rows.length} 行数据`);
+        } else {
+          toast.error('Excel文件中没有找到有效数据');
         }
       } catch (error) {
         console.error('Excel读取错误:', error);
@@ -199,21 +226,15 @@ const ExcelCleanerPanel: React.FC = () => {
     return isNaN(num) ? 0 : num;
   }, []);
 
-  // Apply filter and clean with enhanced debugging
+  // Apply filter and clean - FIXED: Process ALL data, not just first 5
   const applyFilterAndClean = useCallback(() => {
     if (!excelData.length) return;
 
     console.log('🚀 Tiktok FS - Beast 数据清洗调试开始');
     console.log('='.repeat(50));
     
-    // 1. Output header fields
     console.log('📊 表头字段：', originalHeaders);
-    console.log(`📊 数据总行数: ${excelData.length}`);
-    
-    // 2. Show first row field names
-    if (excelData.length > 0) {
-      console.log('📋 第1行所有字段名：', Object.keys(excelData[0]));
-    }
+    console.log(`📊 原始数据总行数: ${excelData.length}`);
 
     const dateColumn = findDateColumn();
     const settlementColumn = findSettlementColumn();
@@ -237,38 +258,13 @@ const ExcelCleanerPanel: React.FC = () => {
       return;
     }
 
-    // 3. Output user selected date range
     console.log('📅 用户选择的筛选范围：');
     console.log('  起始日期：', startDate ? format(startDate, 'yyyy-MM-dd') : '未设置');
     console.log('  结束日期：', endDate ? format(endDate, 'yyyy-MM-dd') : '未设置');
 
+    // 处理所有数据，不只是前5行
     let filtered = [...excelData];
-
-    // 4. Analyze date parsing row by row
-    console.log('📅 日期字段解析分析：');
-    excelData.slice(0, Math.min(10, excelData.length)).forEach((row, index) => {
-      const rawDateValue = row[dateColumn];
-      const parsedDate = parseDate(rawDateValue);
-      
-      if (parsedDate) {
-        console.log(`✅ 第${index + 1}行日期字段值：'${rawDateValue}' → 解析成功：${parsedDate.toISOString()}`);
-      } else {
-        console.log(`❌ 第${index + 1}行日期字段值：'${rawDateValue}' → 解析失败`);
-      }
-    });
-
-    // 5. Analyze amount parsing row by row
-    console.log('💰 金额字段解析分析：');
-    excelData.slice(0, Math.min(10, excelData.length)).forEach((row, index) => {
-      const rawAmountValue = row[settlementColumn];
-      const parsedAmount = parseNumber(rawAmountValue);
-      
-      if (isNaN(parsedAmount)) {
-        console.log(`⚠️ 第${index + 1}行金额字段值：'${rawAmountValue}' → 转换失败（NaN）`);
-      } else {
-        console.log(`✅ 第${index + 1}行金额字段值：'${rawAmountValue}' → 转换后数值：${parsedAmount}`);
-      }
-    });
+    console.log(`📊 开始处理所有 ${filtered.length} 行数据`);
 
     // Time filtering
     if (startDate || endDate) {
@@ -277,30 +273,19 @@ const ExcelCleanerPanel: React.FC = () => {
       filtered = filtered.filter(row => {
         const rowDate = parseDate(row[dateColumn]);
         if (!rowDate) {
-          console.log(`⚠️ 跳过无效日期的行：'${row[dateColumn]}'`);
           return false;
         }
 
         if (startDate && rowDate < startDate) {
-          console.log(`📅 行被过滤（早于起始日期）：${rowDate.toISOString()} < ${startDate.toISOString()}`);
           return false;
         }
         if (endDate && rowDate > endDate) {
-          console.log(`📅 行被过滤（晚于结束日期）：${rowDate.toISOString()} > ${endDate.toISOString()}`);
           return false;
         }
         return true;
       });
       
       console.log(`📊 筛选前行数：${beforeFilterCount}，筛选后行数：${filtered.length}`);
-      
-      if (filtered.length === 0) {
-        console.warn('⚠️ 无数据满足当前日期筛选条件，可能为字段名或日期格式问题');
-        console.log('💡 检查要点：');
-        console.log(`  1. 日期字段名是否正确（当前模式期望："${accountingMode === 'order_created' ? 'Order created date' : 'Statement date'}"）`);
-        console.log('  2. 日期格式是否为 YYYY/MM/DD 或其他支持的格式');
-        console.log('  3. 选择的日期范围是否包含数据');
-      }
     }
 
     // Sort by date in ascending order
@@ -348,7 +333,7 @@ const ExcelCleanerPanel: React.FC = () => {
     toast.success(`筛选完成，共 ${filtered.length - 1} 条数据记录 + 1 条合计`);
   }, [excelData, startDate, endDate, originalHeaders, accountingMode, findDateColumn, findSettlementColumn, parseDate, parseNumber, getAccountingModeText]);
 
-  // Export Excel
+  // Export Excel - FIXED: Export ALL filtered data
   const exportToExcel = useCallback(() => {
     if (!filteredData.length) {
       toast.error('没有数据可导出');
@@ -356,11 +341,12 @@ const ExcelCleanerPanel: React.FC = () => {
     }
 
     try {
+      console.log(`📤 导出数据行数: ${filteredData.length}`);
       const worksheet = XLSX.utils.json_to_sheet(filteredData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Cleaned Data');
       XLSX.writeFile(workbook, 'cleaned_financial_report.xlsx');
-      toast.success('Excel文件导出成功');
+      toast.success(`Excel文件导出成功，共 ${filteredData.length} 行数据`);
     } catch (error) {
       console.error('导出错误:', error);
       toast.error('导出失败');
@@ -510,12 +496,12 @@ const ExcelCleanerPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Data preview table - FIXED: Proper contained scrolling */}
+      {/* Data preview table */}
       {filteredData.length > 0 && (
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>数据预览</CardTitle>
+              <CardTitle>数据预览 (显示前5行，导出全部数据)</CardTitle>
               <Button onClick={exportToExcel} className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 导出清洗后的财务报告
@@ -523,7 +509,6 @@ const ExcelCleanerPanel: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* FIXED: Use ScrollArea with fixed height and contained scrolling */}
             <ScrollArea className="h-96 w-full border rounded-md">
               <Table>
                 <TableHeader>
@@ -536,7 +521,8 @@ const ExcelCleanerPanel: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredData.map((row, index) => (
+                  {/* 只显示前5行用于预览 */}
+                  {filteredData.slice(0, 5).map((row, index) => (
                     <TableRow 
                       key={index}
                       className={cn(
@@ -558,7 +544,8 @@ const ExcelCleanerPanel: React.FC = () => {
               </Table>
             </ScrollArea>
             <div className="mt-2 text-sm text-muted-foreground">
-              共 {filteredData.length - 1} 条数据记录 + 1 条合计行
+              预览显示前5行，实际筛选结果共 {filteredData.length - (filteredData.some(row => row[findDateColumn()] === '合计') ? 1 : 0)} 条数据记录
+              {filteredData.some(row => row[findDateColumn()] === '合计') && ' + 1 条合计行'}
               {filteredData.some(isNegativeRow) && (
                 <span className="ml-2 text-red-600">
                   (红色高亮表示结算金额为负数的记录)
