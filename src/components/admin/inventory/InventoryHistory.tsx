@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,12 +60,20 @@ const InventoryHistory: React.FC = () => {
         .from('inventory_history')
         .select(`
           *,
-          users!inventory_history_created_by_fkey(full_name)
+          user:users!inventory_history_created_by_fkey(full_name)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setHistory(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: HistoryRecord[] = (data || []).map(item => ({
+        ...item,
+        operation_type: item.operation_type as 'in' | 'out',
+        user: Array.isArray(item.user) ? item.user[0] : item.user
+      }));
+      
+      setHistory(transformedData);
     } catch (error: any) {
       console.error("Error fetching inventory history:", error);
       toast.error("获取历史记录失败");
@@ -120,7 +127,7 @@ const InventoryHistory: React.FC = () => {
         record.reason || "",
         record.batch_number || "",
         record.expiration_date || "",
-        record.users?.full_name || ""
+        record.user?.full_name || ""
       ])
     ].map(row => row.join(",")).join("\n");
 
@@ -269,7 +276,7 @@ const InventoryHistory: React.FC = () => {
                   <TableCell>{record.reason || '-'}</TableCell>
                   <TableCell>{record.batch_number || '-'}</TableCell>
                   <TableCell>{record.expiration_date || '-'}</TableCell>
-                  <TableCell>{record.users?.full_name || '-'}</TableCell>
+                  <TableCell>{record.user?.full_name || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

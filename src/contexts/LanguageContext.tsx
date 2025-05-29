@@ -24,6 +24,7 @@ interface LanguageContextType {
  * @returns {Language} 返回支持的语言代码
  */
 const getBrowserLanguage = (): Language => {
+  if (typeof navigator === 'undefined') return "en";
   const lang = navigator.language.split("-")[0];
   return (lang === "zh" || lang === "es") ? lang as Language : "en";
 };
