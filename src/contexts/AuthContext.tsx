@@ -73,15 +73,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Set up Supabase authentication session for RLS policies
           if (userData.id) {
             // Create a custom session token for Supabase
-            await supabase.auth.setSession({
-              access_token: userData.id, // Use user ID as a simple token
-              refresh_token: '',
-            });
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error || !session) {
+              // If no session exists, create one
+              const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                email: userData.email || `${userData.id}@example.com`,
+                password: userData.password_hash
+              });
+              
+              if (signInError) {
+                console.error("Failed to sign in:", signInError);
+                localStorage.removeItem('user');
+                setUser(null);
+              }
+            }
           }
         } catch (error) {
           console.error("Failed to parse user data:", error);
           // 清除无效的用户数据
           localStorage.removeItem('user');
+          setUser(null);
         }
       }
       // 完成加载过程
@@ -166,7 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else if (userType === 'employee') {
           navigate('/employee-dashboard');
         } else if (userType === 'unassigned') {
-          navigate('/waiting-assignment');
+          navigate('/waiting-approval');
         }
       }
       

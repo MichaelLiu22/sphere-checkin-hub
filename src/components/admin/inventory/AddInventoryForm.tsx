@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,11 +82,20 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
 
     try {
       // 检查SKU是否已存在
-      const { data: existingItem } = await supabase
+      const { data: existingItem, error: queryError } = await supabase
         .from('inventory')
         .select('id, quantity')
         .eq('sku', formData.sku)
         .single();
+
+      if (queryError) {
+        console.error("Error querying inventory:", queryError);
+        if (queryError.code === '406') {
+          toast.error("权限不足，请确保已登录");
+          return;
+        }
+        throw queryError;
+      }
 
       let imageUrl = null;
       if (imageFile) {
