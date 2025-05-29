@@ -65,6 +65,109 @@ export type Database = {
           },
         ]
       }
+      inventory: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          created_by: string | null
+          expiration_date: string | null
+          id: string
+          image_url: string | null
+          min_stock_alert: number | null
+          product_name: string
+          quantity: number
+          sku: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiration_date?: string | null
+          id?: string
+          image_url?: string | null
+          min_stock_alert?: number | null
+          product_name: string
+          quantity?: number
+          sku: string
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiration_date?: string | null
+          id?: string
+          image_url?: string | null
+          min_stock_alert?: number | null
+          product_name?: string
+          quantity?: number
+          sku?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_history: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          created_by: string | null
+          expiration_date: string | null
+          id: string
+          operation_type: string
+          product_name: string
+          quantity: number
+          reason: string | null
+          sku: string
+          unit_cost: number | null
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiration_date?: string | null
+          id?: string
+          operation_type: string
+          product_name: string
+          quantity: number
+          reason?: string | null
+          sku: string
+          unit_cost?: number | null
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiration_date?: string | null
+          id?: string
+          operation_type?: string
+          product_name?: string
+          quantity?: number
+          reason?: string | null
+          sku?: string
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_history_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_costs: {
         Row: {
           cost: number

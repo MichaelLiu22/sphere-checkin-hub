@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, FileSpreadsheet } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, FileSpreadsheet, Package } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -116,6 +116,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             >
               <CheckSquare className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">📋 任务管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          {/* 库存系统模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "inventory"}
+              onClick={() => setActiveTab("inventory")}
+              tooltip="Inventory System"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <Package className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📦 库存系统</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           

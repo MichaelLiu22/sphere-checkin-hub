@@ -13,6 +13,7 @@ import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
 import ExcelCleanerPanel from "@/components/admin/ExcelCleanerPanel";
 import CostSheetUploadPanel from "@/components/admin/CostSheetUploadPanel";
+import InventoryPanel from "@/components/admin/InventoryPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -157,6 +158,9 @@ const AdminDashboard: React.FC = () => {
                   <TaskBoard canAssignTasks={true} isAdmin={true} />
                 </>
               )}
+              
+              {/* 库存系统 */}
+              {activeTab === "inventory" && <InventoryPanel />}
               
               {activeTab === "finance" && (
                 <ExcelCleanerPanel />
