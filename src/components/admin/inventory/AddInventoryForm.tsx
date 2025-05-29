@@ -86,7 +86,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
         .from('inventory')
         .select('id, quantity')
         .eq('sku', formData.sku)
-        .single();
+        .maybeSingle();
 
       if (queryError) {
         console.error("Error querying inventory:", queryError);
@@ -158,7 +158,10 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
             created_by: user?.id
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error inserting inventory:", insertError);
+          throw insertError;
+        }
 
         // 记录入库历史
         const { error: historyError } = await supabase
@@ -175,7 +178,10 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
             created_by: user?.id
           });
 
-        if (historyError) throw historyError;
+        if (historyError) {
+          console.error("Error inserting history:", historyError);
+          throw historyError;
+        }
 
         toast.success(`新商品 ${formData.product_name} 已成功入库`);
       }
