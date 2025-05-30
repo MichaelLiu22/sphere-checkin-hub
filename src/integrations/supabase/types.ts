@@ -245,41 +245,6 @@ export type Database = {
         }
         Relationships: []
       }
-      SphereCheckIN: {
-        Row: {
-          created_at: string
-          full_legal_name: string | null
-          id: number
-          nda_file: string | null
-          user_id: string | null
-          w9_file: string | null
-        }
-        Insert: {
-          created_at?: string
-          full_legal_name?: string | null
-          id?: number
-          nda_file?: string | null
-          user_id?: string | null
-          w9_file?: string | null
-        }
-        Update: {
-          created_at?: string
-          full_legal_name?: string | null
-          id?: number
-          nda_file?: string | null
-          user_id?: string | null
-          w9_file?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tasks: {
         Row: {
           assignee_id: string | null

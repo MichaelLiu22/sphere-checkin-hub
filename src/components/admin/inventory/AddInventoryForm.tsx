@@ -1,17 +1,15 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Upload, Plus } from "lucide-react";
-import ExcelImport from "./ExcelImport";
+import SmartExcelImport from "./SmartExcelImport";
 import type { Database } from "@/integrations/supabase/types";
 
 type InReason = Database['public']['Enums']['inventory_in_reason'];
@@ -115,7 +113,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
       const quantity = parseInt(formData.quantity);
       const unitCost = parseFloat(formData.unit_cost);
       const minStockAlert = parseInt(formData.min_stock_alert);
-      const inReason = formData.in_reason as InReason;
+      const inReason = formData.in_reason as Database['public']['Enums']['inventory_in_reason'];
 
       if (existingItem) {
         // 如果SKU已存在，更新库存数量（累加）
@@ -227,7 +225,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
     <Tabs defaultValue="manual" className="space-y-4">
       <TabsList>
         <TabsTrigger value="manual">手动入库</TabsTrigger>
-        <TabsTrigger value="excel">Excel导入</TabsTrigger>
+        <TabsTrigger value="excel">智能Excel导入</TabsTrigger>
       </TabsList>
 
       <TabsContent value="manual">
@@ -382,7 +380,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
       </TabsContent>
 
       <TabsContent value="excel">
-        <ExcelImport onSuccess={onSuccess} />
+        <SmartExcelImport onSuccess={onSuccess} />
       </TabsContent>
     </Tabs>
   );
