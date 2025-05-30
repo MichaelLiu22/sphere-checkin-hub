@@ -1,10 +1,9 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, FileSpreadsheet, Package } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, FileSpreadsheet, Package, Receipt } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -155,6 +154,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             >
               <FileSpreadsheet className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">💹 成本表上传</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 新增发票模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "invoice"}
+              onClick={() => setActiveTab("invoice")}
+              tooltip="Make Invoice"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <Receipt className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">🧾 Make Invoice</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
