@@ -488,7 +488,7 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
                 </Button>
                 <Button 
                   onClick={handleImport} 
-                  disabled={loading || !inReason || inReason === "no-reason"}
+                  disabled={loading || !inReason}
                 >
                   {loading ? (
                     <>
