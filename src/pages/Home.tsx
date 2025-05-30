@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,16 +65,16 @@ const Home: React.FC = () => {
 
       const publicUrl = publicUrlResponse.data.publicUrl;
 
-      // Add to SphereCheckIN table
+      // Add to spherecheckin table
       const { error: sphereError } = await supabase
-        .from("SphereCheckIN")
+        .from("spherecheckin")
         .upsert({
           full_legal_name: fullLegalName,
           w9_file: publicUrl
         });
 
       if (sphereError) {
-        console.error("SphereCheckIN update error:", sphereError);
+        console.error("spherecheckin update error:", sphereError);
         toast(t("uploadError"), {
           description: sphereError?.message || "Unknown error",
         });

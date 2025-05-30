@@ -142,7 +142,7 @@ const FileUploadForm: React.FC = () => {
       
       // 提交表单数据到Supabase
       const { data, error } = await supabase
-        .from("SphereCheckIN")
+        .from("spherecheckin")
         .insert([{
           full_legal_name: fullLegalName,
           w9_file: uploadedUrls.w9,

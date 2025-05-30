@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,14 +72,14 @@ const FileUploadPanel: React.FC<FileUploadPanelProps> = ({ allUsers }) => {
         const { error: updateError } = await supabase
           .from('users')
           .update({
-            notes: `W9 File URL: ${urlData.publicUrl}` // Store URL in notes field as workaround
+            notes: `W9 File URL: ${urlData.publicUrl}`
           })
           .eq('id', targetUser);
           
         if (updateError) throw updateError;
       }
       
-      // Update or insert into SphereCheckIN table (keeping existing functionality)
+      // Update or insert into spherecheckin table
       const updateData = {
         full_legal_name: userData.full_name,
         user_id: targetUser
@@ -91,7 +92,7 @@ const FileUploadPanel: React.FC<FileUploadPanelProps> = ({ allUsers }) => {
       }
       
       const { data: checkData, error: checkError } = await supabase
-        .from('SphereCheckIN')
+        .from('spherecheckin')
         .select()
         .eq('full_legal_name', userData.full_name)
         .maybeSingle();
@@ -101,7 +102,7 @@ const FileUploadPanel: React.FC<FileUploadPanelProps> = ({ allUsers }) => {
       if (checkData) {
         // Update existing record
         const { error: updateError } = await supabase
-          .from('SphereCheckIN')
+          .from('spherecheckin')
           .update(updateData)
           .eq('id', checkData.id);
           
@@ -109,7 +110,7 @@ const FileUploadPanel: React.FC<FileUploadPanelProps> = ({ allUsers }) => {
       } else {
         // Insert new record
         const { error: insertError } = await supabase
-          .from('SphereCheckIN')
+          .from('spherecheckin')
           .insert([updateData]);
           
         if (insertError) throw insertError;

@@ -245,6 +245,44 @@ export type Database = {
         }
         Relationships: []
       }
+      spherecheckin: {
+        Row: {
+          created_at: string
+          full_legal_name: string
+          id: string
+          nda_file: string | null
+          updated_at: string
+          user_id: string | null
+          w9_file: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_legal_name: string
+          id?: string
+          nda_file?: string | null
+          updated_at?: string
+          user_id?: string | null
+          w9_file?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_legal_name?: string
+          id?: string
+          nda_file?: string | null
+          updated_at?: string
+          user_id?: string | null
+          w9_file?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spherecheckin_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee_id: string | null

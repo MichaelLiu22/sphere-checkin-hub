@@ -35,13 +35,13 @@ const W9FilesPanel: React.FC = () => {
     fetchStorageW9Files();
   }, []);
 
-  // Fetch records from SphereCheckIN table
+  // Fetch records from spherecheckin table
   const fetchW9Files = async () => {
     setW9Loading(true);
     try {
-      // Fetch directly from SphereCheckIN table where w9_file IS NOT NULL
+      // Fetch directly from spherecheckin table where w9_file IS NOT NULL
       const { data, error } = await supabase
-        .from('SphereCheckIN')
+        .from('spherecheckin')
         .select('full_legal_name, created_at, w9_file')
         .not('w9_file', 'is', null)
         .order('created_at', { ascending: false });

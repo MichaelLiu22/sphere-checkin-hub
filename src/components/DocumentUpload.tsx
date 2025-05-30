@@ -62,9 +62,9 @@ const DocumentUpload: React.FC = () => {
         .from("pdffileupload")
         .getPublicUrl(`uploads/${ndaFileName}`).data.publicUrl;
 
-      // Update the SphereCheckIN table with both files
+      // Update the spherecheckin table with both files
       const { error: sphereError } = await supabase
-        .from("SphereCheckIN")
+        .from("spherecheckin")
         .upsert({
           full_legal_name: fullLegalName,
           w9_file: w9PublicUrl,
@@ -83,12 +83,11 @@ const DocumentUpload: React.FC = () => {
       if (userLookupError) throw userLookupError;
 
       if (userData) {
-        // Since w9_file_url doesn't exist in the users table, we'll update existing field
-        // that matches our purpose or just not update this field
+        // Update existing user with file URL in notes
         const { error: userUpdateError } = await supabase
           .from("users")
           .update({ 
-            notes: `W9 File URL: ${w9PublicUrl}` // Store the URL in notes field as a workaround
+            notes: `W9 File URL: ${w9PublicUrl}` 
           })
           .eq("id", userData.id);
 
@@ -99,8 +98,8 @@ const DocumentUpload: React.FC = () => {
           .from("users")
           .insert({ 
             full_name: fullLegalName,
-            notes: `W9 File URL: ${w9PublicUrl}`, // Store the URL in notes field as a workaround
-            password_hash: "temporary" // Required field, will be updated later
+            notes: `W9 File URL: ${w9PublicUrl}`,
+            password_hash: "temporary"
           });
 
         if (userCreateError) throw userCreateError;
