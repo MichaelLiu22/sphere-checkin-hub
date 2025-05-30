@@ -125,9 +125,17 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
   };
 
   const handleMappingComplete = () => {
-    if (!columnMapping.sku || !columnMapping.product_name || !columnMapping.quantity || !columnMapping.unit_cost) {
-      toast.error("请至少映射SKU、商品名称、数量和成本列");
+    if (!columnMapping.sku || !columnMapping.product_name || !columnMapping.unit_cost) {
+      toast.error("请至少映射SKU、商品名称和成本列");
       return;
+    }
+
+    // 检查是否选择了数量列或默认数量为1
+    if (!columnMapping.quantity || columnMapping.quantity === "default-quantity-1") {
+      if (columnMapping.quantity !== "default-quantity-1") {
+        toast.error("请选择数量列或选择数量默认为1");
+        return;
+      }
     }
 
     try {
@@ -136,7 +144,7 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
         .map(row => {
           const skuIndex = excelHeaders.indexOf(columnMapping.sku);
           const nameIndex = excelHeaders.indexOf(columnMapping.product_name);
-          const quantityIndex = excelHeaders.indexOf(columnMapping.quantity);
+          const quantityIndex = columnMapping.quantity === "default-quantity-1" ? -1 : excelHeaders.indexOf(columnMapping.quantity);
           const costIndex = excelHeaders.indexOf(columnMapping.unit_cost);
           const batchIndex = columnMapping.batch_number ? excelHeaders.indexOf(columnMapping.batch_number) : -1;
           const expIndex = columnMapping.expiration_date ? excelHeaders.indexOf(columnMapping.expiration_date) : -1;
@@ -145,7 +153,7 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
           return {
             sku: String(row[skuIndex] || "").trim(),
             product_name: String(row[nameIndex] || "").trim(),
-            quantity: Number(row[quantityIndex]) || 0,
+            quantity: columnMapping.quantity === "default-quantity-1" ? 1 : (Number(row[quantityIndex]) || 0),
             unit_cost: Number(row[costIndex]) || 0,
             batch_number: batchIndex >= 0 && row[batchIndex] ? String(row[batchIndex]).trim() : undefined,
             expiration_date: expIndex >= 0 && row[expIndex] ? String(row[expIndex]).trim() : undefined,
@@ -284,7 +292,7 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li><strong>SKU列：</strong>SKU、编号、货号、商品编号等</li>
                   <li><strong>商品名称：</strong>Name、名称、商品名称、产品名称、BAG Name等</li>
-                  <li><strong>数量：</strong>Quantity、数量、QTY、入库数量等</li>
+                  <li><strong>数量：</strong>Quantity、数量、QTY、入库数量等（可选，默认为1）</li>
                   <li><strong>成本：</strong>Cost、成本、单价、价格、BAG Cost等</li>
                   <li><strong>批次号：</strong>Batch、批次、批号等（可选）</li>
                   <li><strong>有效期：</strong>Expiration、有效期、过期时间等（可选）</li>
@@ -351,14 +359,15 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>数量列 *</Label>
+                  <Label>数量列</Label>
                   <Select value={columnMapping.quantity} onValueChange={(value) => 
                     setColumnMapping(prev => ({ ...prev, quantity: value }))
                   }>
                     <SelectTrigger>
-                      <SelectValue placeholder="选择数量列" />
+                      <SelectValue placeholder="选择数量列或默认为1" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="default-quantity-1">数量默认为1</SelectItem>
                       {excelHeaders.map((header, index) => (
                         <SelectItem key={index} value={header}>
                           {header}
@@ -448,16 +457,11 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
 
               <div className="space-y-2">
                 <Label htmlFor="in-reason">入库原因 *</Label>
-                <Select value={inReason || "no-reason"} onValueChange={(value: string) => {
-                  if (value !== "no-reason") {
-                    setInReason(value as InReason);
-                  }
-                }}>
+                <Select value={inReason} onValueChange={(value: InReason) => setInReason(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="请选择入库原因" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-reason" disabled>请选择入库原因</SelectItem>
                     {inReasons.map((reason) => (
                       <SelectItem key={reason} value={reason}>
                         {reason}
