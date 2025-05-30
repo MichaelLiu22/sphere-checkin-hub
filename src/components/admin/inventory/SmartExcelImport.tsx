@@ -388,14 +388,14 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
 
                 <div className="space-y-2">
                   <Label>批次号列（可选）</Label>
-                  <Select value={columnMapping.batch_number || ""} onValueChange={(value) => 
-                    setColumnMapping(prev => ({ ...prev, batch_number: value || undefined }))
+                  <Select value={columnMapping.batch_number || "no-mapping"} onValueChange={(value) => 
+                    setColumnMapping(prev => ({ ...prev, batch_number: value === "no-mapping" ? undefined : value }))
                   }>
                     <SelectTrigger>
                       <SelectValue placeholder="选择批次号列" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">不映射</SelectItem>
+                      <SelectItem value="no-mapping">不映射</SelectItem>
                       {excelHeaders.map((header, index) => (
                         <SelectItem key={index} value={header}>
                           {header}
@@ -407,14 +407,14 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
 
                 <div className="space-y-2">
                   <Label>有效期列（可选）</Label>
-                  <Select value={columnMapping.expiration_date || ""} onValueChange={(value) => 
-                    setColumnMapping(prev => ({ ...prev, expiration_date: value || undefined }))
+                  <Select value={columnMapping.expiration_date || "no-mapping"} onValueChange={(value) => 
+                    setColumnMapping(prev => ({ ...prev, expiration_date: value === "no-mapping" ? undefined : value }))
                   }>
                     <SelectTrigger>
                       <SelectValue placeholder="选择有效期列" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">不映射</SelectItem>
+                      <SelectItem value="no-mapping">不映射</SelectItem>
                       {excelHeaders.map((header, index) => (
                         <SelectItem key={index} value={header}>
                           {header}
@@ -448,11 +448,16 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
 
               <div className="space-y-2">
                 <Label htmlFor="in-reason">入库原因 *</Label>
-                <Select onValueChange={(value: InReason) => setInReason(value)}>
+                <Select value={inReason || "no-reason"} onValueChange={(value: string) => {
+                  if (value !== "no-reason") {
+                    setInReason(value as InReason);
+                  }
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="请选择入库原因" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="no-reason" disabled>请选择入库原因</SelectItem>
                     {inReasons.map((reason) => (
                       <SelectItem key={reason} value={reason}>
                         {reason}
@@ -483,7 +488,7 @@ const SmartExcelImport: React.FC<SmartExcelImportProps> = ({ onSuccess }) => {
                 </Button>
                 <Button 
                   onClick={handleImport} 
-                  disabled={loading || !inReason}
+                  disabled={loading || !inReason || inReason === "no-reason"}
                 >
                   {loading ? (
                     <>
