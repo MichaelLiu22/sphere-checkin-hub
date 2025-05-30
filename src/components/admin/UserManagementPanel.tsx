@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -233,13 +234,14 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                   <div>
                     <Label htmlFor="department">Department</Label>
                     <Select 
-                      value={userDepartment || ""}
-                      onValueChange={setUserDepartment}
+                      value={userDepartment || "no-department"}
+                      onValueChange={(value) => setUserDepartment(value === "no-department" ? null : value)}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-department">No Department</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>
                             {dept.name}
@@ -265,7 +267,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                         <SelectValue placeholder="Select feature" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="b9ffca1c-004d-4a26-9773-5602821d1d27">None</SelectItem>
+                        <SelectItem value="None">None</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button 

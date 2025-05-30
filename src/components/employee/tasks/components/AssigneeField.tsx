@@ -44,7 +44,7 @@ export const AssigneeField = ({
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no_employees" disabled>
+                  <SelectItem value="no-employees-available" disabled>
                     没有可用的员工
                   </SelectItem>
                 )
@@ -56,7 +56,7 @@ export const AssigneeField = ({
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no_dept_employees" disabled>
+                  <SelectItem value="no-dept-employees-available" disabled>
                     部门中没有可用的员工
                   </SelectItem>
                 )
