@@ -73,6 +73,7 @@ export type Database = {
           expiration_date: string | null
           id: string
           image_url: string | null
+          in_reason: Database["public"]["Enums"]["inventory_in_reason"] | null
           min_stock_alert: number | null
           product_name: string
           quantity: number
@@ -87,6 +88,7 @@ export type Database = {
           expiration_date?: string | null
           id?: string
           image_url?: string | null
+          in_reason?: Database["public"]["Enums"]["inventory_in_reason"] | null
           min_stock_alert?: number | null
           product_name: string
           quantity?: number
@@ -101,6 +103,7 @@ export type Database = {
           expiration_date?: string | null
           id?: string
           image_url?: string | null
+          in_reason?: Database["public"]["Enums"]["inventory_in_reason"] | null
           min_stock_alert?: number | null
           product_name?: string
           quantity?: number
@@ -125,6 +128,7 @@ export type Database = {
           created_by: string | null
           expiration_date: string | null
           id: string
+          in_reason: Database["public"]["Enums"]["inventory_in_reason"] | null
           operation_type: string
           product_name: string
           quantity: number
@@ -138,6 +142,7 @@ export type Database = {
           created_by?: string | null
           expiration_date?: string | null
           id?: string
+          in_reason?: Database["public"]["Enums"]["inventory_in_reason"] | null
           operation_type: string
           product_name: string
           quantity: number
@@ -151,6 +156,7 @@ export type Database = {
           created_by?: string | null
           expiration_date?: string | null
           id?: string
+          in_reason?: Database["public"]["Enums"]["inventory_in_reason"] | null
           operation_type?: string
           product_name?: string
           quantity?: number
@@ -482,6 +488,7 @@ export type Database = {
         | "unassigned"
         | "staff"
         | "employee"
+      inventory_in_reason: "买货" | "return" | "赠送" | "盘点" | "调拨" | "其它"
       user_feature: "None"
     }
     CompositeTypes: {
@@ -611,6 +618,7 @@ export const Constants = {
         "staff",
         "employee",
       ],
+      inventory_in_reason: ["买货", "return", "赠送", "盘点", "调拨", "其它"],
       user_feature: ["None"],
     },
   },

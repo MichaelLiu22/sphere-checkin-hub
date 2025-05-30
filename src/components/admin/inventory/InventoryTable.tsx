@@ -15,6 +15,8 @@ import {
 import { Edit, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PasswordDialog from "./PasswordDialog";
+import ImageViewer from "./ImageViewer";
 
 interface InventoryItem {
   id: string;
@@ -39,10 +41,40 @@ interface InventoryTableProps {
 const InventoryTable: React.FC<InventoryTableProps> = ({ inventory, onUpdate }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [passwordDialog, setPasswordDialog] = useState({
+    open: false,
+    action: "",
+    item: null as InventoryItem | null
+  });
+  const [imageViewer, setImageViewer] = useState({
+    open: false,
+    imageUrl: "",
+    productName: ""
+  });
 
   const handleEdit = (item: InventoryItem) => {
-    setEditingId(item.id);
-    setEditingItem({ ...item });
+    setPasswordDialog({
+      open: true,
+      action: "edit",
+      item: item
+    });
+  };
+
+  const handleDelete = (item: InventoryItem) => {
+    setPasswordDialog({
+      open: true,
+      action: "delete",
+      item: item
+    });
+  };
+
+  const handlePasswordSuccess = () => {
+    if (passwordDialog.action === "edit" && passwordDialog.item) {
+      setEditingId(passwordDialog.item.id);
+      setEditingItem({ ...passwordDialog.item });
+    } else if (passwordDialog.action === "delete" && passwordDialog.item) {
+      performDelete(passwordDialog.item.id, passwordDialog.item.sku);
+    }
   };
 
   const handleSave = async () => {
@@ -78,9 +110,7 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ inventory, onUpdate }) 
     setEditingItem(null);
   };
 
-  const handleDelete = async (id: string, sku: string) => {
-    if (!confirm(`确定要删除 SKU: ${sku} 的库存记录吗？`)) return;
-
+  const performDelete = async (id: string, sku: string) => {
     try {
       const { error } = await supabase
         .from('inventory')
@@ -95,6 +125,14 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ inventory, onUpdate }) 
       console.error("Error deleting inventory:", error);
       toast.error("删除失败");
     }
+  };
+
+  const handleImageClick = (imageUrl: string, productName: string) => {
+    setImageViewer({
+      open: true,
+      imageUrl,
+      productName
+    });
   };
 
   const getRowClassName = (item: InventoryItem) => {
@@ -115,192 +153,209 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ inventory, onUpdate }) 
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>库存总览</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>图片</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>商品名称</TableHead>
-                <TableHead>当前库存</TableHead>
-                <TableHead>单件成本</TableHead>
-                <TableHead>总库存价值</TableHead>
-                <TableHead>有效期</TableHead>
-                <TableHead>批次</TableHead>
-                <TableHead>最低库存告警</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inventory.map((item) => (
-                <TableRow key={item.id} className={getRowClassName(item)}>
-                  <TableCell>
-                    {item.image_url ? (
-                      <img 
-                        src={item.image_url} 
-                        alt={item.product_name}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
-                        无图片
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-mono">{item.sku}</TableCell>
-                  <TableCell>
-                    {editingId === item.id ? (
-                      <Input
-                        value={editingItem?.product_name || ""}
-                        onChange={(e) => setEditingItem(prev => prev ? {...prev, product_name: e.target.value} : null)}
-                        className="w-full"
-                      />
-                    ) : (
-                      item.product_name
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === item.id ? (
-                      <Input
-                        type="number"
-                        value={editingItem?.quantity || 0}
-                        onChange={(e) => setEditingItem(prev => prev ? {...prev, quantity: parseInt(e.target.value) || 0} : null)}
-                        className="w-20"
-                      />
-                    ) : (
-                      <span className={item.quantity <= item.min_stock_alert ? "text-orange-600 font-semibold" : ""}>
-                        {item.quantity}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === item.id ? (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={editingItem?.unit_cost || 0}
-                        onChange={(e) => setEditingItem(prev => prev ? {...prev, unit_cost: parseFloat(e.target.value) || 0} : null)}
-                        className="w-24"
-                      />
-                    ) : (
-                      formatCurrency(item.unit_cost)
-                    )}
-                  </TableCell>
-                  <TableCell className="font-semibold">
-                    {formatCurrency(item.quantity * item.unit_cost)}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === item.id ? (
-                      <Input
-                        type="date"
-                        value={editingItem?.expiration_date || ""}
-                        onChange={(e) => setEditingItem(prev => prev ? {...prev, expiration_date: e.target.value} : null)}
-                        className="w-32"
-                      />
-                    ) : (
-                      item.expiration_date ? (
-                        <span className={new Date(item.expiration_date) < new Date() ? "text-red-600 font-semibold" : ""}>
-                          {item.expiration_date}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">-</span>
-                      )
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === item.id ? (
-                      <Input
-                        value={editingItem?.batch_number || ""}
-                        onChange={(e) => setEditingItem(prev => prev ? {...prev, batch_number: e.target.value} : null)}
-                        className="w-24"
-                      />
-                    ) : (
-                      item.batch_number || <span className="text-gray-500">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === item.id ? (
-                      <Input
-                        type="number"
-                        value={editingItem?.min_stock_alert || 0}
-                        onChange={(e) => setEditingItem(prev => prev ? {...prev, min_stock_alert: parseInt(e.target.value) || 0} : null)}
-                        className="w-20"
-                      />
-                    ) : (
-                      item.min_stock_alert
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      {item.quantity <= item.min_stock_alert && (
-                        <Badge variant="destructive" className="text-xs">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          低库存
-                        </Badge>
-                      )}
-                      {item.expiration_date && new Date(item.expiration_date) < new Date() && (
-                        <Badge variant="destructive" className="text-xs">
-                          已过期
-                        </Badge>
-                      )}
-                      {item.quantity > item.min_stock_alert && 
-                       (!item.expiration_date || new Date(item.expiration_date) >= new Date()) && (
-                        <Badge variant="secondary" className="text-xs">
-                          正常
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {editingId === item.id ? (
-                        <>
-                          <Button size="sm" onClick={handleSave}>
-                            保存
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}>
-                            取消
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(item)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(item.id, item.sku)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>库存总览</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>图片</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>商品名称</TableHead>
+                  <TableHead>当前库存</TableHead>
+                  <TableHead>单件成本</TableHead>
+                  <TableHead>总库存价值</TableHead>
+                  <TableHead>有效期</TableHead>
+                  <TableHead>批次</TableHead>
+                  <TableHead>最低库存告警</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead>操作</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        
-        {inventory.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            暂无库存数据
+              </TableHeader>
+              <TableBody>
+                {inventory.map((item) => (
+                  <TableRow key={item.id} className={getRowClassName(item)}>
+                    <TableCell>
+                      {item.image_url ? (
+                        <img 
+                          src={item.image_url} 
+                          alt={item.product_name}
+                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => handleImageClick(item.image_url!, item.product_name)}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
+                          无图片
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono">{item.sku}</TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input
+                          value={editingItem?.product_name || ""}
+                          onChange={(e) => setEditingItem(prev => prev ? {...prev, product_name: e.target.value} : null)}
+                          className="w-full"
+                        />
+                      ) : (
+                        item.product_name
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input
+                          type="number"
+                          value={editingItem?.quantity || 0}
+                          onChange={(e) => setEditingItem(prev => prev ? {...prev, quantity: parseInt(e.target.value) || 0} : null)}
+                          className="w-20"
+                        />
+                      ) : (
+                        <span className={item.quantity <= item.min_stock_alert ? "text-orange-600 font-semibold" : ""}>
+                          {item.quantity}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={editingItem?.unit_cost || 0}
+                          onChange={(e) => setEditingItem(prev => prev ? {...prev, unit_cost: parseFloat(e.target.value) || 0} : null)}
+                          className="w-24"
+                        />
+                      ) : (
+                        formatCurrency(item.unit_cost)
+                      )}
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      {formatCurrency(item.quantity * item.unit_cost)}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input
+                          type="date"
+                          value={editingItem?.expiration_date || ""}
+                          onChange={(e) => setEditingItem(prev => prev ? {...prev, expiration_date: e.target.value} : null)}
+                          className="w-32"
+                        />
+                      ) : (
+                        item.expiration_date ? (
+                          <span className={new Date(item.expiration_date) < new Date() ? "text-red-600 font-semibold" : ""}>
+                            {item.expiration_date}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">-</span>
+                        )
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input
+                          value={editingItem?.batch_number || ""}
+                          onChange={(e) => setEditingItem(prev => prev ? {...prev, batch_number: e.target.value} : null)}
+                          className="w-24"
+                        />
+                      ) : (
+                        item.batch_number || <span className="text-gray-500">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingId === item.id ? (
+                        <Input
+                          type="number"
+                          value={editingItem?.min_stock_alert || 0}
+                          onChange={(e) => setEditingItem(prev => prev ? {...prev, min_stock_alert: parseInt(e.target.value) || 0} : null)}
+                          className="w-20"
+                        />
+                      ) : (
+                        item.min_stock_alert
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {item.quantity <= item.min_stock_alert && (
+                          <Badge variant="destructive" className="text-xs">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            低库存
+                          </Badge>
+                        )}
+                        {item.expiration_date && new Date(item.expiration_date) < new Date() && (
+                          <Badge variant="destructive" className="text-xs">
+                            已过期
+                          </Badge>
+                        )}
+                        {item.quantity > item.min_stock_alert && 
+                         (!item.expiration_date || new Date(item.expiration_date) >= new Date()) && (
+                          <Badge variant="secondary" className="text-xs">
+                            正常
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {editingId === item.id ? (
+                          <>
+                            <Button size="sm" onClick={handleSave}>
+                              保存
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={handleCancel}>
+                              取消
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(item)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          
+          {inventory.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              暂无库存数据
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <PasswordDialog
+        open={passwordDialog.open}
+        onOpenChange={(open) => setPasswordDialog(prev => ({ ...prev, open }))}
+        onSuccess={handlePasswordSuccess}
+        title={passwordDialog.action === "edit" ? "确认编辑" : "确认删除"}
+      />
+
+      <ImageViewer
+        open={imageViewer.open}
+        onOpenChange={(open) => setImageViewer(prev => ({ ...prev, open }))}
+        imageUrl={imageViewer.imageUrl}
+        productName={imageViewer.productName}
+      />
+    </>
   );
 };
 

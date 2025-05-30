@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Minus, Package } from "lucide-react";
+import { Minus, Package, Search } from "lucide-react";
 
 interface InventoryItem {
   id: string;
@@ -28,6 +28,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     quantity: "",
     reason: ""
@@ -41,6 +42,17 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
     "盘亏",
     "其他"
   ];
+
+  // 过滤库存数据
+  const filteredInventory = useMemo(() => {
+    if (!searchTerm) return inventory;
+    
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return inventory.filter(item => 
+      item.sku.toLowerCase().includes(lowerSearchTerm) ||
+      item.product_name.toLowerCase().includes(lowerSearchTerm)
+    );
+  }, [inventory, searchTerm]);
 
   const handleItemSelect = (sku: string) => {
     const item = inventory.find(item => item.sku === sku);
@@ -114,6 +126,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
       
       // 重置表单
       setSelectedItem(null);
+      setSearchTerm("");
       setFormData({
         quantity: "",
         reason: ""
@@ -139,19 +152,43 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="search">搜索商品</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="search"
+                placeholder="输入SKU或商品名称搜索..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="sku">选择商品 *</Label>
             <Select onValueChange={handleItemSelect}>
               <SelectTrigger>
                 <SelectValue placeholder="请选择要出库的商品" />
               </SelectTrigger>
               <SelectContent>
-                {inventory.map((item) => (
+                {filteredInventory.map((item) => (
                   <SelectItem key={item.id} value={item.sku}>
                     {item.sku} - {item.product_name} (库存: {item.quantity})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {searchTerm && filteredInventory.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                没有找到匹配的商品
+              </p>
+            )}
+            {searchTerm && filteredInventory.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                找到 {filteredInventory.length} 个匹配的商品
+              </p>
+            )}
           </div>
 
           {selectedItem && (
