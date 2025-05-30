@@ -49,11 +49,11 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
 
   return (
     <div id="invoice-preview" className="max-w-4xl mx-auto bg-white p-8 shadow-lg">
-      {/* 发票头部 */}
+      {/* Invoice Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">发票</h1>
-          <p className="text-gray-600">发票号码: {invoiceData.invoiceNumber}</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">INVOICE</h1>
+          <p className="text-gray-600">Invoice Number: {invoiceData.invoiceNumber}</p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-blue-600 mb-2">{invoiceData.billFrom.name}</div>
@@ -62,10 +62,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
         </div>
       </div>
 
-      {/* 日期信息 */}
+      {/* Date Information */}
       <div className="grid grid-cols-2 gap-8 mb-8">
         <div>
-          <h3 className="text-lg font-semibold mb-2 text-gray-800">账单信息</h3>
+          <h3 className="text-lg font-semibold mb-2 text-gray-800">Bill To</h3>
           <div className="bg-gray-50 p-4 rounded">
             <div className="font-semibold">{invoiceData.billTo.name}</div>
             <div className="text-gray-600 whitespace-pre-line">{invoiceData.billTo.address}</div>
@@ -73,14 +73,14 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
           </div>
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-2 text-gray-800">日期</h3>
+          <h3 className="text-lg font-semibold mb-2 text-gray-800">Dates</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">发票日期:</span>
+              <span className="text-gray-600">Invoice Date:</span>
               <span className="font-medium">{invoiceData.date}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">到期日期:</span>
+              <span className="text-gray-600">Due Date:</span>
               <span className="font-medium">{invoiceData.dueDate}</span>
             </div>
           </div>
@@ -89,17 +89,17 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
 
       <Separator className="my-6" />
 
-      {/* 项目列表 */}
+      {/* Items List */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800">项目明细</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">Item Details</h3>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-4 py-2 text-left">描述</th>
-                <th className="border border-gray-300 px-4 py-2 text-center">数量</th>
-                <th className="border border-gray-300 px-4 py-2 text-right">单价</th>
-                <th className="border border-gray-300 px-4 py-2 text-right">金额</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Description</th>
+                <th className="border border-gray-300 px-4 py-2 text-center">Quantity</th>
+                <th className="border border-gray-300 px-4 py-2 text-right">Rate</th>
+                <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -107,8 +107,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
                 <tr key={item.id}>
                   <td className="border border-gray-300 px-4 py-2">{item.description}</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">{item.quantity}</td>
-                  <td className="border border-gray-300 px-4 py-2 text-right">¥{item.rate.toFixed(2)}</td>
-                  <td className="border border-gray-300 px-4 py-2 text-right">¥{item.amount.toFixed(2)}</td>
+                  <td className="border border-gray-300 px-4 py-2 text-right">${item.rate.toFixed(2)}</td>
+                  <td className="border border-gray-300 px-4 py-2 text-right">${item.amount.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -116,41 +116,41 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
         </div>
       </div>
 
-      {/* 总计 */}
+      {/* Total */}
       <div className="flex justify-end mb-8">
         <div className="w-64">
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">小计:</span>
-              <span>¥{calculateSubtotal().toFixed(2)}</span>
+              <span className="text-gray-600">Subtotal:</span>
+              <span>${calculateSubtotal().toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">税费 (10%):</span>
-              <span>¥{calculateTax().toFixed(2)}</span>
+              <span className="text-gray-600">Tax (10%):</span>
+              <span>${calculateTax().toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-bold text-lg">
-              <span>总计:</span>
-              <span className="text-blue-600">¥{calculateTotal().toFixed(2)}</span>
+              <span>Total:</span>
+              <span className="text-blue-600">${calculateTotal().toFixed(2)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 备注和条款 */}
+      {/* Notes and Terms */}
       {(invoiceData.notes || invoiceData.terms) && (
         <>
           <Separator className="my-6" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {invoiceData.notes && (
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">备注</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">Notes</h3>
                 <p className="text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
               </div>
             )}
             {invoiceData.terms && (
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">条款和条件</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">Terms and Conditions</h3>
                 <p className="text-gray-600 whitespace-pre-line">{invoiceData.terms}</p>
               </div>
             )}
@@ -158,9 +158,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoiceData }) => {
         </>
       )}
 
-      {/* 页脚 */}
+      {/* Footer */}
       <div className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
-        <p>感谢您的业务合作！</p>
+        <p>Thank you for your business!</p>
       </div>
     </div>
   );

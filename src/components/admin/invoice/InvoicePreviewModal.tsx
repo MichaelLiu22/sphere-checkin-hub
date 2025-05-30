@@ -51,11 +51,11 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Content className="fixed top-4 left-4 right-4 bottom-4 bg-white rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
           <div className="flex justify-between items-center p-4 border-b">
-            <h2 className="text-xl font-semibold">发票预览</h2>
+            <h2 className="text-xl font-semibold">Invoice Preview</h2>
             <div className="flex gap-2">
               <Button onClick={onGeneratePDF} className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
-                生成PDF
+                Generate PDF
               </Button>
               <Button variant="outline" size="sm" onClick={onClose}>
                 <X className="h-4 w-4" />

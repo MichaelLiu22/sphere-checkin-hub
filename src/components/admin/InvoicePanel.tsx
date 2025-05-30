@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -118,32 +119,32 @@ const InvoicePanel: React.FC = () => {
 
   const handleGeneratePDF = async () => {
     try {
-      // 验证必填字段
+      // Validate required fields
       if (!invoice.billTo.name) {
-        toast.error('请填写客户名称');
+        toast.error('Please fill in customer name');
         return;
       }
       if (!invoice.items.some(item => item.description)) {
-        toast.error('请至少添加一个项目');
+        toast.error('Please add at least one item');
         return;
       }
 
       await generateInvoicePDF(invoice);
-      toast.success('PDF已成功生成并下载');
+      toast.success('PDF generated and downloaded successfully');
     } catch (error) {
-      console.error('PDF生成错误:', error);
-      toast.error('PDF生成失败，请重试');
+      console.error('PDF generation error:', error);
+      toast.error('PDF generation failed, please try again');
     }
   };
 
   const handlePreview = () => {
-    // 验证必填字段
+    // Validate required fields
     if (!invoice.billTo.name) {
-      toast.error('请填写客户名称后再预览');
+      toast.error('Please fill in customer name before preview');
       return;
     }
     if (!invoice.items.some(item => item.description)) {
-      toast.error('请至少添加一个项目后再预览');
+      toast.error('Please add at least one item before preview');
       return;
     }
     
@@ -154,15 +155,15 @@ const InvoicePanel: React.FC = () => {
     <>
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold">发票制作</h2>
+          <h2 className="text-3xl font-bold">Invoice Creator</h2>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handlePreview}>
               <Eye className="h-4 w-4 mr-2" />
-              预览
+              Preview
             </Button>
             <Button onClick={handleGeneratePDF}>
               <Download className="h-4 w-4 mr-2" />
-              生成PDF
+              Generate PDF
             </Button>
           </div>
         </div>
@@ -171,14 +172,14 @@ const InvoicePanel: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              发票信息
+              Invoice Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* 基本信息 */}
+            {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="invoiceNumber">发票号码</Label>
+                <Label htmlFor="invoiceNumber">Invoice Number</Label>
                 <Input
                   id="invoiceNumber"
                   value={invoice.invoiceNumber}
@@ -186,7 +187,7 @@ const InvoicePanel: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="date">日期</Label>
+                <Label htmlFor="date">Date</Label>
                 <Input
                   id="date"
                   type="date"
@@ -195,7 +196,7 @@ const InvoicePanel: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dueDate">到期日期</Label>
+                <Label htmlFor="dueDate">Due Date</Label>
                 <Input
                   id="dueDate"
                   type="date"
@@ -207,12 +208,12 @@ const InvoicePanel: React.FC = () => {
 
             <Separator />
 
-            {/* 账单信息 */}
+            {/* Billing Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">账单发送至</h3>
+                <h3 className="text-lg font-semibold">Bill To</h3>
                 <div className="space-y-2">
-                  <Label htmlFor="billToName">客户名称</Label>
+                  <Label htmlFor="billToName">Customer Name</Label>
                   <Input
                     id="billToName"
                     value={invoice.billTo.name}
@@ -223,7 +224,7 @@ const InvoicePanel: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="billToAddress">客户地址</Label>
+                  <Label htmlFor="billToAddress">Customer Address</Label>
                   <Textarea
                     id="billToAddress"
                     value={invoice.billTo.address}
@@ -234,7 +235,7 @@ const InvoicePanel: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="billToEmail">客户邮箱</Label>
+                  <Label htmlFor="billToEmail">Customer Email</Label>
                   <Input
                     id="billToEmail"
                     type="email"
@@ -248,9 +249,9 @@ const InvoicePanel: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">账单发送方</h3>
+                <h3 className="text-lg font-semibold">Bill From</h3>
                 <div className="space-y-2">
-                  <Label htmlFor="billFromName">公司名称</Label>
+                  <Label htmlFor="billFromName">Company Name</Label>
                   <Input
                     id="billFromName"
                     value={invoice.billFrom.name}
@@ -261,7 +262,7 @@ const InvoicePanel: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="billFromAddress">公司地址</Label>
+                  <Label htmlFor="billFromAddress">Company Address</Label>
                   <Textarea
                     id="billFromAddress"
                     value={invoice.billFrom.address}
@@ -272,7 +273,7 @@ const InvoicePanel: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="billFromEmail">公司邮箱</Label>
+                  <Label htmlFor="billFromEmail">Company Email</Label>
                   <Input
                     id="billFromEmail"
                     type="email"
@@ -288,13 +289,13 @@ const InvoicePanel: React.FC = () => {
 
             <Separator />
 
-            {/* 项目列表 */}
+            {/* Items List */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">项目明细</h3>
+                <h3 className="text-lg font-semibold">Item Details</h3>
                 <Button onClick={addItem} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  添加项目
+                  Add Item
                 </Button>
               </div>
 
@@ -303,7 +304,7 @@ const InvoicePanel: React.FC = () => {
                   <div key={item.id} className="grid grid-cols-12 gap-2 items-center p-3 border rounded-lg">
                     <div className="col-span-5">
                       <Input
-                        placeholder="项目描述"
+                        placeholder="Item description"
                         value={item.description}
                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                       />
@@ -311,7 +312,7 @@ const InvoicePanel: React.FC = () => {
                     <div className="col-span-2">
                       <Input
                         type="number"
-                        placeholder="数量"
+                        placeholder="Quantity"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', Number(e.target.value))}
                       />
@@ -319,14 +320,14 @@ const InvoicePanel: React.FC = () => {
                     <div className="col-span-2">
                       <Input
                         type="number"
-                        placeholder="单价"
+                        placeholder="Rate"
                         value={item.rate}
                         onChange={(e) => updateItem(item.id, 'rate', Number(e.target.value))}
                       />
                     </div>
                     <div className="col-span-2">
                       <Input
-                        value={`¥${item.amount.toFixed(2)}`}
+                        value={`$${item.amount.toFixed(2)}`}
                         readOnly
                         className="bg-gray-50"
                       />
@@ -345,21 +346,21 @@ const InvoicePanel: React.FC = () => {
                 ))}
               </div>
 
-              {/* 总计 */}
+              {/* Total */}
               <div className="flex justify-end">
                 <div className="w-64 space-y-2">
                   <div className="flex justify-between">
-                    <span>小计:</span>
-                    <span>¥{calculateSubtotal().toFixed(2)}</span>
+                    <span>Subtotal:</span>
+                    <span>${calculateSubtotal().toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>税费 (10%):</span>
-                    <span>¥{calculateTax().toFixed(2)}</span>
+                    <span>Tax (10%):</span>
+                    <span>${calculateTax().toFixed(2)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
-                    <span>总计:</span>
-                    <span>¥{calculateTotal().toFixed(2)}</span>
+                    <span>Total:</span>
+                    <span>${calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -367,22 +368,22 @@ const InvoicePanel: React.FC = () => {
 
             <Separator />
 
-            {/* 备注和条款 */}
+            {/* Notes and Terms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="notes">备注</Label>
+                <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
-                  placeholder="感谢您的业务..."
+                  placeholder="Thank you for your business..."
                   value={invoice.notes}
                   onChange={(e) => setInvoice(prev => ({ ...prev, notes: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="terms">条款和条件</Label>
+                <Label htmlFor="terms">Terms and Conditions</Label>
                 <Textarea
                   id="terms"
-                  placeholder="付款条款..."
+                  placeholder="Payment terms..."
                   value={invoice.terms}
                   onChange={(e) => setInvoice(prev => ({ ...prev, terms: e.target.value }))}
                 />
@@ -392,7 +393,7 @@ const InvoicePanel: React.FC = () => {
         </Card>
       </div>
 
-      {/* 预览弹窗 */}
+      {/* Preview Modal */}
       <InvoicePreviewModal
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -157,16 +158,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* 新增发票模块 */}
+          {/* 发票制作模块 */}
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "invoice"}
               onClick={() => setActiveTab("invoice")}
-              tooltip="Make Invoice"
+              tooltip="Invoice Creation"
               className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <Receipt className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">🧾 Make Invoice</span>
+              <span className="group-data-[collapsible=icon]:hidden">🧾 发票制作</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
