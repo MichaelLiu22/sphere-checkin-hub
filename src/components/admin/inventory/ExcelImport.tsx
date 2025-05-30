@@ -10,6 +10,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Upload, FileSpreadsheet } from "lucide-react";
 import * as XLSX from "xlsx";
+import type { Database } from "@/integrations/supabase/types";
+
+type InReason = Database['public']['Enums']['inventory_in_reason'];
 
 interface ExcelImportProps {
   onSuccess: () => void;
@@ -28,9 +31,9 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onSuccess }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [excelData, setExcelData] = useState<ExcelRow[]>([]);
-  const [inReason, setInReason] = useState<string>("");
+  const [inReason, setInReason] = useState<InReason | "">("");
 
-  const inReasons = ["买货", "return", "赠送", "盘点", "调拨", "其它"];
+  const inReasons: InReason[] = ["买货", "return", "赠送", "盘点", "调拨", "其它"];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,6 +86,8 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onSuccess }) => {
     setLoading(true);
 
     try {
+      const reasonValue = inReason as InReason;
+      
       for (const item of excelData) {
         // 检查SKU是否已存在
         const { data: existingItem, error: queryError } = await supabase
@@ -102,7 +107,7 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onSuccess }) => {
             .update({
               quantity: newQuantity,
               unit_cost: item.unit_cost,
-              in_reason: inReason,
+              in_reason: reasonValue,
               ...(item.batch_number && { batch_number: item.batch_number }),
               ...(item.expiration_date && { expiration_date: item.expiration_date }),
             })
@@ -118,7 +123,7 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onSuccess }) => {
               product_name: item.product_name,
               quantity: item.quantity,
               unit_cost: item.unit_cost,
-              in_reason: inReason,
+              in_reason: reasonValue,
               batch_number: item.batch_number || null,
               expiration_date: item.expiration_date || null,
               created_by: user?.id
@@ -136,10 +141,10 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onSuccess }) => {
             quantity: item.quantity,
             operation_type: 'in',
             unit_cost: item.unit_cost,
-            in_reason: inReason,
+            in_reason: reasonValue,
             batch_number: item.batch_number || null,
             expiration_date: item.expiration_date || null,
-            reason: `Excel批量入库 - ${inReason}`,
+            reason: `Excel批量入库 - ${reasonValue}`,
             created_by: user?.id
           });
 
@@ -194,7 +199,7 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onSuccess }) => {
 
         <div className="space-y-2">
           <Label htmlFor="in-reason">入库原因 *</Label>
-          <Select onValueChange={setInReason}>
+          <Select onValueChange={(value: InReason) => setInReason(value)}>
             <SelectTrigger>
               <SelectValue placeholder="请选择入库原因" />
             </SelectTrigger>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Upload, Plus } from "lucide-react";
 import ExcelImport from "./ExcelImport";
+import type { Database } from "@/integrations/supabase/types";
+
+type InReason = Database['public']['Enums']['inventory_in_reason'];
 
 interface AddInventoryFormProps {
   onSuccess: () => void;
@@ -28,10 +32,10 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
     batch_number: "",
     expiration_date: "",
     min_stock_alert: "10",
-    in_reason: ""
+    in_reason: "" as InReason | ""
   });
 
-  const inReasons = ["买货", "return", "赠送", "盘点", "调拨", "其它"];
+  const inReasons: InReason[] = ["买货", "return", "赠送", "盘点", "调拨", "其它"];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -111,6 +115,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
       const quantity = parseInt(formData.quantity);
       const unitCost = parseFloat(formData.unit_cost);
       const minStockAlert = parseInt(formData.min_stock_alert);
+      const inReason = formData.in_reason as InReason;
 
       if (existingItem) {
         // 如果SKU已存在，更新库存数量（累加）
@@ -121,7 +126,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
           .update({
             quantity: newQuantity,
             unit_cost: unitCost,
-            in_reason: formData.in_reason,
+            in_reason: inReason,
             ...(imageUrl && { image_url: imageUrl }),
             ...(formData.batch_number && { batch_number: formData.batch_number }),
             ...(formData.expiration_date && { expiration_date: formData.expiration_date }),
@@ -140,10 +145,10 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
             quantity: quantity,
             operation_type: 'in',
             unit_cost: unitCost,
-            in_reason: formData.in_reason,
+            in_reason: inReason,
             batch_number: formData.batch_number || null,
             expiration_date: formData.expiration_date || null,
-            reason: `入库补货 - ${formData.in_reason}`,
+            reason: `入库补货 - ${inReason}`,
             created_by: user?.id
           });
 
@@ -159,7 +164,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
             product_name: formData.product_name,
             quantity: quantity,
             unit_cost: unitCost,
-            in_reason: formData.in_reason,
+            in_reason: inReason,
             image_url: imageUrl,
             batch_number: formData.batch_number || null,
             expiration_date: formData.expiration_date || null,
@@ -181,10 +186,10 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
             quantity: quantity,
             operation_type: 'in',
             unit_cost: unitCost,
-            in_reason: formData.in_reason,
+            in_reason: inReason,
             batch_number: formData.batch_number || null,
             expiration_date: formData.expiration_date || null,
-            reason: `新品入库 - ${formData.in_reason}`,
+            reason: `新品入库 - ${inReason}`,
             created_by: user?.id
           });
 
@@ -205,7 +210,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
         batch_number: "",
         expiration_date: "",
         min_stock_alert: "10",
-        in_reason: ""
+        in_reason: "" as InReason | ""
       });
       setImageFile(null);
       
@@ -291,7 +296,7 @@ const AddInventoryForm: React.FC<AddInventoryFormProps> = ({ onSuccess }) => {
 
                 <div className="space-y-2">
                   <Label htmlFor="in_reason">入库原因 *</Label>
-                  <Select onValueChange={(value) => setFormData(prev => ({ ...prev, in_reason: value }))}>
+                  <Select onValueChange={(value: InReason) => setFormData(prev => ({ ...prev, in_reason: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择入库原因" />
                     </SelectTrigger>
