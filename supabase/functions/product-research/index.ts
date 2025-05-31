@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -95,15 +96,48 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 验证用户是否存在于public.users表中
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .single()
+    // 首先检查用户是否在 auth.users 中存在
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId)
+    
+    if (authError || !authUser.user) {
+      console.error('Auth用户不存在:', authError)
+      throw new Error(`用户认证失败: ${authError?.message || '用户不存在'}`)
+    }
 
-    if (userError || !userData) {
-      throw new Error(`用户不存在: ${userError?.message}`)
+    // 然后检查或创建 public.users 记录
+    let { data: publicUser, error: publicUserError } = await supabase
+      .from('users')
+      .select('id, full_name')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (publicUserError && publicUserError.code !== 'PGRST116') {
+      console.error('查询public.users失败:', publicUserError)
+      throw new Error(`查询用户失败: ${publicUserError.message}`)
+    }
+
+    // 如果用户在 public.users 中不存在，创建记录
+    if (!publicUser) {
+      console.log('在public.users中创建用户记录')
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          full_name: authUser.user.email || 'Unknown User',
+          user_type: 'unassigned',
+          upload_permission: false,
+          task_permission: false
+        })
+        .select()
+        .single()
+
+      if (createError) {
+        console.error('创建用户记录失败:', createError)
+        throw new Error(`创建用户记录失败: ${createError.message}`)
+      }
+      
+      publicUser = newUser
+      console.log('用户记录创建成功:', publicUser.id)
     }
 
     // 检查缓存
@@ -199,7 +233,7 @@ serve(async (req) => {
 
     console.log('数据收集完成，保存报告...')
 
-    // 保存报告到数据库 - 使用正确的用户ID引用
+    // 保存报告到数据库 - 使用确认存在的用户ID
     const { data: savedReport, error: saveError } = await supabase
       .from('product_reports')
       .insert({
