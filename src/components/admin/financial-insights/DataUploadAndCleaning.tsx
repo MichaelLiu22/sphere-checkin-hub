@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DataUploadAndCleaningProps {
   onAnalysisComplete: (data: any) => void;
@@ -20,6 +21,7 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [analysisName, setAnalysisName] = useState("");
   const [activeTab, setActiveTab] = useState("upload");
+  const [settlementResult, setSettlementResult] = useState<any>(null);
   
   // 筛选条件
   const [startDate, setStartDate] = useState("");
@@ -62,11 +64,35 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
   const applyFilters = () => {
     let filtered = [...uploadedData];
 
-    // 按日期筛选
+    // 按日期筛选 - 检查多个可能的日期字段
     if (startDate || endDate) {
       filtered = filtered.filter((row) => {
-        const orderDate = new Date(row.Date || row.date || row['Order Create Day'] || row.created_at || '');
-        if (isNaN(orderDate.getTime())) return true; // 如果日期无效，保留数据
+        // 尝试多个可能的日期字段名
+        const possibleDateFields = [
+          'Order Create Day', 
+          'order create day', 
+          'Order Create Date', 
+          'order create date',
+          'Date', 
+          'date', 
+          'created_at',
+          'Created At'
+        ];
+        
+        let orderDate = null;
+        for (const field of possibleDateFields) {
+          if (row[field]) {
+            orderDate = new Date(row[field]);
+            if (!isNaN(orderDate.getTime())) {
+              break;
+            }
+          }
+        }
+        
+        if (!orderDate || isNaN(orderDate.getTime())) {
+          console.log("无法解析订单日期，保留该记录:", row);
+          return true; // 如果日期无效，保留数据
+        }
         
         const start = startDate ? new Date(startDate) : new Date('1970-01-01');
         const end = endDate ? new Date(endDate) : new Date('2099-12-31');
@@ -92,38 +118,92 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
     setEndDate("");
     setSelectedSKUs([]);
     setFilteredData(uploadedData);
+    setSettlementResult(null);
     toast.info("已清除所有筛选条件");
   };
 
-  const calculateSettlement = () => {
+  const calculateSettlement = async () => {
     if (filteredData.length === 0) {
       toast.error("没有数据可以计算");
       return;
     }
 
-    // 计算汇总数据
-    const settlement = {
-      totalOrders: filteredData.length,
-      totalRevenue: filteredData.reduce((sum, row) => {
-        const revenue = parseFloat(row.Revenue || row.revenue || row.Settlement || row.settlement || '0');
-        return sum + revenue;
-      }, 0),
-      totalQuantity: filteredData.reduce((sum, row) => {
-        const quantity = parseInt(row.Quantity || row.quantity || '1');
-        return sum + quantity;
-      }, 0),
-      dateRange: {
-        start: startDate || "不限",
-        end: endDate || "不限"
-      },
-      uniqueSKUs: [...new Set(filteredData.map(row => row.SKU || row.sku || ''))].filter(Boolean)
-    };
+    setIsProcessing(true);
+    try {
+      // 获取库存数据来计算成本
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory')
+        .select('sku, product_name, unit_cost');
 
-    console.log("Settlement计算结果:", settlement);
-    toast.success("Settlement计算完成");
-    
-    // 可以在这里添加更多的settlement展示逻辑
-    return settlement;
+      if (inventoryError) throw inventoryError;
+
+      // 创建SKU到成本的映射
+      const skuCostMap = new Map();
+      inventoryData?.forEach(item => {
+        skuCostMap.set(item.sku, item.unit_cost);
+      });
+
+      // 计算Settlement数据
+      let totalRevenue = 0;
+      let totalCost = 0;
+      let missingCostItems = [];
+      let missingCostCount = 0;
+
+      const processedData = filteredData.map((row, index) => {
+        const sku = row.SKU || row.sku || '';
+        const quantity = parseInt(row.Quantity || row.quantity || '1');
+        const revenue = parseFloat(row.Revenue || row.revenue || row.Settlement || row.settlement || '0');
+        
+        const unitCost = skuCostMap.get(sku);
+        let itemCost = 0;
+        
+        if (unitCost !== undefined) {
+          itemCost = unitCost * quantity;
+        } else {
+          missingCostItems.push({ sku, quantity });
+          missingCostCount += quantity;
+        }
+
+        totalRevenue += revenue;
+        totalCost += itemCost;
+
+        return {
+          orderId: index + 1,
+          sku,
+          quantity,
+          revenue,
+          unitCost: unitCost || '缺失',
+          itemCost,
+          hasCost: unitCost !== undefined
+        };
+      });
+
+      const settlement = {
+        totalOrders: filteredData.length,
+        totalRevenue,
+        totalCost,
+        totalProfit: totalRevenue - totalCost,
+        profitMargin: totalRevenue > 0 ? ((totalRevenue - totalCost) / totalRevenue) * 100 : 0,
+        missingCostItems,
+        missingCostCount,
+        dateRange: {
+          start: startDate || "不限",
+          end: endDate || "不限"
+        },
+        uniqueSKUs: [...new Set(filteredData.map(row => row.SKU || row.sku || ''))].filter(Boolean),
+        processedData
+      };
+
+      console.log("Settlement计算结果:", settlement);
+      setSettlementResult(settlement);
+      toast.success("Settlement计算完成");
+      
+    } catch (error: any) {
+      console.error("Settlement计算失败:", error);
+      toast.error(`计算失败: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const processAnalysis = async () => {
@@ -199,6 +279,7 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
       setStartDate("");
       setEndDate("");
       setSelectedSKUs([]);
+      setSettlementResult(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -360,31 +441,33 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg">
-                <div className="overflow-x-auto max-h-96">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted sticky top-0">
-                      <tr>
-                        {uploadedData.length > 0 && Object.keys(uploadedData[0]).slice(0, 8).map((key) => (
-                          <th key={key} className="p-2 text-left border-r">{key}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredData.slice(0, 50).map((row, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          {Object.values(row).slice(0, 8).map((value: any, colIndex) => (
-                            <td key={colIndex} className="p-2 border-r max-w-32 truncate">
-                              {value?.toString() || ''}
-                            </td>
+                <ScrollArea className="h-96 w-full">
+                  <div className="min-w-max">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          {uploadedData.length > 0 && Object.keys(uploadedData[0]).slice(0, 10).map((key) => (
+                            <th key={key} className="p-2 text-left border-r whitespace-nowrap">{key}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {filteredData.length > 50 && (
+                      </thead>
+                      <tbody>
+                        {filteredData.slice(0, 100).map((row, index) => (
+                          <tr key={index} className="border-b hover:bg-muted/50">
+                            {Object.values(row).slice(0, 10).map((value: any, colIndex) => (
+                              <td key={colIndex} className="p-2 border-r whitespace-nowrap">
+                                {value?.toString() || ''}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </ScrollArea>
+                {filteredData.length > 100 && (
                   <div className="p-3 text-center text-muted-foreground bg-muted/30">
-                    显示前50条记录，总共 {filteredData.length} 条
+                    显示前100条记录，总共 {filteredData.length} 条
                   </div>
                 )}
               </div>
@@ -403,7 +486,7 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startDate">开始日期</Label>
+                  <Label htmlFor="startDate">开始日期 (根据Order Create Date筛选)</Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -425,7 +508,7 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
               {uniqueSKUs.length > 0 && (
                 <div>
                   <Label>选择SKU筛选</Label>
-                  <div className="border rounded-lg p-3 max-h-32 overflow-y-auto">
+                  <ScrollArea className="h-32 border rounded-lg p-3">
                     {uniqueSKUs.map((sku) => (
                       <div key={sku} className="flex items-center space-x-2 mb-1">
                         <input
@@ -443,7 +526,7 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
                         <label htmlFor={`sku-${sku}`} className="text-sm">{sku}</label>
                       </div>
                     ))}
-                  </div>
+                  </ScrollArea>
                 </div>
               )}
 
@@ -455,7 +538,16 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
                 <Button variant="outline" onClick={clearFilters}>
                   清除筛选
                 </Button>
-                <Button variant="outline" onClick={calculateSettlement}>
+                <Button 
+                  variant="outline" 
+                  onClick={calculateSettlement}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Calculator className="mr-2 h-4 w-4" />
+                  )}
                   计算Settlement
                 </Button>
               </div>
@@ -468,6 +560,60 @@ const DataUploadAndCleaning: React.FC<DataUploadAndCleaningProps> = ({ onAnalysi
                   {selectedSKUs.length > 0 && ` | 已选SKU: ${selectedSKUs.length}个`}
                 </p>
               </div>
+
+              {/* Settlement计算结果 */}
+              {settlementResult && (
+                <Card className="bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-green-800">Settlement计算结果</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">总订单数</p>
+                        <p className="text-2xl font-bold text-blue-600">{settlementResult.totalOrders}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">总收入</p>
+                        <p className="text-2xl font-bold text-green-600">¥{settlementResult.totalRevenue.toLocaleString()}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">总成本</p>
+                        <p className="text-2xl font-bold text-red-600">¥{settlementResult.totalCost.toLocaleString()}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">毛利润</p>
+                        <p className="text-2xl font-bold text-purple-600">¥{settlementResult.totalProfit.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    {settlementResult.missingCostCount > 0 && (
+                      <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-3">
+                        <h4 className="font-semibold text-yellow-800 mb-2">⚠️ 缺失成本警告</h4>
+                        <p className="text-yellow-700 mb-2">
+                          共有 <strong>{settlementResult.missingCostCount}</strong> 个商品缺失成本数据
+                        </p>
+                        <div className="text-sm text-yellow-600">
+                          <p>缺失成本的SKU:</p>
+                          {settlementResult.missingCostItems.slice(0, 5).map((item: any, index: number) => (
+                            <span key={index} className="inline-block bg-yellow-200 rounded px-2 py-1 mr-1 mb-1">
+                              {item.sku} (数量: {item.quantity})
+                            </span>
+                          ))}
+                          {settlementResult.missingCostItems.length > 5 && (
+                            <span className="text-yellow-500">...还有{settlementResult.missingCostItems.length - 5}个</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="text-sm text-green-700">
+                      <p>毛利率: {settlementResult.profitMargin.toFixed(2)}%</p>
+                      <p>唯一SKU数: {settlementResult.uniqueSKUs.length}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
