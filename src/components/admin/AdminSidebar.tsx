@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -132,16 +131,29 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          {/* 财务模块 */}
+          {/* 财务管理模块 - 更新为智能毛利润分析 */}
           <SidebarMenuItem>
             <SidebarMenuButton 
-              isActive={activeTab === "finance"}
-              onClick={() => setActiveTab("finance")}
-              tooltip="Finance"
+              isActive={activeTab === "financial-insights"}
+              onClick={() => setActiveTab("financial-insights")}
+              tooltip="Financial Insights"
               className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <DollarSign className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 原来的财务模块改名为数据清洗 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "finance"}
+              onClick={() => setActiveTab("finance")}
+              tooltip="Data Cleaning"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">🧹 数据清洗</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 

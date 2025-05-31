@@ -65,6 +65,42 @@ export type Database = {
           },
         ]
       }
+      fixed_costs: {
+        Row: {
+          amount: number
+          cost_name: string
+          cost_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cost_name: string
+          cost_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cost_name?: string
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           batch_number: string | null
@@ -302,6 +338,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profit_analysis: {
+        Row: {
+          analysis_date: string
+          analysis_name: string
+          cost_breakdown: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          payout_data: Json
+          profit_summary: Json
+        }
+        Insert: {
+          analysis_date: string
+          analysis_name: string
+          cost_breakdown: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payout_data: Json
+          profit_summary: Json
+        }
+        Update: {
+          analysis_date?: string
+          analysis_name?: string
+          cost_breakdown?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payout_data?: Json
+          profit_summary?: Json
+        }
+        Relationships: []
+      }
       spherecheckin: {
         Row: {
           created_at: string
@@ -339,6 +408,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      streamer_salary: {
+        Row: {
+          base_amount: number
+          commission_rate: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          salary_type: string
+          streamer_name: string
+          updated_at: string
+          work_schedule: Json | null
+        }
+        Insert: {
+          base_amount: number
+          commission_rate?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          salary_type: string
+          streamer_name: string
+          updated_at?: string
+          work_schedule?: Json | null
+        }
+        Update: {
+          base_amount?: number
+          commission_rate?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          salary_type?: string
+          streamer_name?: string
+          updated_at?: string
+          work_schedule?: Json | null
+        }
+        Relationships: []
       }
       tasks: {
         Row: {

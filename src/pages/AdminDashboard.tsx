@@ -1,4 +1,3 @@
-
 /**
  * 管理员仪表板页面
  * 提供管理员功能，包括任务管理、W9文件管理、用户管理、权限配置等
@@ -17,6 +16,7 @@ import InventoryPanel from "@/components/admin/InventoryPanel";
 import InvoicePanel from "@/components/admin/InvoicePanel";
 import ProductReportPanel from "@/components/admin/ProductReportPanel";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import FinancialInsightsPanel from "@/components/admin/FinancialInsightsPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -164,6 +164,10 @@ const AdminDashboard: React.FC = () => {
               {/* 库存系统 */}
               {activeTab === "inventory" && <InventoryPanel />}
               
+              {/* 智能毛利润分析系统 - 新的财务管理面板 */}
+              {activeTab === "financial-insights" && <FinancialInsightsPanel />}
+              
+              {/* 原来的财务面板改为数据清洗 */}
               {activeTab === "finance" && (
                 <ExcelCleanerPanel />
               )}
