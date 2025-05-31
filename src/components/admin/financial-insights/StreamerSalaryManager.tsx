@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, Save, X, Clock, Calendar, Percent } from "lucide-react";
+import { Plus, Edit, Trash2, Users, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,32 +15,35 @@ import { useAuth } from "@/contexts/AuthContext";
 interface StreamerSalary {
   id: string;
   streamer_name: string;
-  salary_type: 'hourly' | 'monthly' | 'commission';
+  salary_type: 'monthly' | 'commission' | 'hourly';
   base_amount: number;
   commission_rate?: number;
   work_schedule?: any;
   is_active: boolean;
+  created_at: string;
 }
 
 const StreamerSalaryManager: React.FC = () => {
-  const [streamers, setStreamers] = useState<StreamerSalary[]>([]);
+  const [salaries, setSalaries] = useState<StreamerSalary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({
-    streamer_name: '',
-    salary_type: 'monthly' as const,
-    base_amount: '',
-    commission_rate: '',
-    work_schedule: ''
-  });
   const { user } = useAuth();
 
+  // 表单状态
+  const [formData, setFormData] = useState({
+    streamer_name: "",
+    salary_type: "monthly" as 'monthly' | 'commission' | 'hourly',
+    base_amount: 0,
+    commission_rate: 0,
+    is_active: true
+  });
+
   useEffect(() => {
-    fetchStreamers();
+    fetchSalaries();
   }, []);
 
-  const fetchStreamers = async () => {
+  const fetchSalaries = async () => {
     try {
       const { data, error } = await supabase
         .from('streamer_salary')
@@ -48,92 +51,92 @@ const StreamerSalaryManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Type assertion to ensure the data matches our interface
-      const typedData = (data || []).map(item => ({
-        ...item,
-        salary_type: item.salary_type as 'hourly' | 'monthly' | 'commission'
-      }));
-      
-      setStreamers(typedData);
+      setSalaries(data || []);
     } catch (error: any) {
-      console.error('获取主播工资失败:', error);
-      toast.error('获取主播工资失败');
+      console.error("获取主播工资数据失败:", error);
+      toast.error("获取数据失败");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.streamer_name || !formData.base_amount) {
-      toast.error('请填写必填字段');
+  const handleSubmit = async () => {
+    if (!formData.streamer_name.trim()) {
+      toast.error("请输入主播姓名");
+      return;
+    }
+
+    if (formData.base_amount <= 0) {
+      toast.error("请输入有效的基础金额");
+      return;
+    }
+
+    if (formData.salary_type === 'commission' && formData.commission_rate <= 0) {
+      toast.error("提成模式需要设置提成比例");
       return;
     }
 
     try {
-      const submitData: any = {
+      const salaryData = {
         streamer_name: formData.streamer_name,
         salary_type: formData.salary_type,
-        base_amount: parseFloat(formData.base_amount),
+        base_amount: formData.base_amount,
+        commission_rate: formData.salary_type === 'commission' ? formData.commission_rate : null,
+        is_active: formData.is_active,
         created_by: user?.id
       };
 
-      if (formData.salary_type === 'commission' && formData.commission_rate) {
-        submitData.commission_rate = parseFloat(formData.commission_rate);
+      if (editingId) {
+        const { error } = await supabase
+          .from('streamer_salary')
+          .update(salaryData)
+          .eq('id', editingId);
+
+        if (error) throw error;
+        toast.success("更新成功");
+      } else {
+        const { error } = await supabase
+          .from('streamer_salary')
+          .insert(salaryData);
+
+        if (error) throw error;
+        toast.success("添加成功");
       }
 
-      if (formData.work_schedule) {
-        try {
-          submitData.work_schedule = JSON.parse(formData.work_schedule);
-        } catch {
-          submitData.work_schedule = { notes: formData.work_schedule };
-        }
-      }
-
-      const { error } = await supabase
-        .from('streamer_salary')
-        .insert(submitData);
-
-      if (error) throw error;
-
-      toast.success('主播工资配置添加成功');
-      setFormData({ 
-        streamer_name: '', 
-        salary_type: 'monthly', 
-        base_amount: '', 
-        commission_rate: '', 
-        work_schedule: '' 
-      });
-      setShowAddForm(false);
-      fetchStreamers();
+      resetForm();
+      fetchSalaries();
     } catch (error: any) {
-      console.error('添加主播工资失败:', error);
-      toast.error('添加失败');
+      console.error("操作失败:", error);
+      toast.error("操作失败");
     }
   };
 
-  const handleUpdate = async (id: string, updates: Partial<StreamerSalary>) => {
-    try {
-      const { error } = await supabase
-        .from('streamer_salary')
-        .update(updates)
-        .eq('id', id);
+  const resetForm = () => {
+    setFormData({
+      streamer_name: "",
+      salary_type: "monthly",
+      base_amount: 0,
+      commission_rate: 0,
+      is_active: true
+    });
+    setIsAddingNew(false);
+    setEditingId(null);
+  };
 
-      if (error) throw error;
-
-      toast.success('更新成功');
-      setEditingId(null);
-      fetchStreamers();
-    } catch (error: any) {
-      console.error('更新失败:', error);
-      toast.error('更新失败');
-    }
+  const handleEdit = (salary: StreamerSalary) => {
+    setFormData({
+      streamer_name: salary.streamer_name,
+      salary_type: salary.salary_type,
+      base_amount: salary.base_amount,
+      commission_rate: salary.commission_rate || 0,
+      is_active: salary.is_active
+    });
+    setEditingId(salary.id);
+    setIsAddingNew(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个主播工资配置吗？')) return;
+    if (!confirm("确定要删除这条记录吗？")) return;
 
     try {
       const { error } = await supabase
@@ -142,158 +145,260 @@ const StreamerSalaryManager: React.FC = () => {
         .eq('id', id);
 
       if (error) throw error;
-
-      toast.success('删除成功');
-      fetchStreamers();
+      toast.success("删除成功");
+      fetchSalaries();
     } catch (error: any) {
-      console.error('删除失败:', error);
-      toast.error('删除失败');
+      console.error("删除失败:", error);
+      toast.error("删除失败");
+    }
+  };
+
+  const toggleActive = async (id: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('streamer_salary')
+        .update({ is_active: !isActive })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success("状态更新成功");
+      fetchSalaries();
+    } catch (error: any) {
+      console.error("状态更新失败:", error);
+      toast.error("状态更新失败");
     }
   };
 
   const getSalaryTypeLabel = (type: string) => {
     switch (type) {
-      case 'hourly': return '时薪制';
-      case 'monthly': return '月薪制';
-      case 'commission': return '提成制';
-      default: return type;
+      case 'monthly':
+        return '月薪';
+      case 'commission':
+        return '提成';
+      case 'hourly':
+        return '时薪';
+      default:
+        return type;
     }
   };
 
+  const getTotalMonthlyCost = () => {
+    return salaries
+      .filter(s => s.is_active)
+      .reduce((total, salary) => {
+        if (salary.salary_type === 'monthly') {
+          return total + salary.base_amount;
+        }
+        return total;
+      }, 0);
+  };
+
   if (isLoading) {
-    return <div>加载中...</div>;
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">加载中...</div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {/* 汇总信息 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-8 w-8 text-blue-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">活跃主播</p>
+                <p className="text-2xl font-bold">{salaries.filter(s => s.is_active).length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-8 w-8 text-green-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">月度固定成本</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ¥{getTotalMonthlyCost().toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-8 w-8 text-purple-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">总主播数</p>
+                <p className="text-2xl font-bold text-purple-600">{salaries.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 添加新主播 */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>👥 主播工资设置</CardTitle>
-          <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
-            <Plus className="mr-2 h-4 w-4" />
-            添加主播
-          </Button>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>主播工资管理</CardTitle>
+            <Button onClick={() => setIsAddingNew(true)} disabled={isAddingNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              添加主播
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          {showAddForm && (
-            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg mb-4">
-              <div className="grid grid-cols-2 gap-4">
+        
+        {isAddingNew && (
+          <CardContent className="border-t">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="streamer_name">主播姓名 *</Label>
+                  <Label htmlFor="streamerName">主播姓名</Label>
                   <Input
-                    id="streamer_name"
+                    id="streamerName"
                     value={formData.streamer_name}
-                    onChange={(e) => setFormData({ ...formData, streamer_name: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, streamer_name: e.target.value }))}
                     placeholder="输入主播姓名"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="salary_type">薪资类型 *</Label>
-                  <Select
-                    value={formData.salary_type}
-                    onValueChange={(value: any) => setFormData({ ...formData, salary_type: value })}
+                  <Label htmlFor="salaryType">薪资类型</Label>
+                  <Select 
+                    value={formData.salary_type} 
+                    onValueChange={(value: 'monthly' | 'commission' | 'hourly') => 
+                      setFormData(prev => ({ ...prev, salary_type: value }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hourly">时薪制</SelectItem>
-                      <SelectItem value="monthly">月薪制</SelectItem>
-                      <SelectItem value="commission">提成制</SelectItem>
+                      <SelectItem value="monthly">月薪</SelectItem>
+                      <SelectItem value="commission">提成</SelectItem>
+                      <SelectItem value="hourly">时薪</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="base_amount">基础金额 *</Label>
-                <Input
-                  id="base_amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.base_amount}
-                  onChange={(e) => setFormData({ ...formData, base_amount: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              
-              {formData.salary_type === 'commission' && (
+
                 <div>
-                  <Label htmlFor="commission_rate">提成比例 (%)</Label>
+                  <Label htmlFor="baseAmount">
+                    {formData.salary_type === 'monthly' ? '月薪金额 (¥)' : 
+                     formData.salary_type === 'hourly' ? '时薪金额 (¥)' : '基础工资 (¥)'}
+                  </Label>
                   <Input
-                    id="commission_rate"
+                    id="baseAmount"
                     type="number"
-                    step="0.01"
-                    value={formData.commission_rate}
-                    onChange={(e) => setFormData({ ...formData, commission_rate: e.target.value })}
-                    placeholder="10.00"
+                    value={formData.base_amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, base_amount: parseFloat(e.target.value) || 0 }))}
+                    placeholder="输入金额"
                   />
                 </div>
-              )}
-              
-              <div>
-                <Label htmlFor="work_schedule">工作安排</Label>
-                <Textarea
-                  id="work_schedule"
-                  value={formData.work_schedule}
-                  onChange={(e) => setFormData({ ...formData, work_schedule: e.target.value })}
-                  placeholder="工作时间安排、直播时段等..."
-                />
+
+                {formData.salary_type === 'commission' && (
+                  <div>
+                    <Label htmlFor="commissionRate">提成比例 (%)</Label>
+                    <Input
+                      id="commissionRate"
+                      type="number"
+                      value={formData.commission_rate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, commission_rate: parseFloat(e.target.value) || 0 }))}
+                      placeholder="输入提成比例"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                )}
               </div>
-              
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                />
+                <Label htmlFor="isActive">激活状态</Label>
+              </div>
+
               <div className="flex gap-2">
-                <Button type="submit">
-                  <Save className="mr-2 h-4 w-4" />
-                  保存
+                <Button onClick={handleSubmit}>
+                  {editingId ? "更新" : "添加"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
-                  <X className="mr-2 h-4 w-4" />
+                <Button variant="outline" onClick={resetForm}>
                   取消
                 </Button>
               </div>
-            </form>
-          )}
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
-          <div className="space-y-2">
-            {streamers.map((streamer) => (
-              <div key={streamer.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium">{streamer.streamer_name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {getSalaryTypeLabel(streamer.salary_type)} - ¥{streamer.base_amount.toLocaleString()}
-                    {streamer.salary_type === 'commission' && streamer.commission_rate && (
-                      <span className="ml-2">提成: {streamer.commission_rate}%</span>
-                    )}
+      {/* 主播列表 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>主播列表 ({salaries.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {salaries.map((salary) => (
+              <div key={salary.id} className="border rounded-lg p-4">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{salary.streamer_name}</h3>
+                      <Badge variant={salary.is_active ? "default" : "secondary"}>
+                        {salary.is_active ? "活跃" : "停用"}
+                      </Badge>
+                      <Badge variant="outline">
+                        {getSalaryTypeLabel(salary.salary_type)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">
+                      <p>基础金额: ¥{salary.base_amount.toLocaleString()}</p>
+                      {salary.commission_rate && (
+                        <p>提成比例: {salary.commission_rate}%</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={streamer.is_active}
-                    onCheckedChange={(checked) => handleUpdate(streamer.id, { is_active: checked })}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingId(streamer.id)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(streamer.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+
+                  <div className="flex gap-2">
+                    <Switch
+                      checked={salary.is_active}
+                      onCheckedChange={() => toggleActive(salary.id, salary.is_active)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(salary)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(salary.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
-            
-            {streamers.length === 0 && (
+
+            {salaries.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
-                暂无主播工资配置，点击上方按钮添加
+                暂无主播工资数据
               </div>
             )}
           </div>
