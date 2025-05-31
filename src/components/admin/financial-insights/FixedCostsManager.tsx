@@ -46,7 +46,14 @@ const FixedCostsManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFixedCosts(data || []);
+      
+      // Type assertion to ensure the data matches our interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        cost_type: item.cost_type as 'monthly' | 'daily' | 'variable'
+      }));
+      
+      setFixedCosts(typedData);
     } catch (error: any) {
       console.error('获取固定成本失败:', error);
       toast.error('获取固定成本失败');

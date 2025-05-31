@@ -45,7 +45,14 @@ const StreamerSalaryManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStreamers(data || []);
+      
+      // Type assertion to ensure the data matches our interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        salary_type: item.salary_type as 'hourly' | 'monthly' | 'commission'
+      }));
+      
+      setStreamers(typedData);
     } catch (error: any) {
       console.error('获取主播工资失败:', error);
       toast.error('获取主播工资失败');
