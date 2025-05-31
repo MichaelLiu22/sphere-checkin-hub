@@ -174,6 +174,33 @@ export type Database = {
           },
         ]
       }
+      product_cache: {
+        Row: {
+          cached_data: Json | null
+          created_at: string | null
+          data_source: string
+          expires_at: string | null
+          id: string
+          product_name: string
+        }
+        Insert: {
+          cached_data?: Json | null
+          created_at?: string | null
+          data_source: string
+          expires_at?: string | null
+          id?: string
+          product_name: string
+        }
+        Update: {
+          cached_data?: Json | null
+          created_at?: string | null
+          data_source?: string
+          expires_at?: string | null
+          id?: string
+          product_name?: string
+        }
+        Relationships: []
+      }
       product_costs: {
         Row: {
           cost: number
@@ -214,6 +241,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          pdf_url: string | null
+          product_name: string
+          report_data: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          pdf_url?: string | null
+          product_name: string
+          report_data?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          pdf_url?: string | null
+          product_name?: string
+          report_data?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
