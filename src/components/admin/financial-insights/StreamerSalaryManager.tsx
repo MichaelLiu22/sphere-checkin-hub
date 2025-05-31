@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,14 @@ const StreamerSalaryManager: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSalaries(data || []);
+      
+      // 类型安全地处理数据
+      const typedData = (data || []).map(item => ({
+        ...item,
+        salary_type: item.salary_type as 'monthly' | 'commission' | 'hourly'
+      }));
+      
+      setSalaries(typedData);
     } catch (error: any) {
       console.error("获取主播工资数据失败:", error);
       toast.error("获取数据失败");
