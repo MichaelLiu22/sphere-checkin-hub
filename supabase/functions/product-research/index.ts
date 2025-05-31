@@ -12,6 +12,10 @@ interface ProductResearchRequest {
   userId: string;
 }
 
+interface ProductSuggestionRequest {
+  query: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -19,6 +23,65 @@ serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url)
+    const action = url.searchParams.get('action')
+
+    // 处理产品建议请求
+    if (action === 'suggest') {
+      const { query }: ProductSuggestionRequest = await req.json()
+      
+      if (!query || query.length < 2) {
+        return new Response(
+          JSON.stringify({ suggestions: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`获取产品建议: ${query}`)
+
+      // 从维基百科搜索API获取建议
+      const suggestions = []
+      try {
+        const searchResponse = await fetch(
+          `https://en.wikipedia.org/api/rest_v1/page/search/${encodeURIComponent(query)}?limit=5`
+        )
+        
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json()
+          suggestions.push(...searchData.pages.map((page: any) => ({
+            title: page.title,
+            description: page.description || page.extract || ''
+          })))
+        }
+      } catch (error) {
+        console.error('维基百科搜索错误:', error)
+      }
+
+      // 添加一些常见产品建议
+      const commonProducts = [
+        'Jordan 1 Chicago',
+        'iPhone 15 Pro',
+        'Nike Air Force 1',
+        'Adidas Yeezy 350',
+        'Louis Vuitton Speedy',
+        'Rolex Submariner',
+        'MacBook Pro M3',
+        'PlayStation 5'
+      ].filter(product => product.toLowerCase().includes(query.toLowerCase()))
+
+      commonProducts.forEach(product => {
+        if (!suggestions.find(s => s.title === product)) {
+          suggestions.push({ title: product, description: 'Popular product' })
+        }
+      })
+
+      return new Response(
+        JSON.stringify({ suggestions: suggestions.slice(0, 8) }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 处理产品研究请求
     const { productName, userId }: ProductResearchRequest = await req.json()
     
     if (!productName || !userId) {
@@ -32,6 +95,17 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // 验证用户是否存在于public.users表中
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single()
+
+    if (userError || !userData) {
+      throw new Error(`用户不存在: ${userError?.message}`)
+    }
 
     // 检查缓存
     const cacheResults = await Promise.all([
@@ -126,7 +200,7 @@ serve(async (req) => {
 
     console.log('数据收集完成，保存报告...')
 
-    // 保存报告到数据库
+    // 保存报告到数据库 - 使用正确的用户ID引用
     const { data: savedReport, error: saveError } = await supabase
       .from('product_reports')
       .insert({
@@ -139,6 +213,7 @@ serve(async (req) => {
       .single()
 
     if (saveError) {
+      console.error('保存报告失败:', saveError)
       throw new Error(`保存报告失败: ${saveError.message}`)
     }
 

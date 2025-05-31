@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import ProductReportHistory from "./product-report/ProductReportHistory";
 import ProductReportPreview from "./product-report/ProductReportPreview";
+import ProductSuggestions from "./product-report/ProductSuggestions";
 
 interface ProductReportData {
   id: string;
@@ -20,13 +21,33 @@ interface ProductReportData {
 
 const ProductReportPanel: React.FC = () => {
   const [productName, setProductName] = useState("");
+  const [confirmedProductName, setConfirmedProductName] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentReport, setCurrentReport] = useState<ProductReportData | null>(null);
   const [reports, setReports] = useState<ProductReportData[]>([]);
   const { user } = useAuth();
 
+  const handleInputChange = (value: string) => {
+    setProductName(value);
+    setConfirmedProductName("");
+    setShowSuggestions(value.length >= 2);
+  };
+
+  const handleProductSelect = (selectedProduct: string) => {
+    setConfirmedProductName(selectedProduct);
+    setProductName(selectedProduct);
+  };
+
+  const handleConfirmProduct = () => {
+    setShowSuggestions(false);
+    toast.success(`已确认产品: ${confirmedProductName}`);
+  };
+
   const handleGenerateReport = async () => {
-    if (!productName.trim()) {
+    const finalProductName = confirmedProductName || productName.trim();
+    
+    if (!finalProductName) {
       toast.error("请输入产品名称");
       return;
     }
@@ -38,12 +59,12 @@ const ProductReportPanel: React.FC = () => {
 
     setIsGenerating(true);
     try {
-      console.log("开始生成产品报告:", productName);
+      console.log("开始生成产品报告:", finalProductName);
       
       // 调用 Edge Function 生成报告
       const { data, error } = await supabase.functions.invoke('product-research', {
         body: { 
-          productName: productName.trim(),
+          productName: finalProductName,
           userId: user.id 
         }
       });
@@ -73,6 +94,8 @@ const ProductReportPanel: React.FC = () => {
 
       toast.success("产品报告生成成功！");
       setProductName("");
+      setConfirmedProductName("");
+      setShowSuggestions(false);
     } catch (error: any) {
       console.error("生成报告失败:", error);
       toast.error(`生成报告失败: ${error.message || '未知错误'}`);
@@ -141,32 +164,52 @@ const ProductReportPanel: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="输入产品名称 (例如: Jordan 1 Chicago, iPhone 15 Pro)"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleGenerateReport()}
-              disabled={isGenerating}
-              className="flex-1"
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="输入产品名称 (例如: Jordan 1 Chicago, iPhone 15 Pro)"
+                value={productName}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !showSuggestions) {
+                    handleGenerateReport();
+                  }
+                }}
+                disabled={isGenerating}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleGenerateReport}
+                disabled={isGenerating || !productName.trim() || showSuggestions}
+                className="flex items-center gap-2"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                {isGenerating ? "生成中..." : "生成报告"}
+              </Button>
+            </div>
+
+            {/* 产品建议组件 */}
+            <ProductSuggestions
+              query={productName}
+              onSelect={handleProductSelect}
+              onConfirm={handleConfirmProduct}
+              isVisible={showSuggestions}
             />
-            <Button 
-              onClick={handleGenerateReport}
-              disabled={isGenerating || !productName.trim()}
-              className="flex items-center gap-2"
-            >
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileText className="h-4 w-4" />
-              )}
-              {isGenerating ? "生成中..." : "生成报告"}
-            </Button>
           </div>
           
           {isGenerating && (
             <div className="text-sm text-muted-foreground">
               正在收集产品信息... 这可能需要1-2分钟时间
+            </div>
+          )}
+
+          {confirmedProductName && !showSuggestions && (
+            <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+              ✓ 已确认产品: {confirmedProductName}
             </div>
           )}
         </CardContent>
