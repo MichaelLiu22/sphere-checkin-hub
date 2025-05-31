@@ -1,3 +1,4 @@
+
 /**
  * 管理员仪表板页面
  * 提供管理员功能，包括任务管理、W9文件管理、用户管理、权限配置等
@@ -10,8 +11,6 @@ import W9FilesPanel from "@/components/admin/W9FilesPanel";
 import FileUploadPanel from "@/components/admin/FileUploadPanel";
 import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
-import ExcelCleanerPanel from "@/components/admin/ExcelCleanerPanel";
-import CostSheetUploadPanel from "@/components/admin/CostSheetUploadPanel";
 import InventoryPanel from "@/components/admin/InventoryPanel";
 import InvoicePanel from "@/components/admin/InvoicePanel";
 import ProductReportPanel from "@/components/admin/ProductReportPanel";
@@ -164,22 +163,13 @@ const AdminDashboard: React.FC = () => {
               {/* 库存系统 */}
               {activeTab === "inventory" && <InventoryPanel />}
               
-              {/* 智能毛利润分析系统 - 新的财务管理面板 */}
+              {/* 整合后的财务管理系统 */}
               {activeTab === "financial-insights" && <FinancialInsightsPanel />}
-              
-              {/* 原来的财务面板改为数据清洗 */}
-              {activeTab === "finance" && (
-                <ExcelCleanerPanel />
-              )}
-              
-              {activeTab === "costsheet" && (
-                <CostSheetUploadPanel />
-              )}
               
               {/* 发票面板 */}
               {activeTab === "invoice" && <InvoicePanel />}
 
-              {/* 新增产品报告面板 */}
+              {/* 产品报告面板 */}
               {activeTab === "product-report" && <ProductReportPanel />}
               
               {activeTab === "calendar" && (

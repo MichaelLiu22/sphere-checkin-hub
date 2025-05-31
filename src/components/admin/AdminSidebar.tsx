@@ -1,9 +1,10 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, FileSpreadsheet, Package, Receipt, Search } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, Package, Receipt, Search } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -131,42 +132,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          {/* 财务管理模块 - 更新为智能毛利润分析 */}
+          {/* 财务管理模块 - 整合后的完整财务系统 */}
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "financial-insights"}
               onClick={() => setActiveTab("financial-insights")}
-              tooltip="Financial Insights"
+              tooltip="Financial Management"
               className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <DollarSign className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* 原来的财务模块改名为数据清洗 */}
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === "finance"}
-              onClick={() => setActiveTab("finance")}
-              tooltip="Data Cleaning"
-              className="text-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">🧹 数据清洗</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* 成本表上传模块 */}
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === "costsheet"}
-              onClick={() => setActiveTab("costsheet")}
-              tooltip="Cost Sheet Upload"
-              className="text-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">💹 成本表上传</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -183,7 +158,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* 新增产品报告模块 */}
+          {/* 产品报告模块 */}
           <SidebarMenuItem>
             <SidebarMenuButton 
               isActive={activeTab === "product-report"}
