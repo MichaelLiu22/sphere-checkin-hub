@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -14,6 +13,7 @@ interface ProductResearchRequest {
 
 interface ProductSuggestionRequest {
   query: string;
+  action?: string;
 }
 
 serve(async (req) => {
@@ -23,12 +23,11 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url)
-    const action = url.searchParams.get('action')
-
+    const requestBody = await req.json()
+    
     // 处理产品建议请求
-    if (action === 'suggest') {
-      const { query }: ProductSuggestionRequest = await req.json()
+    if (requestBody.action === 'suggest' || requestBody.query) {
+      const { query }: ProductSuggestionRequest = requestBody
       
       if (!query || query.length < 2) {
         return new Response(
@@ -82,7 +81,7 @@ serve(async (req) => {
     }
 
     // 处理产品研究请求
-    const { productName, userId }: ProductResearchRequest = await req.json()
+    const { productName, userId }: ProductResearchRequest = requestBody
     
     if (!productName || !userId) {
       throw new Error('Missing required parameters')

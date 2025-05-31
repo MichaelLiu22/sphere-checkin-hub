@@ -36,34 +36,16 @@ const ProductSuggestions: React.FC<ProductSuggestionsProps> = ({
     const fetchSuggestions = async () => {
       setLoading(true);
       try {
+        // 使用正确的 Supabase functions.invoke 方法
         const { data, error } = await supabase.functions.invoke('product-research', {
-          body: { query },
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          }
+          body: { query, action: 'suggest' }
         });
 
-        // 手动构建URL以包含action参数
-        const response = await fetch(
-          `${supabase.supabaseUrl}/functions/v1/product-research?action=suggest`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabase.supabaseKey}`,
-            },
-            body: JSON.stringify({ query })
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setSuggestions(data.suggestions || []);
+        if (error) {
+          console.error('获取建议失败:', error);
+          setSuggestions([]);
+        } else {
+          setSuggestions(data?.suggestions || []);
         }
       } catch (error) {
         console.error('获取建议失败:', error);
