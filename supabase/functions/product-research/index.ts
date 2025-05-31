@@ -25,9 +25,10 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json()
+    console.log('收到请求:', JSON.stringify(requestBody))
     
     // 处理产品建议请求
-    if (requestBody.action === 'suggest' || requestBody.query) {
+    if (requestBody.action === 'suggest' || (requestBody.query && !requestBody.productName)) {
       const { query }: ProductSuggestionRequest = requestBody
       
       if (!query || query.length < 2) {
@@ -85,14 +86,38 @@ serve(async (req) => {
     const { productName, userId }: ProductResearchRequest = requestBody
     
     if (!productName || !userId) {
-      throw new Error('Missing required parameters')
+      console.error('缺少必需参数:', { productName, userId })
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Missing required parameters: productName and userId are required' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
     }
 
     console.log(`开始研究产品: ${productName} for user: ${userId}`)
 
     // 初始化 Supabase 客户端
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase环境变量未配置')
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Server configuration error' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      )
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -101,7 +126,16 @@ serve(async (req) => {
     
     if (authError || !authUser.user) {
       console.error('Auth用户不存在:', authError)
-      throw new Error(`用户认证失败: ${authError?.message || '用户不存在'}`)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `用户认证失败: ${authError?.message || '用户不存在'}` 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404 
+        }
+      )
     }
 
     // 然后检查或创建 public.users 记录
@@ -113,7 +147,16 @@ serve(async (req) => {
 
     if (publicUserError && publicUserError.code !== 'PGRST116') {
       console.error('查询public.users失败:', publicUserError)
-      throw new Error(`查询用户失败: ${publicUserError.message}`)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `查询用户失败: ${publicUserError.message}` 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      )
     }
 
     // 如果用户在 public.users 中不存在，创建记录
@@ -133,7 +176,16 @@ serve(async (req) => {
 
       if (createError) {
         console.error('创建用户记录失败:', createError)
-        throw new Error(`创建用户记录失败: ${createError.message}`)
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `创建用户记录失败: ${createError.message}` 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
       }
       
       publicUser = newUser
@@ -247,7 +299,16 @@ serve(async (req) => {
 
     if (saveError) {
       console.error('保存报告失败:', saveError)
-      throw new Error(`保存报告失败: ${saveError.message}`)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `保存报告失败: ${saveError.message}` 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      )
     }
 
     console.log('报告保存成功:', savedReport.id)
@@ -275,7 +336,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       },
     )
   }
