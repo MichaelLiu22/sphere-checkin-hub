@@ -1,6 +1,9 @@
 
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import InvoicePDFTemplate from '@/components/admin/invoice/InvoicePDFTemplate';
 
 interface InvoiceItem {
   id: string;
@@ -31,18 +34,37 @@ interface InvoiceData {
 
 export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<void> => {
   try {
-    // 获取预览元素
-    const element = document.getElementById('invoice-preview');
+    // 创建一个临时的DOM元素来渲染PDF模板
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '-9999px';
+    tempDiv.style.width = '800px'; // 固定宽度确保桌面版布局
+    document.body.appendChild(tempDiv);
+
+    // 渲染PDF模板组件到临时DOM元素
+    const root = createRoot(tempDiv);
+    const invoiceElement = React.createElement(InvoicePDFTemplate, { invoiceData });
+    
+    await new Promise<void>((resolve) => {
+      root.render(invoiceElement);
+      // 等待渲染完成
+      setTimeout(resolve, 100);
+    });
+
+    const element = tempDiv.querySelector('#invoice-pdf-template') as HTMLElement;
     if (!element) {
-      throw new Error('Invoice preview element not found');
+      throw new Error('Invoice PDF template element not found');
     }
 
-    // 使用html2canvas生成canvas
+    // 使用html2canvas生成canvas，强制使用桌面版布局
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
+      width: 800, // 固定宽度
+      windowWidth: 800, // 窗口宽度
     });
 
     // 创建PDF
@@ -74,10 +96,14 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<void
       }
     }
 
+    // 清理临时DOM元素
+    root.unmount();
+    document.body.removeChild(tempDiv);
+
     // 下载PDF
-    pdf.save(`发票_${invoiceData.invoiceNumber}.pdf`);
+    pdf.save(`Invoice_${invoiceData.invoiceNumber}.pdf`);
   } catch (error) {
-    console.error('PDF生成失败:', error);
-    throw new Error('PDF生成失败，请重试');
+    console.error('PDF generation failed:', error);
+    throw new Error('PDF generation failed, please try again');
   }
 };
