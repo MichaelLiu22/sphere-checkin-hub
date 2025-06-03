@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import W9FilesPanel from "@/components/admin/W9FilesPanel";
@@ -13,18 +13,44 @@ import FinancialReportsPanel from "@/components/admin/FinancialReportsPanel";
 import InvoicePanel from "@/components/admin/InvoicePanel";
 import ProductReportPanel from "@/components/admin/ProductReportPanel";
 import PayrollCalendar from "@/components/PayrollCalendar";
+import { supabase } from "@/integrations/supabase/client";
+
+interface User {
+  id: string;
+  full_name: string;
+}
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("w9");
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, full_name')
+        .order('full_name');
+      
+      if (error) throw error;
+      setAllUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setAllUsers([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
       case "w9":
         return <W9FilesPanel />;
       case "upload":
-        return <FileUploadPanel />;
+        return <FileUploadPanel allUsers={allUsers} />;
       case "users":
-        return <UserManagementPanel />;
+        return <UserManagementPanel fetchUsers={fetchUsers} />;
       case "permissions":
         return <PermissionConfigPanel />;
       case "tasks":
