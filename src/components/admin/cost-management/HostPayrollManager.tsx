@@ -93,8 +93,9 @@ const HostPayrollManager: React.FC = () => {
       const payrollData = {
         host_name: formData.host_name,
         period: formData.period,
+        work_date: formData.period, // For backwards compatibility
         payment_type: formData.payment_type,
-        hours_worked: formData.payment_type === "hourly" ? parseFloat(formData.hours_worked) || 0 : null,
+        hours_worked: formData.payment_type === "hourly" ? parseFloat(formData.hours_worked) || 0 : 0,
         hourly_rate: parseFloat(formData.hourly_rate),
         commission: parseFloat(formData.commission) || 0,
         settlement_frequency: formData.settlement_frequency,

@@ -241,18 +241,20 @@ const PeriodPayrollExporter: React.FC = () => {
         period_start: start,
         period_end: end,
         total_amount: previewData.reduce((sum, dept) => sum + dept.totalAmount, 0),
-        department_breakdown: previewData.map(dept => ({
+        department_breakdown: JSON.stringify(previewData.map(dept => ({
           department: dept.department,
           count: dept.count,
           totalAmount: dept.totalAmount
-        })),
-        export_data: previewData,
+        }))),
+        export_data: JSON.stringify(previewData),
         exported_by: user?.id
       };
 
-      await supabase
+      const { error } = await supabase
         .from('payroll_exports')
-        .insert([exportRecord]);
+        .insert(exportRecord);
+
+      if (error) throw error;
 
       // 导出文件
       const fileName = `综合工资表_${period.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
