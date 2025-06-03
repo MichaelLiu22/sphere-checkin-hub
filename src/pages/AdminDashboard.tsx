@@ -74,7 +74,7 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen bg-background">
+      <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <main className="flex-1 overflow-auto p-6">
           {renderContent()}
