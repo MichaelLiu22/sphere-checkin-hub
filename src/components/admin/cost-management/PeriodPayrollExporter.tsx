@@ -37,7 +37,8 @@ const PeriodPayrollExporter: React.FC = () => {
       return {
         start: `${year}-${String(month + 1).padStart(2, '0')}-01`,
         end: `${year}-${String(month + 1).padStart(2, '0')}-15`,
-        period: `${year}-${String(month + 1).padStart(2, '0')} 上半月`
+        period: `${year}-${String(month + 1).padStart(2, '0')} 上半月`,
+        settlementFrequency: 'half_monthly'
       };
     } else if (periodType === "second_half") {
       // 当月下半月 (16号-月末)
@@ -45,7 +46,8 @@ const PeriodPayrollExporter: React.FC = () => {
       return {
         start: `${year}-${String(month + 1).padStart(2, '0')}-16`,
         end: `${year}-${String(month + 1).padStart(2, '0')}-${lastDay}`,
-        period: `${year}-${String(month + 1).padStart(2, '0')} 下半月`
+        period: `${year}-${String(month + 1).padStart(2, '0')} 下半月`,
+        settlementFrequency: 'half_monthly'
       };
     } else if (periodType === "last_month") {
       // 上个月整月
@@ -55,28 +57,50 @@ const PeriodPayrollExporter: React.FC = () => {
       return {
         start: `${lastMonthYear}-${String(lastMonth + 1).padStart(2, '0')}-01`,
         end: `${lastMonthYear}-${String(lastMonth + 1).padStart(2, '0')}-${lastDay}`,
-        period: `${lastMonthYear}-${String(lastMonth + 1).padStart(2, '0')} 整月`
+        period: `${lastMonthYear}-${String(lastMonth + 1).padStart(2, '0')} 整月`,
+        settlementFrequency: 'monthly'
       };
     } else {
       // 自定义期间
       return {
         start: customStartDate,
         end: customEndDate,
-        period: `${customStartDate} 至 ${customEndDate}`
+        period: `${customStartDate} 至 ${customEndDate}`,
+        settlementFrequency: 'custom'
       };
     }
   };
 
-  const fetchPayrollData = async (startDate: string, endDate: string) => {
+  const fetchPayrollData = async (startDate: string, endDate: string, settlementFrequency: string) => {
     const results: PayrollSummary[] = [];
 
     try {
+      // 根据结算频率构建查询条件
+      const getSettlementFilter = () => {
+        if (settlementFrequency === 'half_monthly') {
+          return 'half_monthly';
+        } else if (settlementFrequency === 'monthly') {
+          return 'monthly';
+        } else {
+          // 自定义期间时，导出所有记录
+          return null;
+        }
+      };
+
+      const settlementFilter = getSettlementFilter();
+
       // 获取主播工资数据
-      const { data: hostData, error: hostError } = await supabase
+      let hostQuery = supabase
         .from('host_payroll')
         .select('*')
         .gte('period', startDate)
         .lte('period', endDate);
+
+      if (settlementFilter) {
+        hostQuery = hostQuery.eq('settlement_frequency', settlementFilter);
+      }
+
+      const { data: hostData, error: hostError } = await hostQuery;
 
       if (hostError) throw hostError;
 
@@ -90,11 +114,17 @@ const PeriodPayrollExporter: React.FC = () => {
       }
 
       // 获取运营工资数据
-      const { data: operationData, error: operationError } = await supabase
+      let operationQuery = supabase
         .from('operation_payroll')
         .select('*')
         .gte('period', startDate)
         .lte('period', endDate);
+
+      if (settlementFilter) {
+        operationQuery = operationQuery.eq('settlement_frequency', settlementFilter);
+      }
+
+      const { data: operationData, error: operationError } = await operationQuery;
 
       if (operationError) throw operationError;
 
@@ -108,11 +138,17 @@ const PeriodPayrollExporter: React.FC = () => {
       }
 
       // 获取仓库工资数据
-      const { data: warehouseData, error: warehouseError } = await supabase
+      let warehouseQuery = supabase
         .from('warehouse_payroll')
         .select('*')
         .gte('period', startDate)
         .lte('period', endDate);
+
+      if (settlementFilter) {
+        warehouseQuery = warehouseQuery.eq('settlement_frequency', settlementFilter);
+      }
+
+      const { data: warehouseData, error: warehouseError } = await warehouseQuery;
 
       if (warehouseError) throw warehouseError;
 
@@ -134,7 +170,7 @@ const PeriodPayrollExporter: React.FC = () => {
   };
 
   const handlePreview = async () => {
-    const { start, end } = getQuickPeriodDates();
+    const { start, end, settlementFrequency } = getQuickPeriodDates();
     
     if (!start || !end) {
       toast.error("请选择有效的时间期间");
@@ -143,14 +179,18 @@ const PeriodPayrollExporter: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const data = await fetchPayrollData(start, end);
+      const data = await fetchPayrollData(start, end, settlementFrequency);
       setPreviewData(data);
       setShowPreview(true);
       
       if (data.length === 0) {
-        toast.info("所选期间内没有工资记录");
+        const frequencyText = settlementFrequency === 'half_monthly' ? '半月结算' : 
+                             settlementFrequency === 'monthly' ? '月度结算' : '所选择的结算频率';
+        toast.info(`所选期间内没有${frequencyText}的工资记录`);
       } else {
-        toast.success(`找到 ${data.length} 个部门的工资记录`);
+        const frequencyText = settlementFrequency === 'half_monthly' ? '半月结算' : 
+                             settlementFrequency === 'monthly' ? '月度结算' : '';
+        toast.success(`找到 ${data.length} 个部门的${frequencyText}工资记录`);
       }
     } catch (error: any) {
       console.error("预览失败:", error);
@@ -166,7 +206,7 @@ const PeriodPayrollExporter: React.FC = () => {
       return;
     }
 
-    const { start, end, period } = getQuickPeriodDates();
+    const { start, end, period, settlementFrequency } = getQuickPeriodDates();
 
     setIsLoading(true);
     try {
@@ -174,11 +214,16 @@ const PeriodPayrollExporter: React.FC = () => {
       const workbook = XLSX.utils.book_new();
 
       // 创建总结页
+      const frequencyText = settlementFrequency === 'half_monthly' ? '(半月结算)' : 
+                           settlementFrequency === 'monthly' ? '(月度结算)' : '';
+      
       const summaryData = [
-        ['工资期间汇总报表'],
+        [`工资期间汇总报表 ${frequencyText}`],
         ['期间:', period],
         ['导出时间:', new Date().toLocaleString()],
         ['导出人:', user?.full_name || 'Unknown'],
+        ['结算频率:', settlementFrequency === 'half_monthly' ? '半月结算' : 
+                     settlementFrequency === 'monthly' ? '月度结算' : '自定义'],
         [''],
         ['部门', '人数', '总金额($)'],
         ...previewData.map(dept => [dept.department, dept.count, dept.totalAmount.toFixed(2)]),
@@ -296,10 +341,10 @@ const PeriodPayrollExporter: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="first_half">当月上半月 (1-15号)</SelectItem>
-                  <SelectItem value="second_half">当月下半月 (16-月末)</SelectItem>
-                  <SelectItem value="last_month">上个月整月</SelectItem>
-                  <SelectItem value="custom">自定义期间</SelectItem>
+                  <SelectItem value="first_half">当月上半月 (1-15号) - 半月结算</SelectItem>
+                  <SelectItem value="second_half">当月下半月 (16-月末) - 半月结算</SelectItem>
+                  <SelectItem value="last_month">上个月整月 - 月度结算</SelectItem>
+                  <SelectItem value="custom">自定义期间 - 所有记录</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -334,6 +379,15 @@ const PeriodPayrollExporter: React.FC = () => {
             )}
           </div>
 
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-2">结算频率说明</h4>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• 上半月/下半月：只导出半月结算频率的工资记录</li>
+              <li>• 整月：只导出月度结算频率的工资记录</li>
+              <li>• 自定义期间：导出所选期间内的所有工资记录</li>
+            </ul>
+          </div>
+
           <div className="flex gap-2">
             <Button onClick={handlePreview} disabled={isLoading} variant="outline">
               <FileText className="mr-2 h-4 w-4" />
@@ -362,7 +416,7 @@ const PeriodPayrollExporter: React.FC = () => {
           <CardContent>
             {previewData.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                所选期间内没有工资记录
+                所选期间内没有匹配结算频率的工资记录
               </div>
             ) : (
               <>
