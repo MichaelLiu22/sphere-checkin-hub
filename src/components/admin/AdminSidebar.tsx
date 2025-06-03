@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, Package, Receipt, Search } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, Package, Receipt, Search, Calculator, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -132,16 +132,34 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          {/* 财务管理模块 - 整合后的完整财务系统 */}
+          {/* 财务管理分类 */}
+          <SidebarMenuItem>
+            <div className="px-4 py-2 text-xs font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">财务管理</div>
+          </SidebarMenuItem>
+
+          {/* 成本管理模块 */}
           <SidebarMenuItem>
             <SidebarMenuButton 
-              isActive={activeTab === "financial-insights"}
-              onClick={() => setActiveTab("financial-insights")}
-              tooltip="Financial Management"
+              isActive={activeTab === "cost-management"}
+              onClick={() => setActiveTab("cost-management")}
+              tooltip="Cost Management"
               className="text-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              <DollarSign className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">💰 财务管理</span>
+              <Calculator className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">💰 成本管理</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* 财务报表模块 */}
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === "financial-reports"}
+              onClick={() => setActiveTab("financial-reports")}
+              tooltip="Financial Reports"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">📊 财务报表</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 

@@ -75,6 +75,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -86,6 +87,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -97,7 +99,47 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          start_date?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      host_payroll: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          host_name: string
+          hourly_rate: number
+          hours_worked: number
+          id: string
+          notes: string | null
+          total_amount: number
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          host_name: string
+          hourly_rate: number
+          hours_worked: number
+          id?: string
+          notes?: string | null
+          total_amount: number
+          updated_at?: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          host_name?: string
+          hourly_rate?: number
+          hours_worked?: number
+          id?: string
+          notes?: string | null
+          total_amount?: number
+          updated_at?: string
+          work_date?: string
         }
         Relationships: []
       }
