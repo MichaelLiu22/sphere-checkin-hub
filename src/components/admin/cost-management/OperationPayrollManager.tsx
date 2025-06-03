@@ -12,34 +12,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from "xlsx";
 
-interface HostPayroll {
+interface OperationPayroll {
   id: string;
-  host_name: string;
+  employee_name: string;
   period: string;
   payment_type: string;
+  base_salary: number;
   hours_worked?: number;
-  hourly_rate: number;
+  hourly_rate?: number;
   commission: number;
-  settlement_frequency: string;
+  bonus: number;
   total_amount: number;
+  settlement_frequency: string;
   notes?: string;
   created_at: string;
 }
 
-const HostPayrollManager: React.FC = () => {
-  const [payrolls, setPayrolls] = useState<HostPayroll[]>([]);
+const OperationPayrollManager: React.FC = () => {
+  const [payrolls, setPayrolls] = useState<OperationPayroll[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    host_name: "",
+    employee_name: "",
     period: "",
-    payment_type: "hourly",
+    payment_type: "monthly",
+    base_salary: "",
     hours_worked: "",
     hourly_rate: "",
     commission: "",
+    bonus: "",
     settlement_frequency: "half_monthly",
     notes: ""
   });
@@ -52,14 +56,14 @@ const HostPayrollManager: React.FC = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('host_payroll')
+        .from('operation_payroll')
         .select('*')
         .order('period', { ascending: false });
 
       if (error) throw error;
       setPayrolls(data || []);
     } catch (error: any) {
-      console.error("加载工资记录失败:", error);
+      console.error("加载运营工资记录失败:", error);
       toast.error(`加载失败: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -68,57 +72,69 @@ const HostPayrollManager: React.FC = () => {
 
   const calculateTotal = () => {
     const paymentType = formData.payment_type;
+    const baseSalary = parseFloat(formData.base_salary) || 0;
     const hours = parseFloat(formData.hours_worked) || 0;
-    const rate = parseFloat(formData.hourly_rate) || 0;
+    const hourlyRate = parseFloat(formData.hourly_rate) || 0;
     const commission = parseFloat(formData.commission) || 0;
+    const bonus = parseFloat(formData.bonus) || 0;
 
     if (paymentType === "monthly") {
-      // 月薪 + 佣金
-      return rate + commission;
+      return baseSalary + commission + bonus;
     } else {
-      // 小时工资 = 时薪 * 工时 + 佣金
-      return (hours * rate) + commission;
+      return (hours * hourlyRate) + commission + bonus;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.host_name || !formData.period || !formData.hourly_rate) {
+    if (!formData.employee_name || !formData.period) {
       toast.error("请填写必填字段");
+      return;
+    }
+
+    if (formData.payment_type === "monthly" && !formData.base_salary) {
+      toast.error("月薪制需要填写基础月薪");
+      return;
+    }
+
+    if (formData.payment_type === "hourly" && (!formData.hours_worked || !formData.hourly_rate)) {
+      toast.error("时薪制需要填写工作时长和时薪");
       return;
     }
 
     setIsLoading(true);
     try {
       const payrollData = {
-        host_name: formData.host_name,
+        employee_name: formData.employee_name,
         period: formData.period,
         payment_type: formData.payment_type,
+        base_salary: parseFloat(formData.base_salary) || 0,
         hours_worked: formData.payment_type === "hourly" ? parseFloat(formData.hours_worked) || 0 : null,
-        hourly_rate: parseFloat(formData.hourly_rate),
+        hourly_rate: formData.payment_type === "hourly" ? parseFloat(formData.hourly_rate) || 0 : null,
         commission: parseFloat(formData.commission) || 0,
+        bonus: parseFloat(formData.bonus) || 0,
         settlement_frequency: formData.settlement_frequency,
         total_amount: calculateTotal(),
         notes: formData.notes || null,
-        department: "host",
+        department: "operation",
         created_by: user?.id
       };
 
       if (editingId) {
         const { error } = await supabase
-          .from('host_payroll')
+          .from('operation_payroll')
           .update(payrollData)
           .eq('id', editingId);
 
         if (error) throw error;
-        toast.success("主播工资记录已更新");
+        toast.success("运营工资记录已更新");
       } else {
         const { error } = await supabase
-          .from('host_payroll')
+          .from('operation_payroll')
           .insert([payrollData]);
 
         if (error) throw error;
-        toast.success("主播工资记录已添加");
+        toast.success("运营工资记录已添加");
       }
 
       resetForm();
@@ -131,14 +147,16 @@ const HostPayrollManager: React.FC = () => {
     }
   };
 
-  const handleEdit = (payroll: HostPayroll) => {
+  const handleEdit = (payroll: OperationPayroll) => {
     setFormData({
-      host_name: payroll.host_name,
+      employee_name: payroll.employee_name,
       period: payroll.period,
       payment_type: payroll.payment_type,
+      base_salary: payroll.base_salary.toString(),
       hours_worked: payroll.hours_worked?.toString() || "",
-      hourly_rate: payroll.hourly_rate.toString(),
+      hourly_rate: payroll.hourly_rate?.toString() || "",
       commission: payroll.commission.toString(),
+      bonus: payroll.bonus.toString(),
       settlement_frequency: payroll.settlement_frequency,
       notes: payroll.notes || ""
     });
@@ -152,7 +170,7 @@ const HostPayrollManager: React.FC = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('host_payroll')
+        .from('operation_payroll')
         .delete()
         .eq('id', id);
 
@@ -169,12 +187,14 @@ const HostPayrollManager: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      host_name: "",
+      employee_name: "",
       period: "",
-      payment_type: "hourly",
+      payment_type: "monthly",
+      base_salary: "",
       hours_worked: "",
       hourly_rate: "",
       commission: "",
+      bonus: "",
       settlement_frequency: "half_monthly",
       notes: ""
     });
@@ -189,12 +209,14 @@ const HostPayrollManager: React.FC = () => {
     }
 
     const exportData = payrolls.map(payroll => ({
-      '主播姓名': payroll.host_name,
+      '员工姓名': payroll.employee_name,
       '期间': payroll.period,
       '薪资类型': payroll.payment_type === 'monthly' ? '月薪' : '时薪',
+      '基础薪资($)': payroll.base_salary,
       '工作时长': payroll.hours_worked || '-',
-      '基础薪资($)': payroll.hourly_rate,
+      '时薪($)': payroll.hourly_rate || '-',
       '佣金($)': payroll.commission,
+      '奖金($)': payroll.bonus,
       '总薪资($)': payroll.total_amount,
       '结算频率': payroll.settlement_frequency === 'half_monthly' ? '半月结' : '月结',
       '备注': payroll.notes || '',
@@ -203,9 +225,9 @@ const HostPayrollManager: React.FC = () => {
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "主播工资表");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "运营人员工资表");
     
-    const fileName = `主播工资表_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `运营人员工资表_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
     toast.success("工资表已导出");
   };
@@ -218,7 +240,7 @@ const HostPayrollManager: React.FC = () => {
             <div className="flex gap-2">
               <Button onClick={() => setShowAddForm(true)} className="flex-1">
                 <Plus className="mr-2 h-4 w-4" />
-                添加主播工资记录
+                添加运营工资记录
               </Button>
               <Button variant="outline" onClick={exportToExcel} disabled={payrolls.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
@@ -232,18 +254,18 @@ const HostPayrollManager: React.FC = () => {
       {showAddForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingId ? "编辑主播工资记录" : "添加主播工资记录"}</CardTitle>
+            <CardTitle>{editingId ? "编辑运营工资记录" : "添加运营工资记录"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="host_name">主播姓名 *</Label>
+                  <Label htmlFor="employee_name">员工姓名 *</Label>
                   <Input
-                    id="host_name"
-                    placeholder="输入主播姓名"
-                    value={formData.host_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, host_name: e.target.value }))}
+                    id="employee_name"
+                    placeholder="输入员工姓名"
+                    value={formData.employee_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, employee_name: e.target.value }))}
                     required
                   />
                 </div>
@@ -267,8 +289,8 @@ const HostPayrollManager: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hourly">时薪</SelectItem>
                       <SelectItem value="monthly">月薪</SelectItem>
+                      <SelectItem value="hourly">时薪</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -287,33 +309,49 @@ const HostPayrollManager: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {formData.payment_type === "hourly" && (
+
+                {formData.payment_type === "monthly" ? (
                   <div>
-                    <Label htmlFor="hours_worked">工作时长 (小时)</Label>
+                    <Label htmlFor="base_salary">基础月薪 ($) *</Label>
                     <Input
-                      id="hours_worked"
+                      id="base_salary"
                       type="number"
                       step="0.01"
                       placeholder="0.00"
-                      value={formData.hours_worked}
-                      onChange={(e) => setFormData(prev => ({ ...prev, hours_worked: e.target.value }))}
+                      value={formData.base_salary}
+                      onChange={(e) => setFormData(prev => ({ ...prev, base_salary: e.target.value }))}
+                      required
                     />
                   </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label htmlFor="hours_worked">工作时长 (小时) *</Label>
+                      <Input
+                        id="hours_worked"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={formData.hours_worked}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hours_worked: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="hourly_rate">时薪 ($) *</Label>
+                      <Input
+                        id="hourly_rate"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={formData.hourly_rate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: e.target.value }))}
+                        required
+                      />
+                    </div>
+                  </>
                 )}
-                <div>
-                  <Label htmlFor="hourly_rate">
-                    {formData.payment_type === "monthly" ? "月薪 ($) *" : "时薪 ($) *"}
-                  </Label>
-                  <Input
-                    id="hourly_rate"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.hourly_rate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, hourly_rate: e.target.value }))}
-                    required
-                  />
-                </div>
+
                 <div>
                   <Label htmlFor="commission">佣金 ($)</Label>
                   <Input
@@ -325,9 +363,20 @@ const HostPayrollManager: React.FC = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, commission: e.target.value }))}
                   />
                 </div>
+                <div>
+                  <Label htmlFor="bonus">奖金 ($)</Label>
+                  <Input
+                    id="bonus"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={formData.bonus}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bonus: e.target.value }))}
+                  />
+                </div>
               </div>
 
-              {(formData.hourly_rate || formData.commission || formData.hours_worked) && (
+              {(formData.base_salary || formData.commission || formData.bonus || (formData.hours_worked && formData.hourly_rate)) && (
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-blue-700">
                     总薪资: ${calculateTotal().toFixed(2)}
@@ -362,7 +411,7 @@ const HostPayrollManager: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>主播工资记录列表</CardTitle>
+          <CardTitle>运营人员工资记录列表</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading && payrolls.length === 0 ? (
@@ -376,12 +425,12 @@ const HostPayrollManager: React.FC = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">主播姓名</th>
+                    <th className="text-left p-2">员工姓名</th>
                     <th className="text-left p-2">期间</th>
                     <th className="text-left p-2">类型</th>
-                    <th className="text-left p-2">时长</th>
                     <th className="text-left p-2">基础薪资</th>
                     <th className="text-left p-2">佣金</th>
+                    <th className="text-left p-2">奖金</th>
                     <th className="text-left p-2">总薪资</th>
                     <th className="text-left p-2">结算</th>
                     <th className="text-left p-2">操作</th>
@@ -390,12 +439,17 @@ const HostPayrollManager: React.FC = () => {
                 <tbody>
                   {payrolls.map((payroll) => (
                     <tr key={payroll.id} className="border-b hover:bg-muted/50">
-                      <td className="p-2 font-medium">{payroll.host_name}</td>
+                      <td className="p-2 font-medium">{payroll.employee_name}</td>
                       <td className="p-2">{payroll.period}</td>
                       <td className="p-2">{payroll.payment_type === 'monthly' ? '月薪' : '时薪'}</td>
-                      <td className="p-2">{payroll.hours_worked ? `${payroll.hours_worked}h` : '-'}</td>
-                      <td className="p-2">${payroll.hourly_rate}</td>
+                      <td className="p-2">
+                        {payroll.payment_type === 'monthly' 
+                          ? `$${payroll.base_salary}` 
+                          : `$${payroll.hourly_rate} × ${payroll.hours_worked}h`
+                        }
+                      </td>
                       <td className="p-2">${payroll.commission}</td>
+                      <td className="p-2">${payroll.bonus}</td>
                       <td className="p-2 font-medium">${payroll.total_amount.toFixed(2)}</td>
                       <td className="p-2">{payroll.settlement_frequency === 'half_monthly' ? '半月结' : '月结'}</td>
                       <td className="p-2">
@@ -428,4 +482,4 @@ const HostPayrollManager: React.FC = () => {
   );
 };
 
-export default HostPayrollManager;
+export default OperationPayrollManager;

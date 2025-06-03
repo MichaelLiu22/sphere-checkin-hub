@@ -106,37 +106,55 @@ export type Database = {
       }
       host_payroll: {
         Row: {
+          commission: number | null
           created_at: string
           created_by: string | null
+          department: string | null
           host_name: string
           hourly_rate: number
           hours_worked: number
           id: string
           notes: string | null
+          payment_type: string | null
+          payroll_period: string | null
+          period: string | null
+          settlement_frequency: string | null
           total_amount: number
           updated_at: string
           work_date: string
         }
         Insert: {
+          commission?: number | null
           created_at?: string
           created_by?: string | null
+          department?: string | null
           host_name: string
           hourly_rate: number
           hours_worked: number
           id?: string
           notes?: string | null
+          payment_type?: string | null
+          payroll_period?: string | null
+          period?: string | null
+          settlement_frequency?: string | null
           total_amount: number
           updated_at?: string
           work_date: string
         }
         Update: {
+          commission?: number | null
           created_at?: string
           created_by?: string | null
+          department?: string | null
           host_name?: string
           hourly_rate?: number
           hours_worked?: number
           id?: string
           notes?: string | null
+          payment_type?: string | null
+          payroll_period?: string | null
+          period?: string | null
+          settlement_frequency?: string | null
           total_amount?: number
           updated_at?: string
           work_date?: string
@@ -251,6 +269,102 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      operation_payroll: {
+        Row: {
+          base_salary: number
+          bonus: number | null
+          commission: number | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          employee_name: string
+          hourly_rate: number | null
+          hours_worked: number | null
+          id: string
+          notes: string | null
+          payment_type: string
+          payroll_period: string | null
+          period: string
+          settlement_frequency: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          base_salary?: number
+          bonus?: number | null
+          commission?: number | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          employee_name: string
+          hourly_rate?: number | null
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          payment_type?: string
+          payroll_period?: string | null
+          period: string
+          settlement_frequency?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          base_salary?: number
+          bonus?: number | null
+          commission?: number | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          employee_name?: string
+          hourly_rate?: number | null
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          payment_type?: string
+          payroll_period?: string | null
+          period?: string
+          settlement_frequency?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payroll_exports: {
+        Row: {
+          created_at: string
+          department_breakdown: Json | null
+          export_data: Json | null
+          export_period: string
+          exported_by: string | null
+          id: string
+          period_end: string
+          period_start: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          department_breakdown?: Json | null
+          export_data?: Json | null
+          export_period: string
+          exported_by?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          department_breakdown?: Json | null
+          export_data?: Json | null
+          export_period?: string
+          exported_by?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          total_amount?: number
+        }
+        Relationships: []
       }
       product_cache: {
         Row: {
@@ -660,6 +774,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      warehouse_payroll: {
+        Row: {
+          base_salary: number | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          employee_name: string
+          hourly_rate: number
+          hours_worked: number | null
+          id: string
+          notes: string | null
+          overtime_hours: number | null
+          overtime_rate: number | null
+          payment_type: string
+          payroll_period: string | null
+          period: string
+          settlement_frequency: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          base_salary?: number | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          employee_name: string
+          hourly_rate?: number
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          overtime_hours?: number | null
+          overtime_rate?: number | null
+          payment_type?: string
+          payroll_period?: string | null
+          period: string
+          settlement_frequency?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          base_salary?: number | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          employee_name?: string
+          hourly_rate?: number
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          overtime_hours?: number | null
+          overtime_rate?: number | null
+          payment_type?: string
+          payroll_period?: string | null
+          period?: string
+          settlement_frequency?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
