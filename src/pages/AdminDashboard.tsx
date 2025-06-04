@@ -12,7 +12,6 @@ import CostManagementPanel from "@/components/admin/CostManagementPanel";
 import FinancialInsightsPanel from "@/components/admin/FinancialInsightsPanel";
 import FinancialReportPanel from "@/components/admin/financial-reports/FinancialReportPanel";
 import InvoicePanel from "@/components/admin/InvoicePanel";
-import ProductReportPanel from "@/components/admin/ProductReportPanel";
 import PayrollCalendar from "@/components/PayrollCalendar";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -66,8 +65,6 @@ const AdminDashboard: React.FC = () => {
         return <FinancialReportPanel />;
       case "invoice":
         return <InvoicePanel />;
-      case "product-report":
-        return <ProductReportPanel />;
       case "calendar":
         return <PayrollCalendar />;
       default:

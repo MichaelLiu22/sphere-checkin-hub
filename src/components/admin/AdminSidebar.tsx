@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, Package, Receipt, Search, Calculator, BarChart3 } from "lucide-react";
+import { FileText, LogOut, Upload, Users, ArrowLeft, Settings, Calendar, DollarSign, CheckSquare, Package, Receipt, Calculator, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -173,19 +173,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab }) 
             >
               <Receipt className="h-4 w-4" />
               <span className="group-data-[collapsible=icon]:hidden">🧾 发票制作</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* 产品报告模块 */}
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === "product-report"}
-              onClick={() => setActiveTab("product-report")}
-              tooltip="Product Report Generator"
-              className="text-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <Search className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">📊 产品报告</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
