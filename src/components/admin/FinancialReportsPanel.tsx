@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, FileSpreadsheet, Download, BarChart3, AlertTriangle } from "lucide-react";
+import { Upload, FileSpreadsheet, Download, BarChart3, AlertTriangle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -251,10 +251,31 @@ const FinancialReportsPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Migration Notice */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-blue-900">📊 新版财务报表已上线</h3>
+              <p className="text-blue-700 text-sm mt-1">
+                我们推出了全新的智能财务分析面板，支持自动成本计算和可视化报表
+              </p>
+            </div>
+            <Button 
+              onClick={() => window.location.href = '/admin#financial-reports'}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <ArrowRight className="mr-2 h-4 w-4" />
+              使用新版本
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* 标题和清除按钮 */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">📊 财务报表</h2>
+          <h2 className="text-2xl font-bold">📊 财务报表 (传统版本)</h2>
           <p className="text-muted-foreground mt-2">
             上传销售数据进行财务分析，数据仅在前端处理，不保存到数据库
           </p>

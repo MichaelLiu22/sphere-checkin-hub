@@ -9,7 +9,8 @@ import PermissionConfigPanel from "@/components/admin/PermissionConfigPanel";
 import TaskReportPanel from "@/components/admin/TaskReportPanel";
 import InventoryPanel from "@/components/admin/InventoryPanel";
 import CostManagementPanel from "@/components/admin/CostManagementPanel";
-import FinancialReportsPanel from "@/components/admin/FinancialReportsPanel";
+import FinancialInsightsPanel from "@/components/admin/FinancialInsightsPanel";
+import FinancialReportPanel from "@/components/admin/financial-reports/FinancialReportPanel";
 import InvoicePanel from "@/components/admin/InvoicePanel";
 import ProductReportPanel from "@/components/admin/ProductReportPanel";
 import PayrollCalendar from "@/components/PayrollCalendar";
@@ -59,8 +60,10 @@ const AdminDashboard: React.FC = () => {
         return <InventoryPanel />;
       case "cost-management":
         return <CostManagementPanel />;
+      case "financial-insights":
+        return <FinancialInsightsPanel />;
       case "financial-reports":
-        return <FinancialReportsPanel />;
+        return <FinancialReportPanel />;
       case "invoice":
         return <InvoicePanel />;
       case "product-report":
