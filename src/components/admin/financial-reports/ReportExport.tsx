@@ -26,6 +26,11 @@ const ReportExport: React.FC<ReportExportProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
 
+  // Safely access details with fallbacks
+  const inventoryDetails = financialSummary.costBreakdown.details?.inventory || [];
+  const fixedDetails = financialSummary.costBreakdown.details?.fixed || [];
+  const payrollDetails = financialSummary.costBreakdown.details?.payroll || [];
+
   const exportToExcel = async () => {
     setIsExporting(true);
     try {
@@ -70,9 +75,9 @@ const ReportExport: React.FC<ReportExportProps> = ({
       // Cost Details Sheets
       if (includeDetails) {
         // Inventory costs
-        if (financialSummary.costBreakdown.details.inventory.length > 0) {
+        if (inventoryDetails.length > 0) {
           const inventorySheet = XLSX.utils.json_to_sheet(
-            financialSummary.costBreakdown.details.inventory.map((item: any) => ({
+            inventoryDetails.map((item: any) => ({
               'SKU': item.sku,
               '产品名称': item.product_name,
               '出库数量': Math.abs(item.quantity),
@@ -86,9 +91,9 @@ const ReportExport: React.FC<ReportExportProps> = ({
         }
 
         // Fixed costs
-        if (financialSummary.costBreakdown.details.fixed.length > 0) {
+        if (fixedDetails.length > 0) {
           const fixedSheet = XLSX.utils.json_to_sheet(
-            financialSummary.costBreakdown.details.fixed.map((item: any) => ({
+            fixedDetails.map((item: any) => ({
               '成本名称': item.cost_name,
               '成本类型': item.cost_type,
               '原始金额': item.amount,
@@ -101,13 +106,14 @@ const ReportExport: React.FC<ReportExportProps> = ({
         }
 
         // Payroll costs
-        if (financialSummary.costBreakdown.details.payroll.length > 0) {
+        if (payrollDetails.length > 0) {
           const payrollSheet = XLSX.utils.json_to_sheet(
-            financialSummary.costBreakdown.details.payroll.map((item: any) => ({
+            payrollDetails.map((item: any) => ({
               '部门': item.department,
               '员工姓名': item.employee_name || item.host_name,
               '期间': item.period,
               '总金额': item.total_amount,
+              '分摊金额': item.allocatedAmount,
               '结算频率': item.settlement_frequency,
               '备注': item.notes
             }))
@@ -191,6 +197,7 @@ const ReportExport: React.FC<ReportExportProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Export Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -224,6 +231,7 @@ const ReportExport: React.FC<ReportExportProps> = ({
         </CardContent>
       </Card>
 
+      {/* Export Actions */}
       <Card>
         <CardHeader>
           <CardTitle>导出操作</CardTitle>
@@ -241,7 +249,26 @@ const ReportExport: React.FC<ReportExportProps> = ({
             </Button>
             
             <Button
-              onClick={exportToPDF}
+              onClick={() => {
+                const reportData = {
+                  reportType: "财务报表",
+                  generatedAt: new Date().toISOString(),
+                  generatedBy: user?.full_name || 'Unknown',
+                  summary: financialSummary,
+                  orderData: includeDetails ? orderData : null,
+                  costDetails: includeDetails ? financialSummary.costBreakdown.details : null
+                };
+
+                const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `financial_report_${financialSummary.dateRange.start}_${financialSummary.dateRange.end}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                toast.success("PDF报表已导出（JSON格式）");
+              }}
               variant="outline"
               className="w-full"
             >
@@ -250,7 +277,31 @@ const ReportExport: React.FC<ReportExportProps> = ({
             </Button>
             
             <Button
-              onClick={saveToDatabase}
+              onClick={async () => {
+                setIsSaving(true);
+                try {
+                  const { error } = await supabase
+                    .from('profit_analysis')
+                    .insert({
+                      analysis_name: `财务报表_${financialSummary.dateRange.start}_${financialSummary.dateRange.end}`,
+                      analysis_date: new Date().toISOString().split('T')[0],
+                      payout_data: orderData,
+                      cost_breakdown: financialSummary.costBreakdown,
+                      profit_summary: financialSummary,
+                      created_by: user?.id
+                    });
+
+                  if (error) throw error;
+
+                  toast.success("报表已保存到数据库");
+                  onExportComplete();
+                } catch (error: any) {
+                  console.error("保存失败:", error);
+                  toast.error(`保存失败: ${error.message}`);
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
               disabled={isSaving}
               className="w-full"
             >
@@ -280,9 +331,9 @@ const ReportExport: React.FC<ReportExportProps> = ({
               <ul className="ml-4 text-gray-600">
                 <li>• 财务汇总表</li>
                 {includeDetails && <li>• 订单明细 ({orderData.length} 条)</li>}
-                {includeDetails && <li>• 库存成本明细 ({financialSummary.costBreakdown.details.inventory.length} 条)</li>}
-                {includeDetails && <li>• 固定成本明细 ({financialSummary.costBreakdown.details.fixed.length} 条)</li>}
-                {includeDetails && <li>• 工资成本明细 ({financialSummary.costBreakdown.details.payroll.length} 条)</li>}
+                {includeDetails && <li>• 库存成本明细 ({inventoryDetails.length} 条)</li>}
+                {includeDetails && <li>• 固定成本明细 ({fixedDetails.length} 条)</li>}
+                {includeDetails && <li>• 工资成本明细 ({payrollDetails.length} 条)</li>}
                 {includeCharts && <li>• 图表数据</li>}
               </ul>
             </div>

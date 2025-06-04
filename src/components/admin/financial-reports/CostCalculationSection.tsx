@@ -20,6 +20,11 @@ interface CostBreakdown {
   fixedCosts: number;
   payrollCosts: number;
   totalOtherCosts: number;
+  details: {
+    inventory: any[];
+    fixed: any[];
+    payroll: any[];
+  };
 }
 
 interface CostCalculationSectionProps {
@@ -166,7 +171,7 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
       if (fixedError) throw fixedError;
 
       // 计算按比例分摊的固定成本
-      const proportionalFixedCosts = fixedCosts?.reduce((sum, cost) => {
+      const fixedCostDetails = fixedCosts?.map(cost => {
         let dailyAmount = 0;
         if (cost.cost_type === 'monthly') {
           dailyAmount = cost.amount / 30;
@@ -175,8 +180,17 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
         } else if (cost.cost_type === 'daily') {
           dailyAmount = cost.amount;
         }
-        return sum + (dailyAmount * dayCount);
-      }, 0) || 0;
+        const allocatedAmount = dailyAmount * dayCount;
+        return {
+          ...cost,
+          allocatedAmount,
+          daysCovered: dayCount
+        };
+      }) || [];
+
+      const proportionalFixedCosts = fixedCostDetails.reduce((sum, cost) => {
+        return sum + cost.allocatedAmount;
+      }, 0);
 
       // 获取工资成本
       const { data: hostPayroll, error: hostError } = await supabase
@@ -197,12 +211,12 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
 
       // 计算按比例分摊的工资成本
       const allPayroll = [
-        ...(hostPayroll || []),
-        ...(operationPayroll || []),
-        ...(warehousePayroll || [])
+        ...(hostPayroll || []).map(p => ({ ...p, department: 'host' })),
+        ...(operationPayroll || []).map(p => ({ ...p, department: 'operation' })),
+        ...(warehousePayroll || []).map(p => ({ ...p, department: 'warehouse' }))
       ];
 
-      const proportionalPayrollCosts = allPayroll.reduce((sum, payroll) => {
+      const payrollDetails = allPayroll.map(payroll => {
         let dailyAmount = 0;
         if (payroll.payment_type === 'monthly') {
           dailyAmount = payroll.total_amount / 30;
@@ -214,14 +228,28 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
           // 对于其他类型，假设是月度
           dailyAmount = payroll.total_amount / 30;
         }
-        return sum + (dailyAmount * dayCount);
+        const allocatedAmount = dailyAmount * dayCount;
+        return {
+          ...payroll,
+          allocatedAmount,
+          daysCovered: dayCount
+        };
+      });
+
+      const proportionalPayrollCosts = payrollDetails.reduce((sum, payroll) => {
+        return sum + payroll.allocatedAmount;
       }, 0);
 
       const costBreakdown: CostBreakdown = {
         inventoryCost,
         fixedCosts: proportionalFixedCosts,
         payrollCosts: proportionalPayrollCosts,
-        totalOtherCosts: proportionalFixedCosts + proportionalPayrollCosts
+        totalOtherCosts: proportionalFixedCosts + proportionalPayrollCosts,
+        details: {
+          inventory: inventoryHistory || [],
+          fixed: fixedCostDetails,
+          payroll: payrollDetails
+        }
       };
 
       console.log("成本计算结果:", costBreakdown);

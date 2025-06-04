@@ -59,6 +59,11 @@ const ReportVisualization: React.FC<ReportVisualizationProps> = ({
 
   const COLORS = ['#ef4444', '#f97316', '#8b5cf6', '#06b6d4'];
 
+  // Safely access details with fallbacks
+  const inventoryDetails = financialSummary.costBreakdown.details?.inventory || [];
+  const fixedDetails = financialSummary.costBreakdown.details?.fixed || [];
+  const payrollDetails = financialSummary.costBreakdown.details?.payroll || [];
+
   return (
     <div className="space-y-6">
       {/* Financial Summary Cards */}
@@ -141,15 +146,15 @@ const ReportVisualization: React.FC<ReportVisualizationProps> = ({
                 <p><strong>📦 Inventory Cost:</strong> ${financialSummary.costBreakdown.inventoryCost.toFixed(2)}</p>
                 <div className="ml-4 text-gray-600">
                   <p>• 基于库存出库记录计算</p>
-                  <p>• {financialSummary.costBreakdown.details.inventory.length} 条出库记录</p>
+                  <p>• {inventoryDetails.length} 条出库记录</p>
                 </div>
               </div>
               
               <div className="mt-4">
                 <p><strong>🧾 Other Costs:</strong> ${financialSummary.costBreakdown.totalOtherCosts.toFixed(2)}</p>
                 <div className="ml-4 text-gray-600">
-                  <p>• 固定成本: ${financialSummary.costBreakdown.fixedCosts.toFixed(2)} ({financialSummary.costBreakdown.details.fixed.length} 项)</p>
-                  <p>• 工资成本: ${financialSummary.costBreakdown.payrollCosts.toFixed(2)} ({financialSummary.costBreakdown.details.payroll.length} 条记录)</p>
+                  <p>• 固定成本: ${financialSummary.costBreakdown.fixedCosts.toFixed(2)} ({fixedDetails.length} 项)</p>
+                  <p>• 工资成本: ${financialSummary.costBreakdown.payrollCosts.toFixed(2)} ({payrollDetails.length} 条记录)</p>
                 </div>
               </div>
               
