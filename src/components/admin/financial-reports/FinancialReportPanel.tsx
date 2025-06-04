@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -89,9 +88,12 @@ const FinancialReportPanel: React.FC = () => {
     console.log("原始数据数量:", orderData.length);
 
     const startDate = new Date(start);
-    const endDate = new Date(end);
+    startDate.setHours(0, 0, 0, 0); // 设置为当天开始
     
-    // 修正筛选逻辑
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59, 999); // 设置为当天结束
+    
+    // 修正筛选逻辑，确保包含结束日期
     const filtered = orderData.filter(order => {
       const orderDateStr = order[fieldMapping.orderDate];
       if (!orderDateStr) {
@@ -247,6 +249,7 @@ const FinancialReportPanel: React.FC = () => {
             onDateFilter={handleDateFilter}
             onCostCalculation={handleCostCalculation}
             isCalculating={isCalculating}
+            originalOrderData={orderData}
           />
         </TabsContent>
 

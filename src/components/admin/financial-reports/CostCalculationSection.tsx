@@ -40,6 +40,7 @@ interface CostCalculationSectionProps {
   onDateFilter: (start: string, end: string) => void;
   onCostCalculation: (costBreakdown: CostBreakdown) => void;
   isCalculating: boolean;
+  originalOrderData?: OrderData[]; // 添加原始数据的prop
 }
 
 const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
@@ -48,7 +49,8 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
   fieldMapping,
   onDateFilter,
   onCostCalculation,
-  isCalculating
+  isCalculating,
+  originalOrderData = filteredOrders // 如果没有提供原始数据，则使用filteredOrders作为fallback
 }) => {
   const [startDate, setStartDate] = useState(dateRange.start);
   const [endDate, setEndDate] = useState(dateRange.end);
@@ -79,20 +81,21 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
 
     console.log("日期筛选范围:", { startDate, endDate, dayCount });
 
-    onDateFilter(startDate, endDate);
-    
-    // 生成预览数据
+    // 先生成预览数据
     generatePreview(startDate, endDate, dayCount);
+    
+    // 然后调用父组件的筛选函数
+    onDateFilter(startDate, endDate);
   };
 
-  const generatePreview = async (start: string, end: string, dayCount: number) => {
+  const generatePreview = (start: string, end: string, dayCount: number) => {
     try {
-      // 从 parent component 获取原始订单数据
-      // 这里我们需要重新从 parent 获取原始数据进行筛选
-      // 暂时使用 filteredOrders，但实际应该从原始数据筛选
-      
+      // 使用原始订单数据进行筛选
       const startDate = new Date(start);
+      startDate.setHours(0, 0, 0, 0); // 设置为当天开始
+      
       const endDate = new Date(end);
+      endDate.setHours(23, 59, 59, 999); // 设置为当天结束
       
       console.log("筛选条件:", { 
         startDate: startDate.toISOString(), 
@@ -100,20 +103,28 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
         fieldMapping 
       });
 
-      // 这里需要从原始数据重新筛选，而不是使用已经筛选过的数据
-      // 但由于架构限制，我们先用当前的 filteredOrders
       let totalRevenue = 0;
-      const validOrders = filteredOrders.filter(order => {
+      const validOrders = originalOrderData.filter(order => {
         const orderDateStr = order[fieldMapping.orderDate];
         if (!orderDateStr) return false;
         
         const orderDate = new Date(orderDateStr);
         if (isNaN(orderDate.getTime())) return false;
         
-        const settlementAmount = parseFloat(order[fieldMapping.settlementAmount] || '0');
-        totalRevenue += settlementAmount;
+        // 检查订单日期是否在范围内（包含边界）
+        const isInRange = orderDate >= startDate && orderDate <= endDate;
         
-        return orderDate >= startDate && orderDate <= endDate;
+        if (isInRange) {
+          const settlementAmount = parseFloat(order[fieldMapping.settlementAmount] || '0');
+          totalRevenue += settlementAmount;
+          
+          console.log("订单在范围内:", {
+            orderDate: orderDate.toISOString().split('T')[0],
+            settlementAmount: order[fieldMapping.settlementAmount]
+          });
+        }
+        
+        return isInRange;
       });
 
       setPreviewData({
