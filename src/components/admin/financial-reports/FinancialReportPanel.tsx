@@ -62,6 +62,9 @@ const FinancialReportPanel: React.FC = () => {
   }, [hasUnsavedData]);
 
   const handleDataUpload = (data: OrderData[], mapping: any) => {
+    console.log("上传的订单数据:", data.length, "条");
+    console.log("字段映射:", mapping);
+    
     setOrderData(data);
     setFieldMapping(mapping);
     setHasUnsavedData(true);
@@ -75,29 +78,65 @@ const FinancialReportPanel: React.FC = () => {
       return;
     }
 
-    if (!fieldMapping.orderDate) {
+    if (!fieldMapping.orderDate || !fieldMapping.settlementAmount) {
       toast.error("请先完成字段映射");
       return;
     }
 
+    console.log("开始筛选订单数据");
+    console.log("筛选条件:", { start, end });
+    console.log("字段映射:", fieldMapping);
+    console.log("原始数据数量:", orderData.length);
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    
+    // 修正筛选逻辑
     const filtered = orderData.filter(order => {
-      const orderDate = new Date(order[fieldMapping.orderDate]);
-      if (isNaN(orderDate.getTime())) return false;
+      const orderDateStr = order[fieldMapping.orderDate];
+      if (!orderDateStr) {
+        console.log("订单缺少日期字段:", order);
+        return false;
+      }
       
-      const startDate = new Date(start);
-      const endDate = new Date(end);
+      const orderDate = new Date(orderDateStr);
+      if (isNaN(orderDate.getTime())) {
+        console.log("订单日期格式无效:", orderDateStr, order);
+        return false;
+      }
       
-      return orderDate >= startDate && orderDate <= endDate;
+      // 使用包含边界的日期比较
+      const isInRange = orderDate >= startDate && orderDate <= endDate;
+      if (isInRange) {
+        console.log("订单在范围内:", {
+          orderDate: orderDate.toISOString().split('T')[0],
+          settlementAmount: order[fieldMapping.settlementAmount]
+        });
+      }
+      
+      return isInRange;
     });
+
+    console.log("筛选后的订单数量:", filtered.length);
 
     setFilteredOrders(filtered);
     setDateRange({ start, end });
     
     const totalRevenue = filtered.reduce((sum, order) => {
-      return sum + (parseFloat(order[fieldMapping.settlementAmount] || '0'));
+      const amount = parseFloat(order[fieldMapping.settlementAmount] || '0');
+      return sum + amount;
     }, 0);
 
-    toast.success(`筛选完成：${filtered.length} 条订单，总收入 $${totalRevenue.toFixed(2)}`);
+    const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    console.log("筛选结果汇总:", {
+      订单数量: filtered.length,
+      总收入: totalRevenue,
+      日期范围: `${start} 到 ${end}`,
+      天数: dayCount
+    });
+
+    toast.success(`筛选完成：${filtered.length} 条订单，${dayCount} 天，总收入 $${totalRevenue.toLocaleString()}`);
   };
 
   const handleCostCalculation = (costBreakdown: CostBreakdown) => {
@@ -126,6 +165,8 @@ const FinancialReportPanel: React.FC = () => {
       grossProfit,
       profitMargin
     };
+
+    console.log("财务汇总:", summary);
 
     setFinancialSummary(summary);
     setActiveTab("report");

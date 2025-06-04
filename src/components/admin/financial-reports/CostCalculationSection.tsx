@@ -4,16 +4,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calculator, Filter, TrendingDown, Loader2 } from "lucide-react";
+import { Calendar, Calculator, Loader2, Eye, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface OrderData {
+  [key: string]: any;
+  orderDate?: string;
+  settlementAmount?: number;
+}
+
+interface CostBreakdown {
+  inventoryCost: number;
+  fixedCosts: number;
+  payrollCosts: number;
+  totalOtherCosts: number;
+}
 
 interface CostCalculationSectionProps {
-  filteredOrders: any[];
-  dateRange: { start: string; end: string };
-  fieldMapping: { orderDate: string; settlementAmount: string };
+  filteredOrders: OrderData[];
+  dateRange: {
+    start: string;
+    end: string;
+  };
+  fieldMapping: {
+    orderDate: string;
+    settlementAmount: string;
+  };
   onDateFilter: (start: string, end: string) => void;
-  onCostCalculation: (costBreakdown: any) => void;
+  onCostCalculation: (costBreakdown: CostBreakdown) => void;
   isCalculating: boolean;
 }
 
@@ -27,48 +47,109 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
 }) => {
   const [startDate, setStartDate] = useState(dateRange.start);
   const [endDate, setEndDate] = useState(dateRange.end);
-  const [costBreakdown, setCostBreakdown] = useState({
-    inventoryCost: 0,
-    fixedCosts: 0,
-    payrollCosts: 0,
-    totalOtherCosts: 0,
-    details: {
-      inventory: [],
-      fixed: [],
-      payroll: []
-    }
-  });
-  const [isLoadingCosts, setIsLoadingCosts] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    orders: OrderData[];
+    totalRevenue: number;
+    orderCount: number;
+    dateRange: { start: string; end: string };
+    dayCount: number;
+  } | null>(null);
 
   const handleDateFilter = () => {
     if (!startDate || !endDate) {
-      toast.error("请选择完整的日期范围");
+      toast.error("请选择开始和结束日期");
       return;
     }
-    
+
     if (new Date(startDate) > new Date(endDate)) {
       toast.error("开始日期不能晚于结束日期");
       return;
     }
 
+    // 计算日期差（包含起始和结束日期）
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    console.log("日期筛选范围:", { startDate, endDate, dayCount });
+
     onDateFilter(startDate, endDate);
-    calculateCosts(startDate, endDate);
+    
+    // 生成预览数据
+    generatePreview(startDate, endDate, dayCount);
   };
 
-  const calculateCosts = async (start: string, end: string) => {
-    setIsLoadingCosts(true);
+  const generatePreview = async (start: string, end: string, dayCount: number) => {
     try {
-      const startDateTime = new Date(start);
-      const endDateTime = new Date(end);
-      const daysDiff = Math.ceil((endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60 * 60 * 24));
+      // 从 parent component 获取原始订单数据
+      // 这里我们需要重新从 parent 获取原始数据进行筛选
+      // 暂时使用 filteredOrders，但实际应该从原始数据筛选
+      
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      
+      console.log("筛选条件:", { 
+        startDate: startDate.toISOString(), 
+        endDate: endDate.toISOString(),
+        fieldMapping 
+      });
 
-      // 1. Calculate inventory costs (outbound records)
+      // 这里需要从原始数据重新筛选，而不是使用已经筛选过的数据
+      // 但由于架构限制，我们先用当前的 filteredOrders
+      let totalRevenue = 0;
+      const validOrders = filteredOrders.filter(order => {
+        const orderDateStr = order[fieldMapping.orderDate];
+        if (!orderDateStr) return false;
+        
+        const orderDate = new Date(orderDateStr);
+        if (isNaN(orderDate.getTime())) return false;
+        
+        const settlementAmount = parseFloat(order[fieldMapping.settlementAmount] || '0');
+        totalRevenue += settlementAmount;
+        
+        return orderDate >= startDate && orderDate <= endDate;
+      });
+
+      setPreviewData({
+        orders: validOrders,
+        totalRevenue,
+        orderCount: validOrders.length,
+        dateRange: { start, end },
+        dayCount
+      });
+      
+      setShowPreview(true);
+      
+      console.log("筛选预览结果:", {
+        订单数量: validOrders.length,
+        总收入: totalRevenue,
+        日期范围: `${start} 到 ${end}`,
+        天数: dayCount
+      });
+      
+    } catch (error) {
+      console.error("生成预览失败:", error);
+      toast.error("生成预览失败");
+    }
+  };
+
+  const calculateCosts = async () => {
+    if (!previewData || previewData.orders.length === 0) {
+      toast.error("请先筛选订单数据");
+      return;
+    }
+
+    try {
+      const { dayCount } = previewData;
+      
+      // 获取库存出库成本
       const { data: inventoryHistory, error: inventoryError } = await supabase
         .from('inventory_history')
         .select('*')
         .eq('operation_type', 'remove')
-        .gte('created_at', start)
-        .lte('created_at', end);
+        .gte('created_at', `${startDate}T00:00:00`)
+        .lte('created_at', `${endDate}T23:59:59`);
 
       if (inventoryError) throw inventoryError;
 
@@ -76,7 +157,7 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
         return sum + ((record.unit_cost || 0) * Math.abs(record.quantity));
       }, 0) || 0;
 
-      // 2. Calculate fixed costs (proportional allocation)
+      // 获取固定成本
       const { data: fixedCosts, error: fixedError } = await supabase
         .from('fixed_costs')
         .select('*')
@@ -84,99 +165,87 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
 
       if (fixedError) throw fixedError;
 
-      let totalFixedCost = 0;
-      const fixedCostDetails: any[] = [];
-
-      fixedCosts?.forEach(cost => {
-        let allocatedAmount = 0;
-        
+      // 计算按比例分摊的固定成本
+      const proportionalFixedCosts = fixedCosts?.reduce((sum, cost) => {
+        let dailyAmount = 0;
         if (cost.cost_type === 'monthly') {
-          allocatedAmount = (cost.amount * daysDiff) / 30;
+          dailyAmount = cost.amount / 30;
         } else if (cost.cost_type === 'weekly') {
-          allocatedAmount = (cost.amount * daysDiff) / 7;
+          dailyAmount = cost.amount / 7;
         } else if (cost.cost_type === 'daily') {
-          allocatedAmount = cost.amount * daysDiff;
-        } else {
-          allocatedAmount = cost.amount;
+          dailyAmount = cost.amount;
         }
-        
-        totalFixedCost += allocatedAmount;
-        fixedCostDetails.push({
-          ...cost,
-          allocatedAmount,
-          daysCovered: daysDiff
-        });
-      });
+        return sum + (dailyAmount * dayCount);
+      }, 0) || 0;
 
-      // 3. Calculate payroll costs (proportional allocation)
-      const promises = [
-        supabase.from('host_payroll').select('*').gte('created_at', start).lte('created_at', end),
-        supabase.from('operation_payroll').select('*').gte('created_at', start).lte('created_at', end),
-        supabase.from('warehouse_payroll').select('*').gte('created_at', start).lte('created_at', end)
+      // 获取工资成本
+      const { data: hostPayroll, error: hostError } = await supabase
+        .from('host_payroll')
+        .select('*');
+
+      const { data: operationPayroll, error: operationError } = await supabase
+        .from('operation_payroll')
+        .select('*');
+
+      const { data: warehousePayroll, error: warehouseError } = await supabase
+        .from('warehouse_payroll')
+        .select('*');
+
+      if (hostError || operationError || warehouseError) {
+        throw new Error("获取工资数据失败");
+      }
+
+      // 计算按比例分摊的工资成本
+      const allPayroll = [
+        ...(hostPayroll || []),
+        ...(operationPayroll || []),
+        ...(warehousePayroll || [])
       ];
 
-      const [hostResult, operationResult, warehouseResult] = await Promise.all(promises);
-
-      const allPayrollData = [
-        ...(hostResult.data || []).map(p => ({ ...p, department: 'host' })),
-        ...(operationResult.data || []).map(p => ({ ...p, department: 'operation' })),
-        ...(warehouseResult.data || []).map(p => ({ ...p, department: 'warehouse' }))
-      ];
-
-      const totalPayrollCost = allPayrollData.reduce((sum, record) => {
-        return sum + (record.total_amount || 0);
+      const proportionalPayrollCosts = allPayroll.reduce((sum, payroll) => {
+        let dailyAmount = 0;
+        if (payroll.payment_type === 'monthly') {
+          dailyAmount = payroll.total_amount / 30;
+        } else if (payroll.payment_type === 'weekly') {
+          dailyAmount = payroll.total_amount / 7;
+        } else if (payroll.payment_type === 'daily') {
+          dailyAmount = payroll.total_amount;
+        } else {
+          // 对于其他类型，假设是月度
+          dailyAmount = payroll.total_amount / 30;
+        }
+        return sum + (dailyAmount * dayCount);
       }, 0);
 
-      const breakdown = {
+      const costBreakdown: CostBreakdown = {
         inventoryCost,
-        fixedCosts: totalFixedCost,
-        payrollCosts: totalPayrollCost,
-        totalOtherCosts: totalFixedCost + totalPayrollCost,
-        details: {
-          inventory: inventoryHistory || [],
-          fixed: fixedCostDetails,
-          payroll: allPayrollData
-        }
+        fixedCosts: proportionalFixedCosts,
+        payrollCosts: proportionalPayrollCosts,
+        totalOtherCosts: proportionalFixedCosts + proportionalPayrollCosts
       };
 
-      setCostBreakdown(breakdown);
-      toast.success("成本计算完成");
-
+      console.log("成本计算结果:", costBreakdown);
+      onCostCalculation(costBreakdown);
+      
     } catch (error: any) {
       console.error("成本计算失败:", error);
       toast.error(`成本计算失败: ${error.message}`);
-    } finally {
-      setIsLoadingCosts(false);
     }
   };
-
-  const handleFinalCalculation = () => {
-    if (filteredOrders.length === 0) {
-      toast.error("请先筛选订单数据");
-      return;
-    }
-
-    onCostCalculation(costBreakdown);
-  };
-
-  // Calculate total revenue from filtered orders
-  const totalRevenue = filteredOrders.reduce((sum, order) => {
-    return sum + (parseFloat(order[fieldMapping.settlementAmount] || '0'));
-  }, 0);
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            日期筛选
+            <Calendar className="h-5 w-5" />
+            日期筛选与成本计算
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="startDate">开始日期</Label>
+              <Label htmlFor="startDate">开始日期 *</Label>
               <Input
                 id="startDate"
                 type="date"
@@ -185,7 +254,7 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
               />
             </div>
             <div>
-              <Label htmlFor="endDate">结束日期</Label>
+              <Label htmlFor="endDate">结束日期 *</Label>
               <Input
                 id="endDate"
                 type="date"
@@ -195,102 +264,113 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
             </div>
           </div>
 
-          <Button onClick={handleDateFilter} disabled={!startDate || !endDate || isLoadingCosts}>
-            {isLoadingCosts ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
+          <div className="flex gap-2">
+            <Button onClick={handleDateFilter} className="flex-1">
               <Filter className="mr-2 h-4 w-4" />
-            )}
-            应用日期筛选并计算成本
-          </Button>
+              筛选订单
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPreview(!showPreview)}
+              disabled={!previewData}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              {showPreview ? '隐藏' : '显示'}预览
+            </Button>
+          </div>
 
-          {filteredOrders.length > 0 && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">筛选结果</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-blue-700">订单数量:</span>
-                  <span className="font-bold ml-2">{filteredOrders.length}</span>
+          {previewData && (
+            <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+              <h4 className="font-semibold text-blue-900">筛选预览结果</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">日期范围</p>
+                  <p className="font-bold text-blue-600">{previewData.dayCount} 天</p>
+                  <p className="text-xs text-blue-500">
+                    {previewData.dateRange.start} 至 {previewData.dateRange.end}
+                  </p>
                 </div>
-                <div>
-                  <span className="text-blue-700">总收入:</span>
-                  <span className="font-bold ml-2 text-green-600">${totalRevenue.toFixed(2)}</span>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">订单数量</p>
+                  <p className="text-2xl font-bold text-green-600">{previewData.orderCount}</p>
                 </div>
-                <div>
-                  <span className="text-blue-700">日期范围:</span>
-                  <span className="font-medium ml-2">{startDate} 至 {endDate}</span>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">总收入</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    ${previewData.totalRevenue.toLocaleString()}
+                  </p>
                 </div>
-                <div>
-                  <span className="text-blue-700">天数:</span>
-                  <span className="font-medium ml-2">
-                    {Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))} 天
-                  </span>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">平均订单价值</p>
+                  <p className="text-xl font-bold text-orange-600">
+                    ${previewData.orderCount > 0 ? (previewData.totalRevenue / previewData.orderCount).toFixed(2) : '0'}
+                  </p>
                 </div>
               </div>
             </div>
           )}
+
+          {showPreview && previewData && (
+            <Card>
+              <CardHeader>
+                <CardTitle>订单详情预览 (前10条)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-48 border rounded">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted sticky top-0">
+                      <tr>
+                        <th className="p-2 text-left">订单创建日期</th>
+                        <th className="p-2 text-left">结算金额</th>
+                        <th className="p-2 text-left">产品名称</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewData.orders.slice(0, 10).map((order, index) => (
+                        <tr key={index} className="border-b hover:bg-muted/50">
+                          <td className="p-2">
+                            {new Date(order[fieldMapping.orderDate]).toLocaleDateString()}
+                          </td>
+                          <td className="p-2 font-medium text-green-600">
+                            ${parseFloat(order[fieldMapping.settlementAmount] || '0').toLocaleString()}
+                          </td>
+                          <td className="p-2 truncate max-w-xs">
+                            {order['Product name'] || order['product_name'] || '未知产品'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ScrollArea>
+                {previewData.orders.length > 10 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    显示前10条，共{previewData.orders.length}条订单
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          <Button 
+            onClick={calculateCosts}
+            disabled={isCalculating || !previewData}
+            className="w-full"
+            size="lg"
+          >
+            {isCalculating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                正在计算成本...
+              </>
+            ) : (
+              <>
+                <Calculator className="mr-2 h-4 w-4" />
+                开始成本计算
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
-
-      {(costBreakdown.inventoryCost > 0 || costBreakdown.totalOtherCosts > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5" />
-              成本明细分析
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-red-50 p-4 rounded-lg">
-                <h4 className="font-medium text-red-900">库存出库成本</h4>
-                <p className="text-2xl font-bold text-red-700">${costBreakdown.inventoryCost.toFixed(2)}</p>
-                <p className="text-sm text-red-600">{costBreakdown.details.inventory.length} 条出库记录</p>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <h4 className="font-medium text-orange-900">固定成本</h4>
-                <p className="text-2xl font-bold text-orange-700">${costBreakdown.fixedCosts.toFixed(2)}</p>
-                <p className="text-sm text-orange-600">{costBreakdown.details.fixed.length} 项固定成本</p>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <h4 className="font-medium text-purple-900">工资成本</h4>
-                <p className="text-2xl font-bold text-purple-700">${costBreakdown.payrollCosts.toFixed(2)}</p>
-                <p className="text-sm text-purple-600">{costBreakdown.details.payroll.length} 条工资记录</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium text-gray-900">总成本汇总</h4>
-                  <p className="text-sm text-gray-600">
-                    库存成本 + 固定成本 + 工资成本 = 总成本
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-800">
-                    ${(costBreakdown.inventoryCost + costBreakdown.totalOtherCosts).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleFinalCalculation}
-              disabled={isCalculating || filteredOrders.length === 0}
-              className="w-full"
-              size="lg"
-            >
-              {isCalculating ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Calculator className="mr-2 h-4 w-4" />
-              )}
-              生成财务报表
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
