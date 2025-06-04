@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ interface CostCalculationSectionProps {
   onDateFilter: (start: string, end: string) => void;
   onCostCalculation: (costBreakdown: CostBreakdown) => void;
   isCalculating: boolean;
-  originalOrderData?: OrderData[]; // 添加原始数据的prop
+  originalOrderData?: OrderData[];
 }
 
 const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
@@ -50,7 +49,7 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
   onDateFilter,
   onCostCalculation,
   isCalculating,
-  originalOrderData = filteredOrders // 如果没有提供原始数据，则使用filteredOrders作为fallback
+  originalOrderData = filteredOrders
 }) => {
   const [startDate, setStartDate] = useState(dateRange.start);
   const [endDate, setEndDate] = useState(dateRange.end);
@@ -90,16 +89,9 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
 
   const generatePreview = (start: string, end: string, dayCount: number) => {
     try {
-      // 使用原始订单数据进行筛选
-      const startDate = new Date(start);
-      startDate.setHours(0, 0, 0, 0); // 设置为当天开始
-      
-      const endDate = new Date(end);
-      endDate.setHours(23, 59, 59, 999); // 设置为当天结束
-      
       console.log("筛选条件:", { 
-        startDate: startDate.toISOString(), 
-        endDate: endDate.toISOString(),
+        start, 
+        end,
         fieldMapping 
       });
 
@@ -111,15 +103,18 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
         const orderDate = new Date(orderDateStr);
         if (isNaN(orderDate.getTime())) return false;
         
+        // 将日期转换为 YYYY-MM-DD 格式进行比较
+        const orderDateFormatted = orderDate.toISOString().split('T')[0];
+        
         // 检查订单日期是否在范围内（包含边界）
-        const isInRange = orderDate >= startDate && orderDate <= endDate;
+        const isInRange = orderDateFormatted >= start && orderDateFormatted <= end;
         
         if (isInRange) {
           const settlementAmount = parseFloat(order[fieldMapping.settlementAmount] || '0');
           totalRevenue += settlementAmount;
           
           console.log("订单在范围内:", {
-            orderDate: orderDate.toISOString().split('T')[0],
+            orderDate: orderDateFormatted,
             settlementAmount: order[fieldMapping.settlementAmount]
           });
         }

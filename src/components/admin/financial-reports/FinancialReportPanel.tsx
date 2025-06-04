@@ -86,12 +86,6 @@ const FinancialReportPanel: React.FC = () => {
     console.log("筛选条件:", { start, end });
     console.log("字段映射:", fieldMapping);
     console.log("原始数据数量:", orderData.length);
-
-    const startDate = new Date(start);
-    startDate.setHours(0, 0, 0, 0); // 设置为当天开始
-    
-    const endDate = new Date(end);
-    endDate.setHours(23, 59, 59, 999); // 设置为当天结束
     
     // 修正筛选逻辑，确保包含结束日期
     const filtered = orderData.filter(order => {
@@ -107,11 +101,14 @@ const FinancialReportPanel: React.FC = () => {
         return false;
       }
       
-      // 使用包含边界的日期比较
-      const isInRange = orderDate >= startDate && orderDate <= endDate;
+      // 将日期转换为 YYYY-MM-DD 格式进行比较
+      const orderDateFormatted = orderDate.toISOString().split('T')[0];
+      
+      // 使用简单的字符串比较，包含边界
+      const isInRange = orderDateFormatted >= start && orderDateFormatted <= end;
       if (isInRange) {
         console.log("订单在范围内:", {
-          orderDate: orderDate.toISOString().split('T')[0],
+          orderDate: orderDateFormatted,
           settlementAmount: order[fieldMapping.settlementAmount]
         });
       }
@@ -129,7 +126,7 @@ const FinancialReportPanel: React.FC = () => {
       return sum + amount;
     }, 0);
 
-    const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const dayCount = Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
     console.log("筛选结果汇总:", {
       订单数量: filtered.length,
