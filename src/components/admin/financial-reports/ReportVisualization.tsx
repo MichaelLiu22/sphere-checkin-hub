@@ -207,7 +207,8 @@ const ReportVisualization: React.FC<ReportVisualizationProps> = ({
               <LineChart data={dailyRevenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
-                <YAxis />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
                 <Tooltip formatter={(value: any, name: string) => [
                   name === 'revenue' ? `$${value.toFixed(2)}` : value,
                   name === 'revenue' ? '收入' : '订单数'
@@ -219,6 +220,7 @@ const ReportVisualization: React.FC<ReportVisualizationProps> = ({
                   stroke="#2563eb" 
                   strokeWidth={2}
                   name="收入"
+                  yAxisId="left"
                 />
                 <Line 
                   type="monotone" 
