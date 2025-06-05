@@ -153,19 +153,28 @@ const CostCalculationSection: React.FC<CostCalculationSectionProps> = ({
 
     try {
       const { dayCount } = previewData;
-      
-      // 获取库存出库成本
       const { data: inventoryHistory, error: inventoryError } = await supabase
         .from('inventory_history')
         .select('*')
-        .eq('operation_type', 'remove')
-        .gte('created_at', `${startDate}T00:00:00`)
-        .lte('created_at', `${endDate}T23:59:59`);
+        .eq('operation_type', 'out')
+        .gte('out_date', startDate)
+        .lte('out_date', endDate);
 
-      if (inventoryError) throw inventoryError;
+      if (inventoryError) {
+        console.error("获取出库记录失败:", inventoryError);
+        throw inventoryError;
+      }
 
       const inventoryCost = inventoryHistory?.reduce((sum, record) => {
-        return sum + ((record.unit_cost || 0) * Math.abs(record.quantity));
+        const cost = (record.unit_cost || 0) * Math.abs(record.quantity);
+        console.log("计算单条记录成本:", {
+          sku: record.sku,
+          quantity: record.quantity,
+          unit_cost: record.unit_cost,
+          cost,
+          out_date: record.out_date
+        });
+        return sum + cost;
       }, 0) || 0;
 
       // 获取固定成本
