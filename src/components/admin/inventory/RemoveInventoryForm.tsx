@@ -6,10 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Minus, Package, Search } from "lucide-react";
+import { Minus, Package, Search, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface InventoryItem {
   id: string;
@@ -29,6 +33,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [outDate, setOutDate] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
     quantity: "",
     reason: ""
@@ -77,8 +82,8 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedItem || !formData.quantity || !formData.reason) {
-      toast.error("请填写所有必填字段");
+    if (!selectedItem || !formData.quantity || !formData.reason || !outDate) {
+      toast.error("请填写所有必填字段并选择出库日期");
       return;
     }
 
@@ -107,7 +112,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
 
       if (updateError) throw updateError;
 
-      // 记录出库历史
+      // 记录出库历史，包含出库日期
       const { error: historyError } = await supabase
         .from('inventory_history')
         .insert({
@@ -117,6 +122,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
           operation_type: 'out',
           unit_cost: selectedItem.unit_cost,
           reason: formData.reason,
+          out_date: format(outDate, 'yyyy-MM-dd'),
           created_by: user?.id
         });
 
@@ -127,6 +133,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
       // 重置表单
       setSelectedItem(null);
       setSearchTerm("");
+      setOutDate(new Date());
       setFormData({
         quantity: "",
         reason: ""
@@ -208,7 +215,7 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
             </Card>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantity">出库数量 *</Label>
               <Input
@@ -228,6 +235,34 @@ const RemoveInventoryForm: React.FC<RemoveInventoryFormProps> = ({ inventory, on
                   最大可出库: {selectedItem.quantity} 件
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="out_date">出库日期 *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !outDate && "text-muted-foreground"
+                    )}
+                    disabled={!selectedItem}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {outDate ? format(outDate, "yyyy/MM/dd") : "选择出库日期"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={outDate}
+                    onSelect={(date) => date && setOutDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

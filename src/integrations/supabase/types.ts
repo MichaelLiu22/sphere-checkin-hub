@@ -167,7 +167,15 @@ export type Database = {
           updated_at?: string
           work_date?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "host_payroll_created_by_fkey1"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory: {
         Row: {
@@ -234,6 +242,7 @@ export type Database = {
           id: string
           in_reason: Database["public"]["Enums"]["inventory_in_reason"] | null
           operation_type: string
+          out_date: string | null
           product_name: string
           quantity: number
           reason: string | null
@@ -248,6 +257,7 @@ export type Database = {
           id?: string
           in_reason?: Database["public"]["Enums"]["inventory_in_reason"] | null
           operation_type: string
+          out_date?: string | null
           product_name: string
           quantity: number
           reason?: string | null
@@ -262,6 +272,7 @@ export type Database = {
           id?: string
           in_reason?: Database["public"]["Enums"]["inventory_in_reason"] | null
           operation_type?: string
+          out_date?: string | null
           product_name?: string
           quantity?: number
           reason?: string | null
@@ -336,7 +347,15 @@ export type Database = {
           total_amount?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "operation_payroll_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payroll_exports: {
         Row: {
@@ -372,7 +391,15 @@ export type Database = {
           period_start?: string
           total_amount?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payroll_exports_exported_by_fkey"
+            columns: ["exported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_cache: {
         Row: {
@@ -841,7 +868,15 @@ export type Database = {
           total_amount?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_payroll_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
